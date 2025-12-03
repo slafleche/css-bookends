@@ -3,9 +3,9 @@
 **CSS is code. Measure it like one.**  
 Compile-time unit safety for numeric, unit-bearing CSS values, no surprises at runtime.
 
-CSS-Calipers is a tiny layer for typed CSS measurements. Stop parsing CSS strings 
-and concatenating units. Do your math on real numbers, get compile-time unit safety, 
-and output CSS only at the edges.
+CSS-Calipers is a tiny layer for typed CSS measurements. Stop parsing CSS
+strings and concatenating units. Do your math on real numbers, get
+compile-time unit safety, and output CSS only at the edges.
 
 At a glance:
 
@@ -263,7 +263,7 @@ keywords for symbolic CSS values, without reintroducing vague unions like
   existing styling system so runtime only sees static values.
 - **Unit guards in debug:** Use `assertUnit()` in dev-only blocks to confirm
   consistency between related measurements.
-- **CSS variables:** Pass CSS-Calipers css output into style layers that
+- **CSS variables:** Pass CSS-Calipers `.css()` output into style layers that
   interpolate them, but don’t try to store `var(--token)` inside the library.
 
 ---
@@ -293,6 +293,6 @@ keywords for symbolic CSS values, without reintroducing vague unions like
 
 - **CSS custom properties coexist; they don’t mix.**  
   Third-party primitives exposing `var(--token)` should keep those values as raw
-  CSS strings. Feed CSS-Calipers css output into them where possible, but don’t
-  wrap CSS variables inside the library; treat them as parallel pipes that meet
-  in the style layer.
+  CSS strings. Feed CSS-Calipers `.css()` output into them where possible, but
+  don’t wrap CSS variables inside the library; treat them as parallel pipes
+  that meet in the style layer.
