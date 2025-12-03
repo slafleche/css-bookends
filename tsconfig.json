@@ -8,9 +8,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "rootDir": "src",
     "types": ["vitest"]
   },
   "include": ["src", "tests"]
 }
-
