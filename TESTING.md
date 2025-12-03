@@ -40,7 +40,7 @@ development.
   - Unit helpers (for example, `mPx`, `mPercent`) and their branded
     measurement types.
   - `MeasurementString` and the string literal types used to exclude
-    css-calipers-emitted CSS strings from keyword unions.
+    CSS-Calipers-emitted CSS strings from keyword unions.
   - Guard and assertion helpers (for example, `isMeasurement`,
     `isPercentMeasurement`, `assertPercentMeasurement`).
 - To run the type tests locally, use:

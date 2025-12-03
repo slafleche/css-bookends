@@ -23,10 +23,11 @@ Releases should be performed via the `release` script rather than calling
 3. The script will:
    - Verify that the current branch is `main` (abort otherwise).
    - Warn if there are uncommitted changes and ask whether to continue.
-   - Run the source tests (`npm test`).
+   - Run the core tests (`npm run test:core`).
    - Run the build (`npm run build`) to produce `dist/cjs` and `dist/esm`.
    - Check that the expected build outputs exist.
-   - Run the build artifact tests (`npm run test:build`) against both CJS and ESM outputs.
+   - Run the dist tests (`npm run test:dist`) against both CJS and ESM outputs.
+   - Run the type tests (`npm run test:types`).
    - Prompt you to choose the version bump (`patch`, `minor`, or `major`).
    - Run `npm version <type>` to bump the version and create a tag.
    - Show the new version and ask for final confirmation before publishing.
@@ -38,10 +39,12 @@ non-zero status and print an error message.
 
 ## prepublishOnly safety net
 
-The `prepublishOnly` npm script is configured to run:
+The `prepublishOnly` npm script is configured to refuse direct `npm publish`
+unless the `CSS_CALIPERS_RELEASE` environment variable is set, then run the
+core tests and build.
 
 The `prepublishOnly` hook runs automatically on every `npm publish` and will
-block publishing if tests or the build fail.
+block publishing if these checks fail.
 
 ## Dist-tag strategy
 
