@@ -43,12 +43,11 @@ const useApiAssertPercent = () => {
 };
 
 // MeasurementString and unit metadata types are exported and coherent
-declare const pxScalar: MeasurementString<'px'>;
-expectAssignable<string>(pxScalar);
+declare const pxCss: MeasurementString<'px'>;
+expectAssignable<string>(pxCss);
 
 const percentMeta = measurementUnitMetadata.mPercent;
 expectAssignable<MeasurementUnitDefinition>(percentMeta);
 
 declare const category: MeasurementUnitCategory;
 void category;
-

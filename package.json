@@ -1,7 +1,7 @@
 {
   "name": "css-calipers",
   "version": "0.0.0",
-  "description": "Reserved package name placeholder for the upcoming CSS-Calipers unit-safety toolkit for CSS.",
+  "description": "Compile-time unit safety for numeric, unit-bearing CSS values via typed measurements.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -22,10 +22,28 @@
     "type-safe",
     "css-calipers"
   ],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE.txt",
+    "RELEASING.md"
+  ],
+  "sideEffects": false,
   "type": "commonjs",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.14",
     "tsd": "^0.31.0",

@@ -10,6 +10,7 @@ using the local release script.
   `css-calipers` package (`npm whoami` should work).
 - If your npm account uses 2FA, be ready to enter your OTP during
   `npm publish`.
+- The supported runtime target for published builds is Node 18 or newer.
 
 ## Release flow (local, scripted)
 
