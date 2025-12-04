@@ -37,7 +37,7 @@ import { m } from "css-calipers";
 
 // Declare vars
 const paddingBase = m(4); // defaults to "px" with no unit specified
-const rotation = m(45, "deg"); // equivalent to a dedicated helper like mDeg(45)
+const rotation = m(45, "deg"); // equivalent to a dedicated helper: mDeg(45)
 
 // Do safe arithmetic
 const margins = paddingBase.add(4);
@@ -73,7 +73,11 @@ CSS-Calipers focuses exclusively on numeric, unit-bearing CSS values. Keywords
 like `auto`, `fit-content`, or `max-content`, full shorthand strings,
 `var(--token)`, or `calc(...)` expressions should remain explicit strings or
 dedicated keyword types in your app or styling layer. Everything else stays as
-plain CSS (see "Philosophy & Boundaries" below for more detail).
+plain CSS (see "Philosophy & Boundaries" below for more detail). For a concrete
+example of this separation in a mixed-input helper, see
+[examples/lineHeight-normalizer.example.ts](examples/lineHeight-normalizer.example.ts),
+which keeps keywords and CSS variables as plain strings while using measurements
+for numeric values.
 
 ---
 
@@ -96,7 +100,7 @@ It’s probably overkill if:
 ### Layout tokens example
 
 ```ts
-import { m, mPercent, mVw, mVh, mFr, assertCondition } from "css-calipers";
+import { m, mPercent, mVw, mVh, assertCondition } from "css-calipers";
 
 // Token-style measurements (px by default)
 const spacing = m(8); // Defaults to px; equivalent to mPx(8)
@@ -142,7 +146,8 @@ if (process.env.NODE_ENV !== "production") {
 const cardGridStyles = {
   display: "grid",
   gap: gutter.css(),
-  gridTemplateColumns: `repeat(${columns}, ${mFr(1).css()})`,
+  // Keep fraction units as plain CSS alongside measurement-derived values
+  gridTemplateColumns: `repeat(${columns}, 1fr)`,
   // width driven by card width + gutters
   width: cardWidth
     .multiply(columns)
@@ -152,7 +157,7 @@ const cardGridStyles = {
   minWidth: minWidthPercent.css(),
   maxWidth: maxWidthViewport.css(),
   // derived hero height based on px ratio, expressed in vh and used inside a calc() string
-  // calc() stays plain CSS; css-calipers only provides the numeric pieces
+  // calc() stays plain CSS; CSS-Calipers only provides the numeric pieces
   minHeight: `calc(${heroHeight.css()} + 10vh)`,
 };
 ```
@@ -163,7 +168,7 @@ const cardGridStyles = {
 
 CSS-Calipers will happily enforce units anywhere you choose, but it stays
 unopinionated about where those guards live. Drop assertions in a component, in
-a theme overwrite, hardcode a debug routine, or wire a global invariant; the
+a theme override, hardcode a debug routine, or wire a global invariant; the
 structure is up to you:
 
 ```ts
@@ -179,9 +184,15 @@ if (process.env.NODE_ENV !== "production") {
 }
 ```
 
-You can apply the same checks globally (e.g., during app bootstrap) or only
-inside the components that need them. CSS-Calipers gives you the tools;
-placement is a design decision.
+You can apply the same checks globally (e.g., during app bootstrap), only
+inside the components that need them, or in dedicated test helpers. For more
+complete patterns, see the examples folder: the validation unit-tests example
+([examples/validation-unit-tests.example.ts](examples/validation-unit-tests.example.ts)) shows how to
+enforce spacing token invariants in a test suite, and the validation and runtime
+checks example ([examples/validation-and-runtime-checks.example.ts](examples/validation-and-runtime-checks.example.ts))
+shows how to apply dev-only guards around shared tokens in two different
+consumers (an HTML snippet and a style object) using the same line-height
+measurement.
 
 ---
 
@@ -189,7 +200,7 @@ placement is a design decision.
 
 - Operations are fail-fast: when you call helpers like `add`, `divide`, `clamp`,
   `measurementMin` / `measurementMax`, or the assertion helpers with invalid
-  input (for example, mismatched units or non-finite values), css-calipers
+  input (for example, mismatched units or non-finite values), CSS-Calipers
   throws a normal `Error`.
 - Error messages include the operation name (for example,
   `css-calipers.Measurement.divide` or `css-calipers.assertMatchingUnits`), the
@@ -200,34 +211,23 @@ placement is a design decision.
   (such as `if (process.env.NODE_ENV !== 'production')`) or to enforce
   invariants in tests, so checks stay cheap and predictable at runtime.
 
+For concrete uses of these errors in tests and dev-only guards, see
+`TESTING.md` and the validation examples in
+[examples/validation-unit-tests.example.ts](examples/validation-unit-tests.example.ts) and
+[examples/validation-and-runtime-checks.example.ts](examples/validation-and-runtime-checks.example.ts).
+
 ---
 
 ## Co-existing with other systems
 
-You don’t have to convert everything at once, or at all. If it fits your setup, you can write small adapters that accept existing CSS strings, css-calipers measurements, or plain numbers and turn them into CSS values. The example below is just one possible adapter pattern, not a recommendation or default.
-
-```ts
-import { m, isMeasurement } from "css-calipers";
-
-type SpacingInput = string | number | ReturnType<typeof m>;
-
-const toSpacingCss = (value: SpacingInput): string => {
-  if (typeof value === "string") {
-    // Already a CSS value (for example, "auto" or "var(--gap)")
-    return value;
-  }
-
-  const measurement = isMeasurement(value) ? value : m(value);
-  return measurement.css();
-};
-
-// Later, callers can pass tokens, raw CSS strings, or measurements:
-toSpacingCss("var(--card-gap)");
-toSpacingCss(8); // becomes "8px"
-toSpacingCss(m(12, "px"));
-```
-
----
+You don’t have to convert everything at once, or at all. If it fits your setup,
+you can write small adapters that accept existing CSS strings, CSS-Calipers
+measurements, or plain numbers and turn them into CSS values. CSS-Calipers can
+be dropped into an existing styling system or used from the ground up; it
+focuses narrowly on numeric, unit-bearing values and leaves the rest of your
+styling approach up to you. For a more realistic adapter pattern that
+normalizes mixed inputs (including CSS variables) into a single css-like value,
+see the line-height normalizer example referenced below.
 
 ## Advanced
 
@@ -272,7 +272,7 @@ keywords for symbolic CSS values, without reintroducing vague unions like
 
 - **Measurement math lives here; string composition lives elsewhere.**  
   Use CSS-Calipers for unit-aware calculations, then hand results to
-  helpers/adapters that emit CSS literals. Keep `calc()`/`clamp()` logic outside
+  helpers/adapters that emit CSS literals. Keep `calc()`/`linear-gradient()` logic outside
   the library so measurement objects remain pure.
 
 - **`.css()` at runtime is an edge, not a habit.**  
@@ -293,6 +293,42 @@ keywords for symbolic CSS values, without reintroducing vague unions like
 
 - **CSS custom properties coexist; they don’t mix.**  
   Third-party primitives exposing `var(--token)` should keep those values as raw
-  CSS strings. Feed CSS-Calipers `.css()` output into them where possible, but
-  don’t wrap CSS variables inside the library; treat them as parallel pipes
-  that meet in the style layer.
+  CSS strings. CSS-Calipers is intentionally narrow: it works with numeric
+  measurements and unit-safe conversions, not tokens or CSS variables. You can
+  still use `var(...)` and token strings anywhere in your styling system; they
+  just sit outside the library. If you want those values to flow through
+  CSS-Calipers, first extract the numeric value and unit in your own code and
+  then pass that measurement into the library.
+
+## Using CSS-Calipers in a larger styling system
+
+CSS is inherently flexible: the same property can accept numbers, unit-bearing
+strings, keywords, and CSS variables. CSS-Calipers is one focused piece of that
+ecosystem. It keeps the numeric, unit-bearing parts typed and predictable, and
+lets the rest of your styling system own tokens, variables, and higher-level
+APIs.
+
+For a worked example of this pattern, see
+[examples/lineHeight-normalizer.example.ts](examples/lineHeight-normalizer.example.ts). It shows a helper that accepts a
+`lineHeight` value from a CMS or configuration (numbers, numeric strings with
+units, keywords like `"normal"`, or CSS variables such as
+`"var(--body-line-height)"`) and normalizes them into a value with a `.css()`
+method. CSS-Calipers only participates when there is a concrete measurement
+(numbers and units); keywords and CSS variables remain plain CSS strings owned
+by your styling layer. That’s the intended scope: CSS will always be a mix of
+values, but the library gives you a tight, unit-safe boundary for the numeric
+parts inside a broader styling solution.
+
+### Further examples in this repo
+
+The `examples/` folder contains a few non-published usage sketches:
+
+- [examples/lineHeight-normalizer.example.ts](examples/lineHeight-normalizer.example.ts) &mdash;
+  mixed input normalization for `lineHeight` (numbers, strings, CSS variables)
+  into a single value with a `.css()` method.
+- [examples/validation-unit-tests.example.ts](examples/validation-unit-tests.example.ts) &mdash;
+  simple unit tests that enforce spacing token invariants (shared units and
+  small &le; large).
+- [examples/validation-and-runtime-checks.example.ts](examples/validation-and-runtime-checks.example.ts) &mdash;
+  dev-only validation around shared tokens in two different consumers (HTML
+  string and style object) using the same line-height measurement.

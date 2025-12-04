@@ -1,4 +1,4 @@
-# Releasing css-calipers
+# Releasing CSS-Calipers
 
 This document describes how to publish a new version of `css-calipers` to npm
 using the local release script.

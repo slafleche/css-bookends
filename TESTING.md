@@ -1,4 +1,4 @@
-# Testing css-calipers
+# Testing CSS-Calipers
 
 This document describes how tests are organized and how to run them during
 development.
