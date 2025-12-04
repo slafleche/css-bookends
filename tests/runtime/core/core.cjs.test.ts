@@ -4,7 +4,7 @@ import { runCoreTests } from './core.shared';
 
 // Dynamic import works with CommonJS output and will fail fast if the
 // artifact does not exist or exports are incorrect.
-const cjsModule = await import('../dist/cjs/index.js');
+const cjsModule = await import('../../../dist/cjs/index.js');
 
 const {
   assertMatchingUnits,
@@ -39,7 +39,7 @@ const {
   measurementMin,
 } = cjsModule;
 
-const api: CoreApi = {
+const api = {
   m,
   mPercent,
   mPx,
@@ -70,7 +70,6 @@ const api: CoreApi = {
   hasCssMethod,
   measurementMin,
   measurementMax,
-};
+} as CoreApi;
 
 runCoreTests('cjs', api);
-

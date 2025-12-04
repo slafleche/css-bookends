@@ -42,6 +42,16 @@
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
     },
+    "./units": {
+      "types": "./dist/esm/units/index.d.ts",
+      "import": "./dist/esm/units/index.js",
+      "require": "./dist/cjs/units/index.js"
+    },
+    "./units/*": {
+      "types": "./dist/esm/units/*.d.ts",
+      "import": "./dist/esm/units/*.js",
+      "require": "./dist/cjs/units/*.js"
+    },
     "./package.json": "./package.json"
   },
   "devDependencies": {
@@ -61,12 +71,12 @@
     "prepublishOnly": "node -e \"if (!process.env.CSS_CALIPERS_RELEASE) { console.error('Direct npm publish is disabled; use \\\"npm run release\\\" instead.'); process.exit(1); }\"",
     "release": "node scripts/release.mjs",
     "release:dry": "node scripts/release.mjs --dry-run",
-    "test": "vitest tests/core.test.ts",
-    "test:core": "vitest run tests/core.test.ts",
-    "test:cjs": "vitest run tests/core.cjs.test.ts",
-    "test:esm": "vitest run tests/core.esm.test.ts",
+    "test": "vitest tests/runtime/core/core.src.test.ts",
+    "test:core": "vitest run tests/runtime/core/core.src.test.ts",
+    "test:cjs": "vitest run tests/runtime/core/core.cjs.test.ts tests/runtime/api-surface/api-surface.cjs.test.ts",
+    "test:esm": "vitest run tests/runtime/core/core.esm.test.ts tests/runtime/api-surface/api-surface.esm.test.ts",
     "test:dist": "npm run test:cjs && npm run test:esm",
-    "test:all": "npm run test:core && npm run test:dist",
+    "test:all": "npm run test:core && npm run test:dist && npm run test:types",
     "test:types": "echo \"\n 🧪 Starting tsd type checks...\n\" && tsd --files tests/types/**/*.test-d.ts && echo \"✅ tsd type checks passed!\n\""
   }
 }

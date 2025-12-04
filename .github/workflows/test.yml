@@ -26,14 +26,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run core tests
-        run: npm run test:core
-
       - name: Build artifacts
         run: npm run build
 
-      - name: Run dist tests
-        run: npm run test:dist
-
-      - name: Run type tests
-        run: npm run test:types
+      - name: Run all tests
+        run: npm run test:all

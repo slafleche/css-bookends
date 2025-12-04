@@ -50,6 +50,8 @@ const style = {
 };
 ```
 
+If you prefer, you can also import unit helpers from dedicated subpaths. For example, `mPercent` is available from the root entrypoint and from `css-calipers/units/percent`, and all unit helpers are aggregated under `css-calipers/units`.
+
 ---
 
 ## Features

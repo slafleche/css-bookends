@@ -1,45 +1,43 @@
-// Core tests against the built ESM artifact in dist/esm.
+// NOTE: This file is being refactored in phases to use a shared
+// `runCoreTests` helper defined in tests/runtime/core/core.shared.ts. If you
+// need to restore the original single-environment layout, use README.md.bak
+// and the git history for reference.
+import {
+  assertMatchingUnits,
+  assertUnit,
+  assertCondition,
+  isMeasurement,
+  m,
+  mPercent,
+  mPx,
+  mCm,
+  mEm,
+  mVh,
+  mSvw,
+  mLvw,
+  mDvw,
+  mCqh,
+  mDeg,
+  mMs,
+  mKhz,
+  mDpi,
+  mFr,
+  mCqw,
+  isPercentMeasurement,
+  assertPercentMeasurement,
+  makeUnitHelper,
+  makeUnitHelperFromDefinition,
+  measurementUnitMetadata,
+  makeUnitAssert,
+  makeUnitGuard,
+  hasCssMethod,
+  measurementMax,
+  measurementMin,
+} from '../../../src';
 import type { CoreApi } from './core.shared';
 import { runCoreTests } from './core.shared';
 
-// Dynamic import will fail fast if the ESM artifact does not exist or
-// exports are incorrect.
-const esmModule = await import('../dist/esm/index.js');
-
-const {
-  assertMatchingUnits,
-  assertUnit,
-  assertCondition,
-  isMeasurement,
-  m,
-  mPercent,
-  mPx,
-  mCm,
-  mEm,
-  mVh,
-  mSvw,
-  mLvw,
-  mDvw,
-  mCqh,
-  mDeg,
-  mMs,
-  mKhz,
-  mDpi,
-  mFr,
-  mCqw,
-  isPercentMeasurement,
-  assertPercentMeasurement,
-  makeUnitHelper,
-  makeUnitHelperFromDefinition,
-  measurementUnitMetadata,
-  makeUnitAssert,
-  makeUnitGuard,
-  hasCssMethod,
-  measurementMax,
-  measurementMin,
-} = esmModule;
-
-const api: CoreApi = {
+const api = {
   m,
   mPercent,
   mPx,
@@ -70,7 +68,6 @@ const api: CoreApi = {
   hasCssMethod,
   measurementMin,
   measurementMax,
-};
+} as unknown as CoreApi;
 
-runCoreTests('esm', api);
-
+runCoreTests('src', api);
