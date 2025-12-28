@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest';
 
 const cjsRoot = await import('../../../dist/cjs/index.js');
 const cjsUnits = await import('../../../dist/cjs/units/index.js');
+const cjsMediaQueries = await import(
+  '../../../dist/cjs/mediaQueries/index.js'
+);
 
 const cjsUnitsPercent = await import('../../../dist/cjs/units/percent.js');
 const cjsUnitsAbsolute = await import('../../../dist/cjs/units/absolute.js');
@@ -139,5 +142,13 @@ describe('API surface (CJS)', () => {
     const actualKeys = rootKeys.sort();
 
     expect(actualKeys).toEqual(expectedKeys);
+  });
+
+  it('exposes media query helpers via the mediaQueries entrypoint', () => {
+    expect(cjsMediaQueries).toHaveProperty('buildMediaQueryString');
+    expect(typeof cjsMediaQueries.buildMediaQueryString).toBe('function');
+
+    expect(cjsMediaQueries).toHaveProperty('makeMediaQueryStyle');
+    expect(typeof cjsMediaQueries.makeMediaQueryStyle).toBe('function');
   });
 });
