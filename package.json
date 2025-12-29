@@ -1,6 +1,6 @@
 {
   "name": "css-calipers",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Compile-time unit safety for numeric, unit-bearing CSS values via typed measurements.",
   "license": "MIT",
   "repository": {
@@ -78,19 +78,15 @@
     "prepublishOnly": "node -e \"if (!process.env.CSS_CALIPERS_RELEASE) { console.error('Direct npm publish is disabled; use \\\"npm run release\\\" instead.'); process.exit(1); }\"",
     "release": "node scripts/release.mjs",
     "release:dry": "node scripts/release.mjs --dry-run",
-    
     "test": "npm run test:core && npm run test:mediaQueries && npm run test:dist && npm run test:types",
-    
     "test:mediaQueries": "vitest run tests/runtime/mediaQueries/mediaQueries.src.test.ts",
     "test:mediaQueries:cjs": "vitest run tests/runtime/mediaQueries/mediaQueries.cjs.test.ts tests/runtime/api-surface/mediaQueries.api-surface.cjs.test.ts",
     "test:mediaQueries:esm": "vitest run tests/runtime/mediaQueries/mediaQueries.esm.test.ts tests/runtime/api-surface/mediaQueries.api-surface.esm.test.ts",
     "test:mediaQueries:dist": "npm run test:mediaQueries:cjs && npm run test:mediaQueries:esm",
-    
     "test:core": "vitest run tests/runtime/core/core.src.test.ts",
     "test:core:cjs": "vitest run tests/runtime/core/core.cjs.test.ts tests/runtime/api-surface/api-surface.cjs.test.ts",
     "test:core:esm": "vitest run tests/runtime/core/core.esm.test.ts tests/runtime/api-surface/api-surface.esm.test.ts",
     "test:core:dist": "npm run test:core:cjs && npm run test:core:esm",
-
     "test:types": "echo \"\n 🧪 Starting tsd type checks...\n\" && tsd --files tests/types/**/*.test-d.ts && echo \"✅ tsd type checks passed!\n\"",
     "test:dist": "npm run test:core:dist && npm run test:mediaQueries:dist"
   }
