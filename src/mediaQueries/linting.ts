@@ -13,7 +13,7 @@ export const runMediaQueryLint = <TConfig>(
 ): boolean => {
   if (!check) return true;
   const mode: MediaQueryLintingMode =
-    helpers.config.errorHandling?.lintingMode ?? 'allow';
+    helpers.config.errorHandling?.lintingMode ?? 'throw';
   if (mode === 'allow') return true;
   if (mode === 'log') {
     try {

@@ -51,7 +51,7 @@ export type IMediaQueryStyles<T extends IMediaQueries> = Partial<
   Record<keyof T, StyleRule>
 >;
 
-const emitCoreFeatures = (
+export const emitCoreFeatures = (
   props: IMediaQueryCore,
   helpers: MediaQueryBuilderHelpers
 ): void => {

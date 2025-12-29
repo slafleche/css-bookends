@@ -17,9 +17,31 @@ describe('mediaQueries API surface (CJS)', () => {
 
     expect(cjsMediaQueries).toHaveProperty('buildMediaQueryFromFeatures');
     expect(typeof cjsMediaQueries.buildMediaQueryFromFeatures).toBe('function');
+
+    expect(cjsMediaQueries).toHaveProperty('buildMediaQueryStringFromParts');
+    expect(typeof cjsMediaQueries.buildMediaQueryStringFromParts).toBe('function');
+
+    expect(cjsMediaQueries).toHaveProperty('createMediaQueryFeatureEmitter');
+    expect(typeof cjsMediaQueries.createMediaQueryFeatureEmitter).toBe('function');
+
+    expect(cjsMediaQueries).toHaveProperty(
+      'createMediaQueryFeatureEmitterWithTracking',
+    );
+    expect(typeof cjsMediaQueries.createMediaQueryFeatureEmitterWithTracking).toBe(
+      'function',
+    );
+
+    expect(cjsMediaQueries).toHaveProperty('mediaQueryFactory');
+    expect(typeof cjsMediaQueries.mediaQueryFactory).toBe('function');
+
+    expect(cjsMediaQueries).toHaveProperty('defineMediaQueryModules');
+    expect(typeof cjsMediaQueries.defineMediaQueryModules).toBe('function');
   });
 
   it('exposes media query module emitters', () => {
+    expect(cjsMediaQueries).toHaveProperty('emitCoreFeatures');
+    expect(typeof cjsMediaQueries.emitCoreFeatures).toBe('function');
+
     expect(cjsMediaQueries).toHaveProperty('emitDimensionsFeatures');
     expect(typeof cjsMediaQueries.emitDimensionsFeatures).toBe('function');
 

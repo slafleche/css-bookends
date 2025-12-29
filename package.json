@@ -63,8 +63,12 @@
     "csstype": "^3.1.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
     "@vitest/coverage-v8": "^4.0.14",
+    "eslint": "^9.39.2",
     "tsd": "^0.31.0",
     "typescript": "^5.6.3",
     "vitest": "^4.0.14"
@@ -78,7 +82,7 @@
     "prepublishOnly": "node -e \"if (!process.env.CSS_CALIPERS_RELEASE) { console.error('Direct npm publish is disabled; use \\\"npm run release\\\" instead.'); process.exit(1); }\"",
     "release": "node scripts/release.mjs",
     "release:dry": "node scripts/release.mjs --dry-run",
-    "test": "npm run test:core && npm run test:mediaQueries && npm run test:dist && npm run test:types",
+    "test": "npm run test:core && npm run test:mediaQueries && npm run test:dist && npm run test:types && npm run test:tsc && npm run lint",
     "test:mediaQueries": "vitest run tests/runtime/mediaQueries/mediaQueries.src.test.ts",
     "test:mediaQueries:cjs": "vitest run tests/runtime/mediaQueries/mediaQueries.cjs.test.ts tests/runtime/api-surface/mediaQueries.api-surface.cjs.test.ts",
     "test:mediaQueries:esm": "vitest run tests/runtime/mediaQueries/mediaQueries.esm.test.ts tests/runtime/api-surface/mediaQueries.api-surface.esm.test.ts",
@@ -87,7 +91,10 @@
     "test:core:cjs": "vitest run tests/runtime/core/core.cjs.test.ts tests/runtime/api-surface/api-surface.cjs.test.ts",
     "test:core:esm": "vitest run tests/runtime/core/core.esm.test.ts tests/runtime/api-surface/api-surface.esm.test.ts",
     "test:core:dist": "npm run test:core:cjs && npm run test:core:esm",
+    "lint": "eslint . --max-warnings=0",
+    "test:lint": "npm run lint",
     "test:types": "echo \"\n 🧪 Starting tsd type checks...\n\" && tsd --files tests/types/**/*.test-d.ts && echo \"✅ tsd type checks passed!\n\"",
-    "test:dist": "npm run test:core:dist && npm run test:mediaQueries:dist"
+    "test:tsc": "tsc -p tsconfig.json --noEmit",
+    "test:dist": "npm run build && npm run test:core:dist && npm run test:mediaQueries:dist"
   }
 }

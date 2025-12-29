@@ -1,32 +1,39 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type {
+  buildMediaQueryFromFeatures,
+  buildMediaQueryString,
+  createMediaQueryBuilder,
+  emitCustomFeatures,
+  emitDimensionsFeatures,
+  emitResolutionFeatures,
+  mediaQueryFactory,
+} from '../../../src/mediaQueries';
+import type {
+  MediaQueryBuilderHelpers,
+  MediaQueryValidationResult,
+} from '../../../src/mediaQueries/helpers';
+import type { IMeasurement } from '../../../src/core';
+import type { StyleRule } from '../../../src/mediaQueries/types';
+import type { IMediaQueryProps } from '../../../src/mediaQueries/mediaQueries';
+import type {
+  IMediaQueryCustomFeatures,
+  IMediaQueryDimensions,
+  IMediaQueryResolutionRange,
+} from '../../../src/mediaQueries/modules';
 
-type MeasurementLike = {
-  css: () => string;
-  getValue: () => number;
-};
+type MeasurementLike = IMeasurement;
 
 type MediaQueriesApi = {
-  buildMediaQueryFromFeatures: (
-    features: Record<string, MeasurementLike | string | number>,
-  ) => string;
-  createMediaQueryBuilder: (options: {
-    emitBase: (props: unknown, helpers: unknown) => void;
-    config?: { errorHandling?: { invalidValueMode?: 'allow' | 'log' | 'throw' } };
-  }) => (props: unknown) => string;
-  buildMediaQueryString: (props: {
-    minWidth?: MeasurementLike;
-    maxWidth?: MeasurementLike;
-    width?: MeasurementLike;
-    minHeight?: MeasurementLike;
-    orientation?: 'landscape' | 'portrait';
-    minResolution?: MeasurementLike;
-    maxResolution?: MeasurementLike;
-  }) => string;
-  emitDimensionsFeatures: (props: unknown, helpers: unknown) => void;
-  emitCustomFeatures: (props: unknown, helpers: unknown) => void;
-  emitResolutionFeatures: (props: unknown, helpers: unknown) => void;
+  buildMediaQueryFromFeatures: typeof buildMediaQueryFromFeatures;
+  createMediaQueryBuilder: typeof createMediaQueryBuilder;
+  buildMediaQueryString: typeof buildMediaQueryString;
+  emitDimensionsFeatures: typeof emitDimensionsFeatures;
+  emitCustomFeatures: typeof emitCustomFeatures;
+  emitResolutionFeatures: typeof emitResolutionFeatures;
+  mediaQueryFactory: typeof mediaQueryFactory;
   mDpi: (value: number) => MeasurementLike;
   mPx: (value: number) => MeasurementLike;
+  styleRuleSample?: StyleRule;
 };
 
 export const runMediaQueryTests = (
@@ -54,13 +61,13 @@ export const runMediaQueryTests = (
       );
     });
 
-    it('builds a height query with max height', () => {
+    it('builds a min/max height range query', () => {
       const result = api.buildMediaQueryString({
-        height: api.mPx(720),
+        minHeight: api.mPx(720),
         maxHeight: api.mPx(900),
       });
       expect(result).toBe(
-        'screen and (height: 720px) and (max-height: 900px)',
+        'screen and (min-height: 720px) and (max-height: 900px)',
       );
     });
 
@@ -124,7 +131,7 @@ export const runMediaQueryTests = (
       expect(() =>
         api.buildMediaQueryString({
           customFeatures: {
-            'custom-feature': { bad: true },
+            'custom-feature': ({ bad: true } as unknown as IMeasurement),
           },
         }),
       ).toThrow('Custom feature "custom-feature" must be a primitive or a measurement.');
@@ -241,7 +248,7 @@ export const runMediaQueryTests = (
     it('respects linting mode for duplicate emissions from custom features', () => {
       const makeBuilder = (lintingMode: 'allow' | 'log' | 'throw') =>
         api.createMediaQueryBuilder({
-          emitBase: (props, helpers) => {
+          emitBase: (props: IMediaQueryCustomFeatures, helpers) => {
             helpers.addFeature('min-width', api.mPx(320));
             api.emitCustomFeatures(props, helpers);
           },
@@ -395,7 +402,10 @@ export const runMediaQueryTests = (
         },
       };
 
-      const emitWithDuplicate = (props: unknown, helpers: unknown) => {
+      const emitWithDuplicate = (
+        props: IMediaQueryCustomFeatures,
+        helpers: MediaQueryBuilderHelpers,
+      ) => {
         api.emitCustomFeatures(props, helpers);
         api.emitCustomFeatures(props, helpers);
       };
@@ -463,6 +473,574 @@ export const runMediaQueryTests = (
       });
       expect(result).toBe(
         'screen and (scripting: enabled) and (overflow-block: scroll) and (overflow-inline: scroll)',
+      );
+    });
+
+    it('defaults to full module coverage when modules are omitted', () => {
+      const queries: Record<string, IMediaQueryProps> = {
+        mixed: {
+          minWidth: api.mPx(640),
+          minHeight: api.mPx(480),
+          minResolution: api.mDpi(96),
+          hover: 'hover',
+          colorScheme: 'dark',
+          scripting: 'enabled',
+          customFeatures: { 'custom-flag': 'on' },
+        },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'default-modules',
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+        },
+      });
+
+      const result = factory({
+        mixed: { padding: '8px' },
+      });
+
+      expect(result).toEqual({
+        '@media': {
+          'screen and (min-width: 640px) and (min-height: 480px) and (min-resolution: 96dpi) and (hover: hover) and (prefers-color-scheme: dark) and (scripting: enabled) and (custom-flag: on)':
+            { padding: '8px' },
+        },
+      });
+    });
+
+    it('errors with a module hint when a feature is unsupported', () => {
+      const queries = {
+        onlyCore: {
+          minWidth: api.mPx(640),
+          hover: 'hover',
+        },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'core-only',
+          modules: ['core'],
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+        },
+      });
+
+      expect(() => factory({ onlyCore: { padding: '8px' } })).toThrow(
+        'Media query factory "core-only" received unsupported feature "hover". Add "interaction" to modules.',
+      );
+    });
+
+    it('runs custom validators with invalidValueMode', () => {
+      const queries = {
+        base: {
+          minWidth: api.mPx(640),
+        },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'custom-validator',
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          custom: {
+            key: 'guard',
+            validator: () => 'nope',
+          },
+        },
+      });
+
+      expect(() => factory({ base: { padding: '8px' } })).toThrow(
+        'Media query factory "custom-validator" custom validator "guard" failed: nope',
+      );
+    });
+
+    it('runs custom linters with lintingMode', () => {
+      const queries = {
+        base: {
+          minWidth: api.mPx(640),
+        },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'custom-linter',
+          errorHandling: { invalidValueMode: 'allow', lintingMode: 'throw' },
+          custom: {
+            key: 'guard',
+            linter: () => 'flagged',
+          },
+        },
+      });
+
+      expect(() => factory({ base: { padding: '8px' } })).toThrow(
+        'Media query factory "custom-linter" custom linter "guard" flagged: flagged',
+      );
+    });
+
+    it('requires the custom module when customFeatures are used', () => {
+      const queries = {
+        coreOnly: {
+          minWidth: api.mPx(640),
+          customFeatures: { 'custom-flag': 'on' },
+        },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'no-custom-module',
+          modules: ['core'],
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+        },
+      });
+
+      expect(() => factory({ coreOnly: { padding: '8px' } })).toThrow(
+        'Media query factory "no-custom-module" received unsupported feature "customFeatures". Add "custom" to modules.',
+      );
+    });
+
+    it('defaults invalidValueMode to throw for factory guard failures', () => {
+      const queries = {
+        onlyCore: { minWidth: api.mPx(640), hover: 'hover' },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'guard-default',
+          modules: ['core'],
+        },
+      });
+
+      expect(() => factory({ onlyCore: { padding: '8px' } })).toThrow(
+        'Media query factory "guard-default" received unsupported feature "hover". Add "interaction" to modules.',
+      );
+    });
+
+    it('defaults invalidValueMode to throw for custom validator failures', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'validator-default',
+          custom: {
+            key: 'guard',
+            validator: () => 'nope',
+          },
+        },
+      });
+
+      expect(() => factory({ base: { padding: '8px' } })).toThrow(
+        'Media query factory "validator-default" custom validator "guard" failed: nope',
+      );
+    });
+
+    it('keeps low-level builder behavior when used directly', () => {
+      const builder = api.createMediaQueryBuilder({
+        emitBase: api.emitDimensionsFeatures,
+      });
+
+      const result = builder({
+        width: api.mPx(640),
+        minHeight: api.mPx(480),
+        orientation: 'portrait',
+      });
+
+      expect(result).toBe(
+        'screen and (width: 640px) and (min-height: 480px) and (orientation: portrait)',
+      );
+    });
+
+    it('preserves direct builder media type resolution', () => {
+      const builder = api.createMediaQueryBuilder({
+        emitBase: api.emitDimensionsFeatures,
+        resolveType: () => 'print',
+      });
+
+      const result = builder({
+        width: api.mPx(640),
+      });
+
+      expect(result).toBe('print and (width: 640px)');
+    });
+
+    it('guards interaction features when module is missing', () => {
+      const queries = {
+        onlyCore: { minWidth: api.mPx(640), hover: 'hover' },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'no-interaction',
+          modules: ['core'],
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+        },
+      });
+
+      expect(() => factory({ onlyCore: { padding: '8px' } })).toThrow(
+        'Media query factory "no-interaction" received unsupported feature "hover". Add "interaction" to modules.',
+      );
+    });
+
+    it('guards preferences features when module is missing', () => {
+      const queries = {
+        onlyCore: { minWidth: api.mPx(640), colorScheme: 'dark' },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'no-preferences',
+          modules: ['core'],
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+        },
+      });
+
+      expect(() => factory({ onlyCore: { padding: '8px' } })).toThrow(
+        'Media query factory "no-preferences" received unsupported feature "colorScheme". Add "preferences" to modules.',
+      );
+    });
+
+    it('guards display features when module is missing', () => {
+      const queries = {
+        onlyCore: { minWidth: api.mPx(640), colorGamut: 'p3' },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'no-display',
+          modules: ['core'],
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+        },
+      });
+
+      expect(() => factory({ onlyCore: { padding: '8px' } })).toThrow(
+        'Media query factory "no-display" received unsupported feature "colorGamut". Add "display" to modules.',
+      );
+    });
+
+    it('guards environment features when module is missing', () => {
+      const queries = {
+        onlyCore: { minWidth: api.mPx(640), scripting: 'enabled' },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'no-environment',
+          modules: ['core'],
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+        },
+      });
+
+      expect(() => factory({ onlyCore: { padding: '8px' } })).toThrow(
+        'Media query factory "no-environment" received unsupported feature "scripting". Add "environment" to modules.',
+      );
+    });
+
+    it('matches output when modules are omitted vs explicitly provided', () => {
+      const queries: Record<string, IMediaQueryProps> = {
+        mixed: {
+          minWidth: api.mPx(640),
+          minHeight: api.mPx(480),
+          minResolution: api.mDpi(96),
+          hover: 'hover',
+          colorScheme: 'dark',
+          scripting: 'enabled',
+          customFeatures: { 'custom-flag': 'on' },
+        },
+      };
+
+      const factoryDefault = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'default-modules-parity',
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+        },
+      });
+
+      const factoryExplicit = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'explicit-modules-parity',
+          modules: [
+            'core',
+            'dimensions',
+            'resolution',
+            'interaction',
+            'preferences',
+            'display',
+            'environment',
+            'custom',
+          ],
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+        },
+      });
+
+      const styles = {
+        mixed: { padding: '8px' },
+      };
+
+      expect(factoryDefault(styles)).toEqual(factoryExplicit(styles));
+    });
+
+    it('uses invalidValueMode log for module guard failures', () => {
+      const queries = {
+        onlyCore: { minWidth: api.mPx(640), hover: 'hover' },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'guard-log',
+          modules: ['core'],
+          errorHandling: { invalidValueMode: 'log', lintingMode: 'log' },
+        },
+      });
+
+      expect(() => factory({ onlyCore: { padding: '8px' } })).not.toThrow();
+    });
+
+    it('uses invalidValueMode allow for module guard failures', () => {
+      const queries = {
+        onlyCore: { minWidth: api.mPx(640), hover: 'hover' },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'guard-allow',
+          modules: ['core'],
+          errorHandling: { invalidValueMode: 'allow', lintingMode: 'log' },
+        },
+      });
+
+      expect(() => factory({ onlyCore: { padding: '8px' } })).not.toThrow();
+    });
+
+    it('defaults lintingMode to throw for custom linter failures', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'linter-default',
+          errorHandling: { invalidValueMode: 'allow' },
+          custom: {
+            key: 'guard',
+            linter: () => 'flagged',
+          },
+        },
+      });
+
+      expect(() => factory({ base: { padding: '8px' } })).toThrow(
+        'Media query factory "linter-default" custom linter "guard" flagged: flagged',
+      );
+    });
+
+    it('no-ops when factory is called without matching styles', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'no-op',
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'throw' },
+          custom: {
+            key: 'guard',
+            validator: () => 'nope',
+            linter: () => 'flagged',
+          },
+        },
+      });
+
+      expect(factory({})).toEqual({ '@media': {} });
+      expect(factory({ base: undefined })).toEqual({ '@media': {} });
+    });
+
+    it('logs warnings when invalidValueMode is log for guard failures', () => {
+      const queries = {
+        onlyCore: { minWidth: api.mPx(640), hover: 'hover' },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'guard-log-warning',
+          modules: ['core'],
+          errorHandling: { invalidValueMode: 'log', lintingMode: 'log' },
+        },
+      });
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      factory({ onlyCore: { padding: '8px' } });
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Media query factory "guard-log-warning" received unsupported feature "hover". Add "interaction" to modules.',
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('logs warnings when lintingMode is log for duplicate emissions', () => {
+      const builder = api.createMediaQueryBuilder({
+        emitBase: (_props, helpers) => {
+          helpers.addFeature('min-width', api.mPx(320));
+          helpers.addFeature('min-width', api.mPx(480));
+        },
+        config: { errorHandling: { lintingMode: 'log' } },
+      });
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      builder({});
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Media query feature "min-width" was emitted more than once; using the latest value.',
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('uses invalidValueMode log for custom validator failures', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'validator-log',
+          errorHandling: { invalidValueMode: 'log', lintingMode: 'log' },
+          custom: {
+            key: 'guard',
+            validator: () => 'nope',
+          },
+        },
+      });
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      expect(() => factory({ base: { padding: '8px' } })).not.toThrow();
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Media query factory "validator-log" custom validator "guard" failed: nope',
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('uses invalidValueMode allow for custom validator failures', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'validator-allow',
+          errorHandling: { invalidValueMode: 'allow', lintingMode: 'log' },
+          custom: {
+            key: 'guard',
+            validator: () => 'nope',
+          },
+        },
+      });
+
+      expect(() => factory({ base: { padding: '8px' } })).not.toThrow();
+    });
+
+    it('uses lintingMode log for custom linter failures', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'linter-log',
+          errorHandling: { invalidValueMode: 'allow', lintingMode: 'log' },
+          custom: {
+            key: 'guard',
+            linter: () => 'flagged',
+          },
+        },
+      });
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      expect(() => factory({ base: { padding: '8px' } })).not.toThrow();
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Media query factory "linter-log" custom linter "guard" flagged: flagged',
+      );
+      warnSpy.mockRestore();
+    });
+
+    it('uses lintingMode allow for custom linter failures', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'linter-allow',
+          errorHandling: { invalidValueMode: 'allow', lintingMode: 'allow' },
+          custom: {
+            key: 'guard',
+            linter: () => 'flagged',
+          },
+        },
+      });
+
+      expect(() => factory({ base: { padding: '8px' } })).not.toThrow();
+    });
+
+    it('ignores styles for keys not present in queries', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'unknown-keys',
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'throw' },
+        },
+      });
+
+      const styles = {
+        base: { padding: '8px' },
+        extra: { color: 'red' },
+      } as Record<string, StyleRule>;
+
+      const result = factory(styles);
+
+      expect(result).toEqual({
+        '@media': {
+          'screen and (min-width: 640px)': { padding: '8px' },
+        },
+      });
+    });
+
+    it('handles empty modules list by rejecting all features', () => {
+      const queries = {
+        onlyCore: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'empty-modules',
+          modules: [],
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'throw' },
+        },
+      });
+
+      expect(() => factory({ onlyCore: { padding: '8px' } })).toThrow(
+        'Media query factory "empty-modules" received unsupported feature "minWidth". Add "core" to modules.',
       );
     });
   });

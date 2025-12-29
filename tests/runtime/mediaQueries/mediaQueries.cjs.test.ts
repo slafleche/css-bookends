@@ -12,6 +12,7 @@ const {
   emitCustomFeatures,
   emitDimensionsFeatures,
   emitResolutionFeatures,
+  mediaQueryFactory,
 } = mediaQueriesModule;
 const { mDpi, mPx } = coreModule;
 
@@ -22,6 +23,7 @@ runMediaQueryTests('cjs', {
   emitCustomFeatures,
   emitDimensionsFeatures,
   emitResolutionFeatures,
+  mediaQueryFactory,
   mDpi,
   mPx,
 });

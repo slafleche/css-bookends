@@ -7,16 +7,46 @@ variants: you supply a typed config object and get a normalized query string.
 ## Quick start
 
 ```ts
-import { mPx } from "css-calipers";
-import {
-  buildMediaQueryString,
-  makeMediaQueryStyle,
-} from "css-calipers/mediaQueries";
+import { m } from "css-calipers";
+import { mediaQueryFactory } from "css-calipers/mediaQueries";
 
 const queries = {
-  mobile: { maxWidth: mPx(639) },
-  tablet: { minWidth: mPx(640), maxWidth: mPx(1023) },
-  desktop: { minWidth: mPx(1024) },
+  mobile: { maxWidth: m(639) },
+  tablet: { minWidth: m(640), maxWidth: m(1023) },
+  desktop: { minWidth: m(1024) },
+};
+
+const media = mediaQueryFactory({
+  queries,
+  config: {
+    label: "breakpoints",
+  },
+});
+
+const styles = {
+  display: "grid",
+  gap: "16px",
+  ...media({
+    mobile: { gridTemplateColumns: "1fr" },
+    tablet: { gridTemplateColumns: "repeat(2, 1fr)" },
+    desktop: { gridTemplateColumns: "repeat(4, 1fr)" },
+  }),
+};
+```
+
+### Simple style helper
+
+If you want the smallest surface area, makeMediaQueryStyle keeps the same
+query config shape and returns a media style object without factory config.
+
+```ts
+import { m } from "css-calipers";
+import { makeMediaQueryStyle } from "css-calipers/mediaQueries";
+
+const queries = {
+  mobile: { maxWidth: m(639) },
+  tablet: { minWidth: m(640), maxWidth: m(1023) },
+  desktop: { minWidth: m(1024) },
 };
 
 const media = makeMediaQueryStyle(queries);
@@ -32,12 +62,11 @@ const styles = {
 };
 ```
 
-
 ## Status and scope
 
-The media queries module ships as a separate entrypoint so it can be
-tree-shaken when unused. It aims to cover the CSS media feature set through
-typed configuration and a set of composable emitters.
+The media queries module ships as a separate entrypoint so it can be omitted
+entirely when unused. It aims to cover the CSS media feature set through typed
+configuration and a set of composable emitters.
 
 ## Defaults at a glance
 
@@ -66,11 +95,46 @@ All numeric, unit-bearing values use `IMeasurement` from CSS-Calipers.
 
 ## Factory and helpers
 
-For advanced usage, build your own query factory by composing emitters. Each
-factory instance can have its own config and extension hooks.
+The factory builds and guards a set of named queries. It enforces module
+coverage (unsupported features trigger the invalidValueMode behavior with a
+module hint) and lets you customize validation and linting behavior per
+factory.
 
 ```ts
-import { mPx } from "css-calipers";
+import { m } from "css-calipers";
+import {
+  defineMediaQueryModules,
+  mediaQueryFactory,
+} from "css-calipers/mediaQueries";
+
+const modules = defineMediaQueryModules("core", "interaction");
+
+const media = mediaQueryFactory({
+  queries: {
+    base: { minWidth: m(720) },
+    hoverCapable: { hover: "hover" },
+  },
+  config: {
+    label: "header",
+    modules,
+    errorHandling: {
+      invalidValueMode: "throw",
+      lintingMode: "log",
+    },
+  },
+});
+
+const styles = media({
+  base: { padding: "12px" },
+  hoverCapable: { rowGap: "24px" },
+});
+```
+
+For advanced usage, build your own query builder by composing emitters. Each
+builder instance can have its own config and extension hooks.
+
+```ts
+import { m } from "css-calipers";
 import {
   createMediaQueryBuilder,
   emitDimensionsFeatures,
@@ -87,7 +151,7 @@ const buildDimensionsQuery = createMediaQueryBuilder({
 });
 
 const query = buildDimensionsQuery({
-  width: mPx(900),
+  width: m(900),
   orientation: "portrait",
 });
 ```
@@ -96,6 +160,8 @@ const query = buildDimensionsQuery({
 
 The helpers module exposes low-level building blocks:
 
+- `mediaQueryFactory`: builder for a named query map with module guards.
+- `defineMediaQueryModules`: typed helper for module lists.
 - `createMediaQueryBuilder`: factory creator for typed query builders.
 - `buildMediaQueryFromFeatures`: build a query from a raw feature map.
 - `buildMediaQueryString`: default builder that includes all modules.
@@ -112,7 +178,7 @@ All modules expose an emitter and a type interface for the config:
 ### Core
 
 - Fields: `type`, `minWidth`, `maxWidth`
-- Emitter: internal to `buildMediaQueryString`
+- Emitter: `emitCoreFeatures`
 
 ### Dimensions
 
@@ -157,9 +223,8 @@ measurement; any other object value throws.
 
 ## Validation behavior
 
-Validation is opt-in via factory configuration and runs when a builder
-emits features. It is not a separate test runner and does not depend on build
-tools; it runs each time you build a media query.
+Validation runs when a builder emits features. It is not a separate test runner
+and does not depend on build tools; it runs each time you build a media query.
 
 Validation uses `invalidValueMode`:
 
@@ -215,7 +280,7 @@ const build = createMediaQueryBuilder({
 ### Global screens + component-specific factory (menu example)
 
 ```ts
-import { mPx } from "css-calipers";
+import { m } from "css-calipers";
 import {
   createMediaQueryBuilder,
   emitDimensionsFeatures,
@@ -239,8 +304,8 @@ const buildMenuQuery = createMediaQueryBuilder({
 });
 
 const screenQueries = {
-  compact: buildScreenQuery({ maxWidth: mPx(719) }),
-  roomy: buildScreenQuery({ minWidth: mPx(720) }),
+  compact: buildScreenQuery({ maxWidth: m(719) }),
+  roomy: buildScreenQuery({ minWidth: m(720) }),
   reducedMotion: buildScreenQuery({ reducedMotion: "reduce" }),
 };
 
@@ -268,14 +333,14 @@ const menuStyles = {
 ### Build a query with custom features
 
 ```ts
-import { mPx } from "css-calipers";
+import { m } from "css-calipers";
 import { buildMediaQueryString } from "css-calipers/mediaQueries";
 
 const query = buildMediaQueryString({
-  minWidth: mPx(800),
+  minWidth: m(800),
   customFeatures: {
     "custom-level": 2,
-    "min-width": mPx(900),
+    "min-width": m(900),
   },
 });
 ```
@@ -283,7 +348,7 @@ const query = buildMediaQueryString({
 ### Use a custom builder with a subset of modules
 
 ```ts
-import { mPx } from "css-calipers";
+import { m } from "css-calipers";
 import {
   createMediaQueryBuilder,
   emitResolutionFeatures,
@@ -294,7 +359,7 @@ const buildResolutionQuery = createMediaQueryBuilder({
 });
 
 const query = buildResolutionQuery({
-  minResolution: mPx(192),
+  minResolution: m(192, "dpi"),
 });
 ```
 
@@ -307,17 +372,21 @@ Types and core exports:
   `IMediaQueryInteraction`, `IMediaQueryPreferences`, `IMediaQueryDisplay`,
   `IMediaQueryEnvironment`, `IMediaQueryCustomFeatures`
 - `MediaQueryBuilderConfig`, `MediaQueryBuilderHelpers`
+- `MediaQueryFactoryConfig`
 - `MediaQueryInvalidValueMode`, `MediaQueryLintingMode`
+- `MediaQueryModuleId`, `MediaQueryModulesList`
 
 Functions:
 
 - `buildMediaQueryString`
 - `makeMediaQueryStyle`
+- `mediaQueryFactory`
 - `createMediaQueryBuilder`
 - `buildMediaQueryFromFeatures`
-- `emitDimensionsFeatures`, `emitResolutionFeatures`, `emitInteractionFeatures`,
+- `emitCoreFeatures`, `emitDimensionsFeatures`, `emitResolutionFeatures`, `emitInteractionFeatures`,
   `emitPreferencesFeatures`, `emitDisplayFeatures`, `emitEnvironmentFeatures`,
   `emitCustomFeatures`
+- `defineMediaQueryModules`
 
 ## Notes and limitations
 
@@ -333,6 +402,6 @@ Functions:
   for typed, structured input. If you already have a raw query string, keep
   it as-is in your styling layer.
 - **Why log in tests?** Log mode is meant to surface issues without failing
-  builds.
+  builds. Tests typically assert that logs and thrown errors follow config.
 - **Can I extend the feature set?** Yes. Use `customFeatures` or custom
   emitters with your own validation rules.

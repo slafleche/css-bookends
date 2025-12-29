@@ -61,6 +61,34 @@ If you prefer, you can also import unit helpers from dedicated subpaths. For exa
 
 ---
 
+## Media queries
+
+```ts
+import { m } from "css-calipers";
+import { mediaQueryFactory } from "css-calipers/mediaQueries";
+
+const media = mediaQueryFactory({
+  queries: {
+    mobile: { maxWidth: m(639) },
+    desktop: { minWidth: m(640) },
+  },
+  config: {
+    label: "layout",
+  },
+});
+
+const styles = {
+  ...media({
+    mobile: { gridTemplateColumns: "1fr" },
+    desktop: { gridTemplateColumns: "repeat(4, 1fr)" },
+  }),
+};
+```
+
+See README_MEDIAQUERIES.md for the full media queries guide.
+
+---
+
 ## Features
 
 - **Compile-time unit validation.** Prevents mixing incompatible units.
@@ -112,7 +140,7 @@ It’s probably overkill if:
 import { m, mPercent, mVw, mVh, assertCondition } from "css-calipers";
 
 // Token-style measurements (px by default)
-const spacing = m(8); // Defaults to px and is typed as a PxMeasurement; equivalent to mPx(8)
+const spacing = m(8); // Defaults to px and is typed as a PxMeasurement
 const cardPadding = spacing.multiply(2); // 16px
 const gutter = spacing.multiply(1.5); // 12px
 

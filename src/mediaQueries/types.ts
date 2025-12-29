@@ -1,4 +1,4 @@
-import type { AtRule, Properties } from 'csstype';
+import type { AtRule, Properties } from "csstype";
 
 export type Resolve<T> = {
   [Key in keyof T]: T[Key];
@@ -9,10 +9,10 @@ export type CSSVarFunction = string;
 export type MapLeafNodes<T, Leaf> = T extends null
   ? null
   : T extends string
-    ? Leaf
-    : T extends object
-      ? { [Key in keyof T]: MapLeafNodes<T[Key], Leaf> }
-      : Leaf;
+  ? Leaf
+  : T extends object
+  ? { [Key in keyof T]: MapLeafNodes<T[Key], Leaf> }
+  : Leaf;
 
 type CSSTypeProperties = Properties<number | (string & {})>;
 
@@ -47,12 +47,12 @@ type Query<Key extends string, StyleType> = {
   };
 };
 
-export type MediaQueries<StyleType> = Query<'@media', StyleType>;
-export type FeatureQueries<StyleType> = Query<'@supports', StyleType>;
-export type ContainerQueries<StyleType> = Query<'@container', StyleType>;
-export type Layers<StyleType> = Query<'@layer', StyleType>;
+export type MediaQueries<StyleType> = Query<"@media", StyleType>;
+export type FeatureQueries<StyleType> = Query<"@supports", StyleType>;
+export type ContainerQueries<StyleType> = Query<"@container", StyleType>;
+export type Layers<StyleType> = Query<"@layer", StyleType>;
 export type StartingStyle<StyleType> = {
-  '@starting-style'?: Omit<StyleType, '@starting-style'>;
+  "@starting-style"?: Omit<StyleType, "@starting-style">;
 };
 
 interface AllQueries<StyleType>
@@ -64,7 +64,7 @@ interface AllQueries<StyleType>
 
 export type WithQueries<StyleType> = StyleType & AllQueries<StyleType>;
 
-interface SelectorMap {
+export interface SelectorMap {
   [selector: string]: WithQueries<CSSPropertiesWithVars>;
 }
 
@@ -76,40 +76,40 @@ export type StyleRule = WithQueries<StyleWithSelectors>;
 
 export type GlobalStyleRule = WithQueries<CSSPropertiesWithVars>;
 
-export type GlobalFontFaceRule = Omit<AtRule.FontFaceFallback, 'src'> &
-  Required<Pick<AtRule.FontFaceFallback, 'src'>>;
-export type FontFaceRule = Omit<GlobalFontFaceRule, 'fontFamily'>;
+export type GlobalFontFaceRule = Omit<AtRule.FontFaceFallback, "src"> &
+  Required<Pick<AtRule.FontFaceFallback, "src">>;
+export type FontFaceRule = Omit<GlobalFontFaceRule, "fontFamily">;
 
 export type CSSStyleBlock = {
-  type: 'local';
+  type: "local";
   selector: string;
   rule: StyleRule;
 };
 
 export type CSSFontFaceBlock = {
-  type: 'fontFace';
+  type: "fontFace";
   rule: GlobalFontFaceRule;
 };
 
 export type CSSKeyframesBlock = {
-  type: 'keyframes';
+  type: "keyframes";
   name: string;
   rule: CSSKeyframes;
 };
 
 export type CSSSelectorBlock = {
-  type: 'selector' | 'global';
+  type: "selector" | "global";
   selector: string;
   rule: GlobalStyleRule;
 };
 
 export type CSSLayerDeclaration = {
-  type: 'layer';
+  type: "layer";
   name: string;
 };
 
 export type CSSPropertyBlock = {
-  type: 'property';
+  type: "property";
   name: string;
   rule: AtRule.Property;
 };
@@ -139,7 +139,7 @@ type CustomIdentFunction = (params: {
   packageName?: string;
 }) => string;
 
-type IdentOption = 'short' | 'debug' | CustomIdentFunction;
+type IdentOption = "short" | "debug" | CustomIdentFunction;
 
 export interface Adapter {
   appendCss: (css: CSS, fileScope: FileScope) => void;
@@ -169,22 +169,22 @@ export type ClassNames = string | Array<ClassNames>;
 export type ComplexStyleRule = StyleRule | Array<StyleRule | ClassNames>;
 
 type _PropertySyntax =
-  | '<angle>'
-  | '<color>'
-  | '<custom-ident>'
-  | '<image>'
-  | '<integer>'
-  | '<length-percentage>'
-  | '<length>'
-  | '<number>'
-  | '<percentage>'
-  | '<resolution>'
-  | '<string>'
-  | '<time>'
-  | '<transform-function>'
-  | '<transform-list>'
-  | '<url>'
-  | '*';
+  | "<angle>"
+  | "<color>"
+  | "<custom-ident>"
+  | "<image>"
+  | "<integer>"
+  | "<length-percentage>"
+  | "<length>"
+  | "<number>"
+  | "<percentage>"
+  | "<resolution>"
+  | "<string>"
+  | "<time>"
+  | "<transform-function>"
+  | "<transform-list>"
+  | "<url>"
+  | "*";
 
 type LooseAutocomplete<Suggestions extends string> =
   | Suggestions

@@ -1,4 +1,4 @@
-import { expectAssignable, expectType } from 'tsd';
+import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 
 import type { IMeasurement } from '../../dist/esm';
 import { mPx } from '../../dist/esm';
@@ -6,8 +6,11 @@ import {
   buildMediaQueryFromFeatures,
   buildMediaQueryString,
   createMediaQueryBuilder,
+  defineMediaQueryModules,
   emitDimensionsFeatures,
+  mediaQueryFactory,
 } from '../../dist/esm/mediaQueries';
+import type { MediaQueryModulePropsMap } from '../../dist/esm/mediaQueries';
 
 const width = mPx(640);
 expectAssignable<IMeasurement<'px'>>(width);
@@ -36,3 +39,36 @@ const builder = createMediaQueryBuilder({
 });
 
 expectType<string>(builder({ width }));
+
+const coreModules = defineMediaQueryModules('core');
+type CoreProps = MediaQueryModulePropsMap[(typeof coreModules)[number]];
+expectNotAssignable<CoreProps>({ minWidth: width, hover: 'hover' });
+const coreFactory = mediaQueryFactory({
+  queries: {
+    onlyCore: {
+      minWidth: width,
+    },
+  } as Record<string, CoreProps>,
+  config: {
+    label: 'core-only',
+    modules: coreModules,
+  },
+});
+expectAssignable<unknown>(coreFactory);
+
+const customModules = defineMediaQueryModules('custom');
+type CustomProps = MediaQueryModulePropsMap[(typeof customModules)[number]];
+expectAssignable<CustomProps>({ customFeatures: { 'custom-flag': 'on' } });
+expectNotAssignable<CustomProps>({ hover: 'hover' });
+const customAllowedFactory = mediaQueryFactory({
+  queries: {
+    customOk: {
+      customFeatures: { 'custom-flag': 'on' },
+    },
+  } as Record<string, CustomProps>,
+  config: {
+    label: 'custom-ok',
+    modules: customModules,
+  },
+});
+expectAssignable<unknown>(customAllowedFactory);

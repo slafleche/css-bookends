@@ -17,9 +17,31 @@ describe('mediaQueries API surface (ESM)', () => {
 
     expect(esmMediaQueries).toHaveProperty('buildMediaQueryFromFeatures');
     expect(typeof esmMediaQueries.buildMediaQueryFromFeatures).toBe('function');
+
+    expect(esmMediaQueries).toHaveProperty('buildMediaQueryStringFromParts');
+    expect(typeof esmMediaQueries.buildMediaQueryStringFromParts).toBe('function');
+
+    expect(esmMediaQueries).toHaveProperty('createMediaQueryFeatureEmitter');
+    expect(typeof esmMediaQueries.createMediaQueryFeatureEmitter).toBe('function');
+
+    expect(esmMediaQueries).toHaveProperty(
+      'createMediaQueryFeatureEmitterWithTracking',
+    );
+    expect(typeof esmMediaQueries.createMediaQueryFeatureEmitterWithTracking).toBe(
+      'function',
+    );
+
+    expect(esmMediaQueries).toHaveProperty('mediaQueryFactory');
+    expect(typeof esmMediaQueries.mediaQueryFactory).toBe('function');
+
+    expect(esmMediaQueries).toHaveProperty('defineMediaQueryModules');
+    expect(typeof esmMediaQueries.defineMediaQueryModules).toBe('function');
   });
 
   it('exposes media query module emitters', () => {
+    expect(esmMediaQueries).toHaveProperty('emitCoreFeatures');
+    expect(typeof esmMediaQueries.emitCoreFeatures).toBe('function');
+
     expect(esmMediaQueries).toHaveProperty('emitDimensionsFeatures');
     expect(typeof esmMediaQueries.emitDimensionsFeatures).toBe('function');
 
