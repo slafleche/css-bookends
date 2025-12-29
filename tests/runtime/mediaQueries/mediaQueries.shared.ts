@@ -61,13 +61,13 @@ export const runMediaQueryTests = (
       );
     });
 
-    it('builds a height query with max height', () => {
+    it('builds a min/max height range query', () => {
       const result = api.buildMediaQueryString({
-        height: api.mPx(720),
+        minHeight: api.mPx(720),
         maxHeight: api.mPx(900),
       });
       expect(result).toBe(
-        'screen and (height: 720px) and (max-height: 900px)',
+        'screen and (min-height: 720px) and (max-height: 900px)',
       );
     });
 
