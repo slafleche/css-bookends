@@ -1,6 +1,6 @@
 {
   "name": "css-calipers",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "Compile-time unit safety for numeric, unit-bearing CSS values via typed measurements.",
   "license": "MIT",
   "repository": {
