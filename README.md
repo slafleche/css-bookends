@@ -125,6 +125,8 @@ CSS-Calipers is a good fit if:
 - You already use TypeScript (or plan to) and want compile-time guarantees around CSS units.
 - You have a design system or token layer where layout math and unit conversions matter.
 - You care about catching unit mismatches and layout invariants early, in dev or tests.
+This library is opinionated about types and emitting valid CSS at the edges,
+but intentionally loose about how you structure or apply styles in between.
 
 It’s probably overkill if:
 

@@ -169,6 +169,8 @@ The helpers module exposes low-level building blocks:
   feature parts.
 - `createMediaQueryFeatureEmitter` and `createMediaQueryFeatureEmitterWithTracking`:
   feature emission helpers (the tracking version detects duplicates).
+- `mediaQueryOutputVanillaExtract`: optional convenience helper for wrapping
+  media query style blocks in vanilla-extract.
 
 ## Feature modules
 
@@ -390,10 +392,9 @@ Functions:
 
 ## Notes and limitations
 
-- This module models the feature set, not every syntax variation in the CSS
-  media queries grammar.
-- Raw string queries are best handled by passing a prebuilt string to your
-  styling layer. The module is optimized for typed, structured input.
+- This module focuses on structured features and type safety, not on mirroring
+  every media query syntax variant; if you prefer raw query strings, keep them
+  in your styling layer.
 - Media type defaults to `screen` when omitted.
 
 ## Gotchas and FAQ

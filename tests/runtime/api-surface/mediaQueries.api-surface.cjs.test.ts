@@ -36,6 +36,11 @@ describe('mediaQueries API surface (CJS)', () => {
 
     expect(cjsMediaQueries).toHaveProperty('defineMediaQueryModules');
     expect(typeof cjsMediaQueries.defineMediaQueryModules).toBe('function');
+
+    expect(cjsMediaQueries).toHaveProperty('mediaQueryOutputVanillaExtract');
+    expect(typeof cjsMediaQueries.mediaQueryOutputVanillaExtract).toBe(
+      'function',
+    );
   });
 
   it('exposes media query module emitters', () => {

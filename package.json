@@ -57,11 +57,6 @@
       "import": "./dist/esm/units/*.js",
       "require": "./dist/cjs/units/*.js"
     },
-    "./libraryHelpers/vanilla-extract": {
-      "types": "./dist/esm/libraryHelpers/vanilla-extract.d.ts",
-      "import": "./dist/esm/libraryHelpers/vanilla-extract.js",
-      "require": "./dist/cjs/libraryHelpers/vanilla-extract.js"
-    },
     "./package.json": "./package.json"
   },
   "dependencies": {

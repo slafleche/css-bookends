@@ -11,7 +11,7 @@ import {
   emitResolutionFeatures,
   mediaQueryFactory,
 } from '../../../src/mediaQueries';
-import { mediaQueryOutputVanillaExtract } from '../../../src/libraryHelpers/vanilla-extract';
+import { mediaQueryOutputVanillaExtract } from '../../../src/mediaQueries/libraryHelpers/vanilla-extract';
 
 runMediaQueryTests('src', {
   buildMediaQueryFromFeatures,

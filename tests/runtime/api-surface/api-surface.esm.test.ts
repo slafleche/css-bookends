@@ -21,9 +21,6 @@ const esmUnitsTime = await import('../../../dist/esm/units/time.js');
 const esmUnitsFrequency = await import('../../../dist/esm/units/frequency.js');
 const esmUnitsResolution = await import('../../../dist/esm/units/resolution.js');
 const esmUnitsGrid = await import('../../../dist/esm/units/grid.js');
-const esmLibraryHelpersVanillaExtract = await import(
-  '../../../dist/esm/libraryHelpers/vanilla-extract.js'
-);
 
 describe('API surface (ESM)', () => {
   it('exposes expected core exports from the root entrypoint', () => {
@@ -137,7 +134,6 @@ describe('API surface (ESM)', () => {
       'assertCondition',
       'isPercentMeasurement',
       'assertPercentMeasurement',
-      'mediaQueryOutputVanillaExtract',
     ];
 
     const unitHelperKeys = Object.keys(
@@ -159,13 +155,9 @@ describe('API surface (ESM)', () => {
 
     expect(esmMediaQueries).toHaveProperty('makeMediaQueryStyle');
     expect(typeof esmMediaQueries.makeMediaQueryStyle).toBe('function');
-  });
 
-  it('exposes library helpers via subpath exports', () => {
-    expect(esmLibraryHelpersVanillaExtract).toHaveProperty(
-      'mediaQueryOutputVanillaExtract',
-    );
-    expect(typeof esmLibraryHelpersVanillaExtract.mediaQueryOutputVanillaExtract).toBe(
+    expect(esmMediaQueries).toHaveProperty('mediaQueryOutputVanillaExtract');
+    expect(typeof esmMediaQueries.mediaQueryOutputVanillaExtract).toBe(
       'function',
     );
   });

@@ -21,9 +21,6 @@ const cjsUnitsTime = await import('../../../dist/cjs/units/time.js');
 const cjsUnitsFrequency = await import('../../../dist/cjs/units/frequency.js');
 const cjsUnitsResolution = await import('../../../dist/cjs/units/resolution.js');
 const cjsUnitsGrid = await import('../../../dist/cjs/units/grid.js');
-const cjsLibraryHelpersVanillaExtract = await import(
-  '../../../dist/cjs/libraryHelpers/vanilla-extract.js'
-);
 
 describe('API surface (CJS)', () => {
   it('exposes expected core exports from the root entrypoint', () => {
@@ -137,7 +134,6 @@ describe('API surface (CJS)', () => {
       'assertCondition',
       'isPercentMeasurement',
       'assertPercentMeasurement',
-      'mediaQueryOutputVanillaExtract',
     ];
 
     const unitHelperKeys = Object.keys(cjsRoot.measurementUnitMetadata);
@@ -154,13 +150,9 @@ describe('API surface (CJS)', () => {
 
     expect(cjsMediaQueries).toHaveProperty('makeMediaQueryStyle');
     expect(typeof cjsMediaQueries.makeMediaQueryStyle).toBe('function');
-  });
 
-  it('exposes library helpers via subpath exports', () => {
-    expect(cjsLibraryHelpersVanillaExtract).toHaveProperty(
-      'mediaQueryOutputVanillaExtract',
-    );
-    expect(typeof cjsLibraryHelpersVanillaExtract.mediaQueryOutputVanillaExtract).toBe(
+    expect(cjsMediaQueries).toHaveProperty('mediaQueryOutputVanillaExtract');
+    expect(typeof cjsMediaQueries.mediaQueryOutputVanillaExtract).toBe(
       'function',
     );
   });

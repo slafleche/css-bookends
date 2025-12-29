@@ -1,4 +1,4 @@
-import type { ComplexStyleRule } from '../mediaQueries/types';
+import type { ComplexStyleRule } from '../types';
 
 export const mediaQueryOutputVanillaExtract = (
   media: ComplexStyleRule,

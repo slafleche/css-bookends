@@ -34,8 +34,7 @@ import {
   type FrMeasurement,
 } from '../../dist/esm';
 import type { ComplexStyleRule } from '../../dist/esm/mediaQueries/types';
-import { mediaQueryOutputVanillaExtract } from '../../dist/esm';
-import { mediaQueryOutputVanillaExtract as mediaQueryOutputVanillaExtractSubpath } from '../../dist/esm/libraryHelpers/vanilla-extract';
+import { mediaQueryOutputVanillaExtract } from '../../dist/esm/mediaQueries';
 
 import * as Units from '../../dist/esm/units';
 import * as PercentUnits from '../../dist/esm/units/percent';
@@ -181,9 +180,6 @@ expectAssignable<IMeasurement<'fr'>>(grid);
 
 expectAssignable<(media: ComplexStyleRule) => Record<string, unknown>>(
   mediaQueryOutputVanillaExtract,
-);
-expectAssignable<(media: ComplexStyleRule) => Record<string, unknown>>(
-  mediaQueryOutputVanillaExtractSubpath,
 );
 
 // Alias types are consistent with their underlying measurement units
