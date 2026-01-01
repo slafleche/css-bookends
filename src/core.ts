@@ -335,6 +335,10 @@ export const isMeasurement = (
 ): x is IMeasurement<string> => x instanceof Measurement;
 
 export function m(value: number): BrandedMeasurement<'px'>;
+export function m(
+  value: number,
+  options: { context?: string },
+): BrandedMeasurement<'px'>;
 export function m<Unit extends string>(
   value: number,
   unit: Unit,
