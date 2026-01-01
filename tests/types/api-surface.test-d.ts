@@ -14,6 +14,8 @@ import {
   makeUnitAssert,
   assertCondition,
   hasCssMethod,
+  setErrorConfig,
+  getErrorConfig,
   type MeasurementOf,
   type UnitGuard,
   type UnitAssertion,
@@ -21,6 +23,8 @@ import {
   type MeasurementString,
   type MeasurementUnitDefinition,
   type MeasurementUnitCategory,
+  type ErrorConfig,
+  type ErrorCode,
   type EmMeasurement,
   type VwMeasurement,
   type SvwMeasurement,
@@ -67,6 +71,11 @@ expectAssignable<IMeasurement<'%'>>(apiPercentMeasurement);
 
 const apiMeasurementPercent = m(10, '%');
 expectAssignable<IMeasurement<'%'>>(apiMeasurementPercent);
+
+const errorConfig: ErrorConfig = getErrorConfig();
+setErrorConfig(errorConfig);
+const errorCode: ErrorCode = 'CALIPERS_E_NONFINITE';
+void errorCode;
 
 // Guards and assertions are exported with the expected shapes
 declare const unknownValue: unknown;

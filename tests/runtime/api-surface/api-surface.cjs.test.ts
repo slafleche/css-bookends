@@ -134,6 +134,8 @@ describe('API surface (CJS)', () => {
       'assertCondition',
       'isPercentMeasurement',
       'assertPercentMeasurement',
+      'getErrorConfig',
+      'setErrorConfig',
     ];
 
     const unitHelperKeys = Object.keys(cjsRoot.measurementUnitMetadata);

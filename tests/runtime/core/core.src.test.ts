@@ -33,6 +33,8 @@ import {
   hasCssMethod,
   measurementMax,
   measurementMin,
+  setErrorConfig,
+  getErrorConfig,
 } from '../../../src';
 import type { CoreApi } from './core.shared';
 import { runCoreTests } from './core.shared';
@@ -68,6 +70,8 @@ const api = {
   hasCssMethod,
   measurementMin,
   measurementMax,
+  setErrorConfig,
+  getErrorConfig,
 } as unknown as CoreApi;
 
 runCoreTests('src', api);

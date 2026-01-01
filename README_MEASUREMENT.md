@@ -199,6 +199,83 @@ For concrete uses of these errors in tests and dev-only guards, see
 
 ---
 
+## Common errors
+
+### Non-finite measurement value
+
+Example
+
+```
+css-calipers.m: Non-finite measurement value: undefined [code=CALIPERS_E_NONFINITE | helper=m | inputs=value=undefined, unit=px | stack=...]
+```
+
+What it means
+- A measurement was constructed with undefined, NaN, or Infinity.
+
+How to fix
+- Provide a real numeric value and a unit (m(12), m(12, "px")).
+- Add a context label so the error points to the calling helper or token (m(12, { context: "tokens.cardWidth" })).
+
+### Unit mismatch
+
+Example
+
+```
+css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]
+```
+
+What it means
+- You mixed units without an explicit conversion.
+
+How to fix
+- Normalize units at the source (convert em to px or vice versa).
+- Add an assertMatchingUnits call where the values enter your system.
+
+### Divide by zero
+
+Example
+
+```
+css-calipers.Measurement.divide: Cannot divide 10px by zero [code=CALIPERS_E_DIVIDE_BY_ZERO]
+```
+
+What it means
+- You attempted to divide by zero in a measurement operation.
+
+How to fix
+- Guard inputs before dividing or replace zero with a safe fallback.
+
+### Clamp bounds
+
+Example
+
+```
+css-calipers.Measurement.clamp: clamp: min (20px) must be <= max (12px) [code=CALIPERS_E_CLAMP_INVALID_RANGE]
+```
+
+What it means
+- The clamp minimum is greater than the clamp maximum.
+
+How to fix
+- Ensure min and max come from the same source or swap them before calling clamp.
+
+### Stack hints and configuration
+
+For m and unit helpers, errors include a trimmed stack hint in non-production by default.
+You can disable or force stack hints globally:
+
+```
+import { setErrorConfig } from "css-calipers";
+
+// Disable stack hints everywhere (for production).
+setErrorConfig({ stackHints: "off" });
+
+// Force stack hints everywhere (useful in dev or tests).
+setErrorConfig({ stackHints: "on" });
+```
+
+---
+
 ## Co-existing with other systems
 
 You don’t have to convert everything at once, or at all. If it fits your setup,

@@ -144,11 +144,15 @@ export const runMediaQueryTests = (
       });
       expect(() =>
         strictBuilder({ aspectRatio: '0/0' }),
-      ).toThrow('aspectRatio must be a valid ratio greater than 0');
+      ).toThrow(
+        /aspectRatio must be a valid ratio greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
+      );
 
       expect(() =>
         strictBuilder({ minAspectRatio: 'abc' }),
-      ).toThrow('minAspectRatio must be a valid ratio greater than 0');
+      ).toThrow(
+        /minAspectRatio must be a valid ratio greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
+      );
     });
 
     it('mixes core and interaction features', () => {
@@ -219,7 +223,7 @@ export const runMediaQueryTests = (
       expect(() => allowBuilder({ aspectRatio: '0/0' })).not.toThrow();
       expect(() => logBuilder({ aspectRatio: '0/0' })).not.toThrow();
       expect(() => throwBuilder({ aspectRatio: '0/0' })).toThrow(
-        'aspectRatio must be a valid ratio greater than 0',
+        /aspectRatio must be a valid ratio greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
       );
     });
 
@@ -313,7 +317,7 @@ export const runMediaQueryTests = (
 
           if (invalidValueMode === 'throw') {
             expect(() => builder(props)).toThrow(
-              'aspectRatio must be a valid ratio greater than 0',
+              /aspectRatio must be a valid ratio greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
             );
             return;
           }
@@ -358,7 +362,7 @@ export const runMediaQueryTests = (
 
           if (invalidValueMode === 'throw') {
             expect(() => builder(props)).toThrow(
-              'aspectRatio must be a valid ratio greater than 0',
+              /aspectRatio must be a valid ratio greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
             );
             return;
           }
@@ -380,7 +384,9 @@ export const runMediaQueryTests = (
 
       expect(() =>
         throwBuilder({ minResolution: api.mDpi(-1) }),
-      ).toThrow('minResolution must be greater than 0');
+      ).toThrow(
+        /minResolution must be greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
+      );
       expect(() =>
         logBuilder({ minResolution: api.mDpi(-1) }),
       ).not.toThrow();

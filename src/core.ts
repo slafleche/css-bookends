@@ -9,6 +9,7 @@ import {
   throwHelperError,
   throwMeasurementMethodError,
 } from './internal/errors';
+import { buildMeasurementCreationError } from './internal/buildMeasurementCreationError';
 
 type UnitSymbol = UnitDefinitionRecord[keyof UnitDefinitionRecord]['unit'];
 
@@ -50,6 +51,10 @@ export interface IMeasurement<Unit extends string = string> {
 }
 
 type DeltaInput = number | IMeasurement<string>;
+type MeasurementCreateOptions<Unit extends string> = {
+  unit?: Unit;
+  context?: string;
+};
 
 export function assertMatchingUnits<Unit extends string>(
   left: IMeasurement<Unit>,
@@ -69,6 +74,7 @@ export function assertMatchingUnits(
       params: [left, right],
       message: `measurement unit mismatch: ${leftUnit} vs ${rightUnit}`,
       context,
+      details: { code: 'CALIPERS_E_UNIT_MISMATCH' },
     });
   }
 }
@@ -95,6 +101,7 @@ class Measurement<Unit extends string>
         operation: 'css-calipers.Measurement.constructor',
         params: [],
         message: `Non-finite measurement value: ${value}`,
+        details: { code: 'CALIPERS_E_NONFINITE' },
       });
     }
     const normalizedUnit = unit.toLowerCase() as Unit;
@@ -145,6 +152,7 @@ class Measurement<Unit extends string>
         params: [],
         message: `Expected unit "${expected}", received "${this.#unit}".`,
         context,
+        details: { code: 'CALIPERS_E_ASSERT_UNIT' },
       });
     }
   }
@@ -159,6 +167,7 @@ class Measurement<Unit extends string>
         caller: this,
         params: [],
         message,
+        details: { code: 'CALIPERS_E_ASSERT_PREDICATE' },
       });
     }
   }
@@ -219,6 +228,7 @@ class Measurement<Unit extends string>
         caller: this,
         params: [],
         message: `Cannot divide ${this.css()} by zero`,
+        details: { code: 'CALIPERS_E_DIVIDE_BY_ZERO' },
       });
     }
     const result = this.#value / divisor;
@@ -228,6 +238,7 @@ class Measurement<Unit extends string>
         caller: this,
         params: [],
         message: 'Non-finite result',
+        details: { code: 'CALIPERS_E_NONFINITE_RESULT' },
       });
     }
     return this.#clone(result);
@@ -289,6 +300,7 @@ class Measurement<Unit extends string>
         caller: this,
         params: [min, max],
         message: 'clamp: expected finite bounds',
+        details: { code: 'CALIPERS_E_CLAMP_NONFINITE_BOUNDS' },
       });
     }
     if (minValue > maxValue) {
@@ -297,6 +309,7 @@ class Measurement<Unit extends string>
         caller: this,
         params: [min, max],
         message: `clamp: min (${min.css()}) must be <= max (${max.css()})`,
+        details: { code: 'CALIPERS_E_CLAMP_INVALID_RANGE' },
       });
     }
 
@@ -325,15 +338,41 @@ export function m(value: number): BrandedMeasurement<'px'>;
 export function m<Unit extends string>(
   value: number,
   unit: Unit,
+  context?: string,
 ): IMeasurement<Lowercase<Unit>> & UnitBrand<Lowercase<Unit>>;
 export function m<Unit extends string>(
   value: number,
-  unit: Unit = 'px' as Unit,
+  options: MeasurementCreateOptions<Unit>,
+): IMeasurement<Lowercase<Unit>> & UnitBrand<Lowercase<Unit>>;
+export function m<Unit extends string>(
+  value: number,
+  unitOrOptions: Unit | MeasurementCreateOptions<Unit> = 'px' as Unit,
+  context?: string,
 ): IMeasurement<Lowercase<Unit>> & UnitBrand<Lowercase<Unit>> {
-  return createMeasurement(
-    value,
-    unit.toLowerCase() as Lowercase<Unit>,
-  );
+  const options =
+    unitOrOptions && typeof unitOrOptions === 'object'
+      ? unitOrOptions
+      : { unit: unitOrOptions, context };
+  const unit = (options.unit ?? 'px') as Unit;
+  const contextLabel = options.context;
+  const normalizedUnit = unit.toLowerCase() as Lowercase<Unit>;
+  if (!Number.isFinite(value)) {
+    const errorPayload = buildMeasurementCreationError(
+      value,
+      normalizedUnit,
+      'm',
+      contextLabel,
+    );
+    throwHelperError({
+      operation: 'css-calipers.m',
+      params: [],
+      message: errorPayload.message,
+      context: errorPayload.context,
+      details: errorPayload.details,
+      includeStackHint: true,
+    });
+  }
+  return createMeasurement(value, normalizedUnit);
 }
 
 export type BrandedMeasurement<Unit extends string> = IMeasurement<Unit> &
@@ -341,19 +380,46 @@ export type BrandedMeasurement<Unit extends string> = IMeasurement<Unit> &
 
 export type UnitHelper<Unit extends string = string> = ((
   value: number,
+  context?: string,
 ) => BrandedMeasurement<Unit>) & {
   unit: Unit;
+};
+
+const createUnitHelper = <Unit extends string>(
+  unit: Unit,
+  helperName?: string,
+): UnitHelper<Unit> => {
+  const normalizedUnit = unit.toLowerCase() as Unit;
+  const helperLabel =
+    helperName ?? `makeUnitHelper(${normalizedUnit})`;
+  const factory = (value: number, context?: string) => {
+    if (!Number.isFinite(value)) {
+      const errorPayload = buildMeasurementCreationError(
+        value,
+        normalizedUnit,
+        helperLabel,
+        context,
+      );
+      throwHelperError({
+        operation: `css-calipers.${helperLabel}`,
+        params: [],
+        message: errorPayload.message,
+        context: errorPayload.context,
+        details: errorPayload.details,
+        includeStackHint: true,
+      });
+    }
+    return createMeasurement(value, normalizedUnit);
+  };
+  return Object.assign(factory, {
+    unit: normalizedUnit,
+  }) as UnitHelper<Unit>;
 };
 
 export const makeUnitHelper = <Unit extends string>(
   unit: Unit,
 ): UnitHelper<Unit> => {
-  const normalizedUnit = unit.toLowerCase() as Unit;
-  const factory = (value: number) =>
-    createMeasurement(value, normalizedUnit);
-  return Object.assign(factory, {
-    unit: normalizedUnit,
-  }) as UnitHelper<Unit>;
+  return createUnitHelper(unit);
 };
 
 export const makeUnitHelperFromDefinition = <
@@ -361,7 +427,7 @@ export const makeUnitHelperFromDefinition = <
 >(
   name: Name,
 ): UnitHelper<UnitDefinitionRecord[Name]['unit']> =>
-  makeUnitHelper(UNIT_DEFINITIONS[name].unit);
+  createUnitHelper(UNIT_DEFINITIONS[name].unit, name);
 
 export const measurementUnitMetadata = UNIT_DEFINITIONS;
 export type MeasurementUnitDefinition = UnitDefinition;
@@ -399,6 +465,7 @@ export const makeUnitAssert = <T extends UnitHelper>(
         params: isMeasurement(value) ? [value] : [],
         message: `Expected unit "${helper.unit}".`,
         context,
+        details: { code: 'CALIPERS_E_ASSERT_UNIT' },
       });
     }
   };
@@ -448,6 +515,14 @@ export const assertCondition = (
       operation: 'css-calipers.assertCondition',
       params: [],
       message,
+      details: { code: 'CALIPERS_E_ASSERT_CONDITION' },
     });
   }
 };
+
+export {
+  getErrorConfig,
+  setErrorConfig,
+  type ErrorConfig,
+  type ErrorCode,
+} from './internal/errors';

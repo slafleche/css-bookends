@@ -26,6 +26,15 @@ expectAssignable<IMeasurement<'px'>>(explicitPx);
 const explicitEm = m(10, 'em');
 expectAssignable<IMeasurement<'em'>>(explicitEm);
 
+const implicitWithContext = m(10, { context: 'spacing.token' });
+expectAssignable<PxMeasurement>(implicitWithContext);
+
+const explicitWithContext = m(10, 'px', 'spacing.token');
+expectAssignable<IMeasurement<'px'>>(explicitWithContext);
+
+const explicitWithOptions = m(10, { unit: 'em', context: 'spacing.token' });
+expectAssignable<IMeasurement<'em'>>(explicitWithOptions);
+
 const added = explicitPx.add(explicitPx);
 expectAssignable<IMeasurement<'px'>>(added);
 
@@ -40,6 +49,9 @@ if (isMeasurement(maybeMeasurement)) {
 const pxFromHelper = mPx(10);
 expectAssignable<PxMeasurement>(pxFromHelper);
 expectAssignable<IMeasurement<'px'>>(pxFromHelper);
+
+const pxFromHelperWithContext = mPx(10, 'spacing.token');
+expectAssignable<PxMeasurement>(pxFromHelperWithContext);
 
 const percentFromHelper = mPercent(50);
 expectAssignable<PercentMeasurement>(percentFromHelper);

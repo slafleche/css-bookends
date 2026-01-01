@@ -30,12 +30,21 @@ export interface MeasurementLike {
   ) => void;
 }
 
-export type UnitHelperLike = ((value: number) => MeasurementLike) & {
-  unit: string;
-};
+export type UnitHelperLike = ((
+  value: number,
+  context?: string,
+) => MeasurementLike) & { unit: string };
 
 export interface CoreApi {
-  m: (value: number, unit?: string) => MeasurementLike;
+  m: (
+    value: number,
+    unitOrOptions?:
+      | string
+      | { unit?: string; context?: string },
+    context?: string,
+  ) => MeasurementLike;
+  setErrorConfig: (next: { stackHints?: 'auto' | 'on' | 'off' }) => void;
+  getErrorConfig: () => { stackHints: 'auto' | 'on' | 'off' };
   mPercent: UnitHelperLike;
   mPx: UnitHelperLike;
   mCm: UnitHelperLike;
@@ -94,6 +103,14 @@ export interface CoreApi {
 }
 
 export const runCoreTests = (label: string, api: CoreApi): void => {
+  const captureErrorMessage = (fn: () => void): string => {
+    try {
+      fn();
+    } catch (error) {
+      return (error as Error).message;
+    }
+    return '';
+  };
 
   const {
     m,
@@ -126,6 +143,8 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
     hasCssMethod,
     measurementMin,
     measurementMax,
+    setErrorConfig,
+    getErrorConfig,
   } = api;
 
   describe(`CSS-Calipers core helpers (${label})`, () => {
@@ -144,14 +163,75 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
     });
 
     it('rejects non-finite values at construction time', () => {
-      expect(() => m(Number.NaN, 'px')).toThrow(
-        'css-calipers.Measurement.constructor: Non-finite measurement value: NaN',
+      const previousStackHints = getErrorConfig().stackHints;
+      setErrorConfig({ stackHints: 'on' });
+      try {
+        const missingValueMessage = captureErrorMessage(() =>
+          (m as (value?: number) => MeasurementLike)(),
+        );
+        expect(missingValueMessage).toContain(
+          'css-calipers.m: Non-finite measurement value: undefined',
+        );
+        expect(missingValueMessage).toContain('code=CALIPERS_E_NONFINITE');
+        expect(missingValueMessage).toContain('helper=m');
+        expect(missingValueMessage).toContain(
+          'inputs=value=undefined, unit=px',
+        );
+        expect(missingValueMessage).toContain('stack=');
+
+        expect(() => m(Number.NaN, 'px')).toThrow(
+          /css-calipers\.m: Non-finite measurement value: NaN/,
+        );
+        expect(() => m(Number.NaN, 'px')).toThrow(
+          /code=CALIPERS_E_NONFINITE/,
+        );
+        expect(() => m(Number.NaN, 'px')).toThrow(/helper=m/);
+        expect(() => m(Number.NaN, 'px')).toThrow(
+          /inputs=value=NaN, unit=px/,
+        );
+        expect(() => m(Number.NaN, 'px')).toThrow(/stack=/);
+
+        const contextMessage = captureErrorMessage(() =>
+          m(Number.NaN, { context: 'tokens.cardWidth' }),
+        );
+        expect(contextMessage).toContain(
+          'tokens.cardWidth: css-calipers.m: Non-finite measurement value: NaN',
+        );
+      } finally {
+        setErrorConfig({ stackHints: previousStackHints });
+      }
+
+      setErrorConfig({ stackHints: 'off' });
+      try {
+        const message = captureErrorMessage(() =>
+          m(Number.POSITIVE_INFINITY, 'px'),
+        );
+        expect(message).toContain(
+          'css-calipers.m: Non-finite measurement value: Infinity',
+        );
+        expect(message).not.toContain('stack=');
+      } finally {
+        setErrorConfig({ stackHints: previousStackHints });
+      }
+
+      const helperMessage = captureErrorMessage(() =>
+        mPx(Number.NEGATIVE_INFINITY),
       );
-      expect(() => m(Number.POSITIVE_INFINITY, 'px')).toThrow(
-        'css-calipers.Measurement.constructor: Non-finite measurement value: Infinity',
+      expect(helperMessage).toContain(
+        'css-calipers.mPx: Non-finite measurement value: -Infinity',
       );
-      expect(() => mPx(Number.NEGATIVE_INFINITY)).toThrow(
-        'css-calipers.Measurement.constructor: Non-finite measurement value: -Infinity',
+      expect(helperMessage).toContain('code=CALIPERS_E_NONFINITE');
+      expect(helperMessage).toContain('helper=mPx');
+      expect(helperMessage).toContain(
+        'inputs=value=-Infinity, unit=px',
+      );
+      expect(helperMessage).toContain('stack=');
+
+      const helperContextMessage = captureErrorMessage(() =>
+        mPx(Number.NaN, 'tokens.spacing'),
+      );
+      expect(helperContextMessage).toContain(
+        'tokens.spacing: css-calipers.mPx: Non-finite measurement value: NaN',
       );
     });
 
@@ -167,13 +247,13 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       const px = m(10);
       const em = m(1, 'em');
       expect(() => px.add(em)).toThrow(
-        'deltaToNumber: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'deltaToNumber: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
       expect(() => assertMatchingUnits(px, em, 'test')).toThrow(
-        'test: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'test: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
       expect(() => assertMatchingUnits(px, em, '')).toThrow(
-        'css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
     });
 
@@ -218,7 +298,7 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       expect(clamped.css()).toBe('12px');
 
       expect(() => value.clamp(m(20), m(12))).toThrow(
-        'css-calipers.Measurement.clamp: clamp: min (20px) must be <= max (12px)',
+        'css-calipers.Measurement.clamp: clamp: min (20px) must be <= max (12px) [code=CALIPERS_E_CLAMP_INVALID_RANGE]',
       );
     });
 
@@ -227,10 +307,10 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       const em = m(1, 'em');
 
       expect(() => value.clamp(em, m(12, 'px'))).toThrow(
-        'clamp(min): css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'clamp(min): css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
       expect(() => value.clamp(m(8, 'px'), em)).toThrow(
-        'clamp(max): css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'clamp(max): css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
     });
 
@@ -246,10 +326,10 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       const em = m(2, 'em');
 
       expect(() => measurementMin(px, em)).toThrow(
-        'measurementMin: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'measurementMin: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
       expect(() => measurementMax(px, em)).toThrow(
-        'measurementMax: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'measurementMax: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
     });
 
@@ -311,7 +391,7 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       expect(() =>
         assertPercentMeasurement(mPx(1), 'ctx'),
       ).toThrow(
-        'ctx: css-calipers.makeUnitAssert: Expected unit "%".',
+        'ctx: css-calipers.makeUnitAssert: Expected unit "%". [code=CALIPERS_E_ASSERT_UNIT]',
       );
     });
 
@@ -347,10 +427,10 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       expect(guard(m(4, 'em'))).toBe(false);
 
       expect(() => assertPx(m(1, 'em'), 'ctx')).toThrow(
-        'ctx: css-calipers.makeUnitAssert: Expected unit "px".',
+        'ctx: css-calipers.makeUnitAssert: Expected unit "px". [code=CALIPERS_E_ASSERT_UNIT]',
       );
       expect(() => assertPx(m(1, 'em'))).toThrow(
-        'css-calipers.makeUnitAssert: Expected unit "px".',
+        'css-calipers.makeUnitAssert: Expected unit "px". [code=CALIPERS_E_ASSERT_UNIT]',
       );
 
       expect(() => assertPx(m(2))).not.toThrow();
@@ -378,41 +458,43 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
     it('rejects division by zero', () => {
       const measurement = m(10);
       expect(() => measurement.divide(0)).toThrow(
-        'css-calipers.Measurement.divide: Cannot divide 10px by zero',
+        'css-calipers.Measurement.divide: Cannot divide 10px by zero [code=CALIPERS_E_DIVIDE_BY_ZERO]',
       );
     });
 
     it('asserts unit via Measurement.assertUnit with structured errors', () => {
       const measurement = m(1, 'px');
       expect(() => measurement.assertUnit('em')).toThrow(
-        'css-calipers.Measurement.assertUnit: Expected unit "em", received "px".',
+        'css-calipers.Measurement.assertUnit: Expected unit "em", received "px". [code=CALIPERS_E_ASSERT_UNIT]',
       );
       expect(() =>
         measurement.assertUnit('em', 'ctx'),
       ).toThrow(
-        'ctx: css-calipers.Measurement.assertUnit: Expected unit "em", received "px".',
+        'ctx: css-calipers.Measurement.assertUnit: Expected unit "em", received "px". [code=CALIPERS_E_ASSERT_UNIT]',
       );
     });
 
     it('asserts unit via free assertUnit, delegating to Measurement.assertUnit', () => {
       const measurement = m(1, 'px');
       expect(() => assertUnit(measurement, 'em')).toThrow(
-        'css-calipers.Measurement.assertUnit: Expected unit "em", received "px".',
+        'css-calipers.Measurement.assertUnit: Expected unit "em", received "px". [code=CALIPERS_E_ASSERT_UNIT]',
       );
       expect(() =>
         assertUnit(measurement, 'em', 'ctx'),
       ).toThrow(
-        'ctx: css-calipers.Measurement.assertUnit: Expected unit "em", received "px".',
+        'ctx: css-calipers.Measurement.assertUnit: Expected unit "em", received "px". [code=CALIPERS_E_ASSERT_UNIT]',
       );
     });
 
     it('asserts arbitrary conditions via assertCondition', () => {
       expect(() => assertCondition(false, 'fail')).toThrow(
-        'css-calipers.assertCondition: fail',
+        'css-calipers.assertCondition: fail [code=CALIPERS_E_ASSERT_CONDITION]',
       );
       expect(() =>
         assertCondition(() => false, 'thunk fail'),
-      ).toThrow('css-calipers.assertCondition: thunk fail');
+      ).toThrow(
+        'css-calipers.assertCondition: thunk fail [code=CALIPERS_E_ASSERT_CONDITION]',
+      );
       expect(() => assertCondition(true, 'ok')).not.toThrow();
       expect(() =>
         assertCondition(() => true, 'ok'),
@@ -427,7 +509,7 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       expect(px.equals(pxSame)).toBe(true);
       expect(px.equals(em, false)).toBe(false);
       expect(() => px.equals(em, true)).toThrow(
-        'equals(strict): css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'equals(strict): css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
     });
 
@@ -442,7 +524,7 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
 
       expect(px.compare(em, false)).not.toBe(0);
       expect(() => px.compare(em, true)).toThrow(
-        'compare(strict): css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'compare(strict): css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
     });
 
@@ -450,7 +532,9 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       const measurement = m(2, 'px');
       expect(() =>
         measurement.assert((mm) => mm.getValue() > 10, 'too small'),
-      ).toThrow('css-calipers.Measurement.assert: too small');
+      ).toThrow(
+        'css-calipers.Measurement.assert: too small [code=CALIPERS_E_ASSERT_PREDICATE]',
+      );
       expect(() =>
         measurement.assert((mm) => mm.getValue() > 1, 'should not throw'),
       ).not.toThrow();
@@ -523,7 +607,7 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
           'Button padding mismatch',
         ),
       ).toThrow(
-        'Button padding mismatch: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em',
+        'Button padding mismatch: css-calipers.assertMatchingUnits: measurement unit mismatch: px vs em [code=CALIPERS_E_UNIT_MISMATCH]',
       );
       expect(() =>
         assertCondition(
@@ -531,7 +615,7 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
           'Button padding must be positive',
         ),
       ).toThrow(
-        'css-calipers.assertCondition: Button padding must be positive',
+        'css-calipers.assertCondition: Button padding must be positive [code=CALIPERS_E_ASSERT_CONDITION]',
       );
     });
   });

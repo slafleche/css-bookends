@@ -134,6 +134,8 @@ describe('API surface (ESM)', () => {
       'assertCondition',
       'isPercentMeasurement',
       'assertPercentMeasurement',
+      'getErrorConfig',
+      'setErrorConfig',
     ];
 
     const unitHelperKeys = Object.keys(

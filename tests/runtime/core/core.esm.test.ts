@@ -37,6 +37,8 @@ const {
   hasCssMethod,
   measurementMax,
   measurementMin,
+  setErrorConfig,
+  getErrorConfig,
 } = esmModule;
 
 const api = {
@@ -70,6 +72,8 @@ const api = {
   hasCssMethod,
   measurementMin,
   measurementMax,
+  setErrorConfig,
+  getErrorConfig,
 } as unknown as CoreApi;
 
 runCoreTests('esm', api);
