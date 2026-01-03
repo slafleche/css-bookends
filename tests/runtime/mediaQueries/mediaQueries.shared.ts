@@ -1004,7 +1004,7 @@ export const runMediaQueryTests = (
       expect(() => factory({ base: { padding: '8px' } })).not.toThrow();
     });
 
-    it('ignores styles for keys not present in queries', () => {
+    it('ignores styles for keys not present in queries when invalidValueMode is allow', () => {
       const queries = {
         base: { minWidth: api.mPx(640) },
       };
@@ -1013,7 +1013,7 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'unknown-keys',
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'throw' },
+          errorHandling: { invalidValueMode: 'allow', lintingMode: 'throw' },
         },
       });
 
@@ -1029,6 +1029,55 @@ export const runMediaQueryTests = (
           'screen and (min-width: 640px)': { padding: '8px' },
         },
       });
+    });
+
+    it('throws when styles include unknown query keys in invalidValueMode throw', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'unknown-key-throw',
+          errorHandling: { invalidValueMode: 'throw', lintingMode: 'throw' },
+        },
+      });
+
+      const styles = {
+        base: { padding: '8px' },
+        extra: { color: 'red' },
+      } as Record<string, StyleRule>;
+
+      expect(() => factory(styles)).toThrow(
+        'Media query factory "unknown-key-throw" received unknown query key "extra".',
+      );
+    });
+
+    it('logs warnings for unknown query keys when invalidValueMode is log', () => {
+      const queries = {
+        base: { minWidth: api.mPx(640) },
+      };
+
+      const factory = api.mediaQueryFactory({
+        queries,
+        config: {
+          label: 'unknown-key-log',
+          errorHandling: { invalidValueMode: 'log', lintingMode: 'throw' },
+        },
+      });
+
+      const styles = {
+        base: { padding: '8px' },
+        extra: { color: 'red' },
+      } as Record<string, StyleRule>;
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      factory(styles);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Media query factory "unknown-key-log" received unknown query key "extra".',
+      );
+      warnSpy.mockRestore();
     });
 
     it('handles empty modules list by rejecting all features', () => {

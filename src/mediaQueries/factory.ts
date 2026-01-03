@@ -246,8 +246,35 @@ export const createMediaQueryFactory = (
     config: options.config,
   });
 
+  const handleUnknownQueryKey = (
+    key: string,
+    config: MediaQueryFactoryConfig<TModules, TOutput>,
+  ): void => {
+    const mode = config.errorHandling?.invalidValueMode ?? 'throw';
+    const message = `Media query factory "${config.label}" received unknown query key "${key}".`;
+
+    if (mode === 'log') {
+      console.warn(message);
+      return;
+    }
+    if (mode === 'allow') return;
+
+    throw new Error(message);
+  };
+
   return (stylesByQuery: MediaQueryStyleMap<TQueries>): TOutput => {
     const result: Record<string, StyleRule> = {};
+
+    (Object.keys(stylesByQuery) as (keyof TQueries)[]).forEach(
+      (key) => {
+        const styles = stylesByQuery[key];
+        if (!styles) return;
+        if (Object.prototype.hasOwnProperty.call(options.queries, key)) {
+          return;
+        }
+        handleUnknownQueryKey(String(key), options.config);
+      },
+    );
 
     (Object.keys(stylesByQuery) as (keyof TQueries)[]).forEach((key) => {
       const styles = stylesByQuery[key];
