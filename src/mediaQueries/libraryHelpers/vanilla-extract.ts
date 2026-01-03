@@ -1,7 +1,7 @@
-import type { ComplexStyleRule } from '../types';
+import type { SelectorMap, StyleRule } from '../types';
 
 export const mediaQueryOutputVanillaExtract = (
-  media: ComplexStyleRule,
-): Record<string, unknown> => ({
+  media: StyleRule,
+): SelectorMap => ({
   '&': media,
 });

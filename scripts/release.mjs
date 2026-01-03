@@ -155,11 +155,9 @@ const main = async () => {
     );
   }
 
-  runStep('Running core tests', 'npm', ['run', 'test:core']);
   runStep('Building artifacts', 'npm', ['run', 'build']);
+  runStep('Running full test suite', 'npm', ['run', 'test']);
   ensureDistOutputsExist();
-  runStep('Running dist tests', 'npm', ['run', 'test:dist']);
-  runStep('Running type tests', 'npm', ['run', 'test:types']);
 
   const currentVersion = readPackageVersion();
 

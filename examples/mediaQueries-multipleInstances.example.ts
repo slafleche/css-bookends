@@ -11,6 +11,7 @@ import {
   makeMediaQueryStyle,
   mediaQueryFactory,
 } from "css-calipers/mediaQueries";
+import type { IMediaQueryProps, StyleRule } from "css-calipers/mediaQueries";
 
 // Simple helper: grid component uses its own breakpoints and column labels.
 // This helper uses the default builder, which includes all modules.
@@ -106,20 +107,20 @@ const interactionMedia = mediaQueryFactory({
       invalidValueMode: "throw",
       lintingMode: "log",
     },
-    output: (media) => ({
+    output: (media: StyleRule) => ({
       label: "interaction",
       media,
       note: "Custom output for advanced example",
     }),
     custom: {
       key: "any-hover-guard",
-      validator: (props) => {
+      validator: (props: IMediaQueryProps) => {
         if (props.anyHover && !props.anyPointer) {
           return "anyHover should be paired with anyPointer for clarity";
         }
         return true;
       },
-      linter: (props) => {
+      linter: (props: IMediaQueryProps) => {
         if (props.anyHover === "none" && props.anyPointer === "fine") {
           return "anyHover none rarely pairs with anyPointer fine";
         }

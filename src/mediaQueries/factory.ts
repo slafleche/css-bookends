@@ -153,7 +153,7 @@ export type MediaQueryFactoryConfig<
 > = MediaQueryBuilderConfig & {
   label: string;
   modules?: TModules;
-  output?: (media: ComplexStyleRule) => TOutput;
+  output?: (media: StyleRule) => TOutput;
   custom?: MediaQueryFactoryCustomHooks;
 };
 
@@ -256,7 +256,7 @@ export const createMediaQueryFactory = (
       result[buildMediaQuery(props as IMediaQueryProps)] = styles;
     });
 
-    const mediaQuery: ComplexStyleRule = {
+    const mediaQuery: StyleRule = {
       '@media': result,
     };
 
