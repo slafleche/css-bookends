@@ -1,7 +1,7 @@
 import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
 
-import type { IMeasurement } from '../../dist/esm';
-import { mPx } from '../../dist/esm';
+import type { IMeasurement, IRatio } from '../../dist/esm';
+import { mPx, r } from '../../dist/esm';
 import {
   buildMediaQueryFromFeatures,
   buildMediaQueryString,
@@ -10,7 +10,10 @@ import {
   emitDimensionsFeatures,
   mediaQueryFactory,
 } from '../../dist/esm/mediaQueries';
-import type { MediaQueryModulePropsMap } from '../../dist/esm/mediaQueries';
+import type {
+  IMediaQueryProps,
+  MediaQueryModulePropsMap,
+} from '../../dist/esm/mediaQueries';
 
 const width = mPx(640);
 expectAssignable<IMeasurement<'px'>>(width);
@@ -72,3 +75,8 @@ const customAllowedFactory = mediaQueryFactory({
   },
 });
 expectAssignable<unknown>(customAllowedFactory);
+
+expectAssignable<IRatio>(r(16, 9));
+expectAssignable<IMediaQueryProps>({ aspectRatio: r(16, 9) });
+expectAssignable<IMediaQueryProps>({ minAspectRatio: r(4, 3) });
+expectAssignable<IMediaQueryProps>({ maxAspectRatio: r(21, 9) });

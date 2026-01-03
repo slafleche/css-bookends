@@ -9,6 +9,18 @@ import {
   type ErrorConfig,
   type ErrorCode,
 } from './internal/errors';
+import {
+  r,
+  isRatio,
+  normalizeRatio,
+  parseRatio,
+  ratioToFloat,
+  toFloat,
+  reduceRatio,
+  simplifyRatio,
+  type IRatio,
+  type RatioParts,
+} from './ratio';
 
 type UnitSymbol = UnitDefinitionRecord[keyof UnitDefinitionRecord]['unit'];
 
@@ -94,3 +106,14 @@ export const {
 export type MeasurementUnitDefinition = UnitDefinition;
 export type MeasurementUnitCategory = UnitCategory;
 export { type ErrorConfig, type ErrorCode };
+export {
+  r,
+  isRatio,
+  normalizeRatio,
+  parseRatio,
+  ratioToFloat,
+  toFloat,
+  reduceRatio,
+  simplifyRatio,
+};
+export type { IRatio, RatioParts };

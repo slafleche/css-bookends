@@ -120,7 +120,9 @@ describe('API surface (ESM)', () => {
 
     const coreRuntimeKeys = [
       'm',
+      'r',
       'isMeasurement',
+      'isRatio',
       'assertMatchingUnits',
       'measurementMin',
       'measurementMax',
@@ -132,6 +134,12 @@ describe('API surface (ESM)', () => {
       'hasCssMethod',
       'assertUnit',
       'assertCondition',
+      'normalizeRatio',
+      'parseRatio',
+      'ratioToFloat',
+      'toFloat',
+      'reduceRatio',
+      'simplifyRatio',
       'isPercentMeasurement',
       'assertPercentMeasurement',
       'getErrorConfig',

@@ -120,7 +120,9 @@ describe('API surface (CJS)', () => {
 
     const coreRuntimeKeys = [
       'm',
+      'r',
       'isMeasurement',
+      'isRatio',
       'assertMatchingUnits',
       'measurementMin',
       'measurementMax',
@@ -132,6 +134,12 @@ describe('API surface (CJS)', () => {
       'hasCssMethod',
       'assertUnit',
       'assertCondition',
+      'normalizeRatio',
+      'parseRatio',
+      'ratioToFloat',
+      'toFloat',
+      'reduceRatio',
+      'simplifyRatio',
       'isPercentMeasurement',
       'assertPercentMeasurement',
       'getErrorConfig',

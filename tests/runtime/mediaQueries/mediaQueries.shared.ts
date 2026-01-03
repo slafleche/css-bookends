@@ -12,7 +12,8 @@ import type {
   MediaQueryBuilderHelpers,
   MediaQueryValidationResult,
 } from '../../../src/mediaQueries/helpers';
-import type { IMeasurement } from '../../../src/core';
+import type { IMeasurement, IRatio } from '../../../src/core';
+import type { r as ratioFactory } from '../../../src/core';
 import type { StyleRule } from '../../../src/mediaQueries/types';
 import type { IMediaQueryProps } from '../../../src/mediaQueries/mediaQueries';
 import type {
@@ -33,6 +34,7 @@ type MediaQueriesApi = {
   mediaQueryFactory: typeof mediaQueryFactory;
   mDpi: (value: number) => MeasurementLike;
   mPx: (value: number) => MeasurementLike;
+  r: typeof ratioFactory;
   styleRuleSample?: StyleRule;
 };
 
@@ -73,9 +75,9 @@ export const runMediaQueryTests = (
 
     it('builds an aspect ratio query with min and max values', () => {
       const result = api.buildMediaQueryString({
-        aspectRatio: '16/9',
-        minAspectRatio: '4/3',
-        maxAspectRatio: '21/9',
+        aspectRatio: api.r(16, 9),
+        minAspectRatio: api.r(4, 3),
+        maxAspectRatio: api.r(21, 9),
       });
       expect(result).toBe(
         'screen and (aspect-ratio: 16/9) and (min-aspect-ratio: 4/3) and (max-aspect-ratio: 21/9)',
@@ -137,21 +139,21 @@ export const runMediaQueryTests = (
       ).toThrow('Custom feature "custom-feature" must be a primitive or a measurement.');
     });
 
-    it('rejects invalid aspect ratio formats', () => {
+    it('rejects aspect ratio values that are not created with r()', () => {
       const strictBuilder = api.createMediaQueryBuilder({
         emitBase: api.emitDimensionsFeatures,
         config: { errorHandling: { invalidValueMode: 'throw' } },
       });
       expect(() =>
-        strictBuilder({ aspectRatio: '0/0' }),
+        strictBuilder({ aspectRatio: '0/0' as unknown as IRatio }),
       ).toThrow(
-        /aspectRatio must be a valid ratio greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
+        /aspectRatio must be a ratio created with r\(\).*code=CALIPERS_E_ASSERT_CONDITION/,
       );
 
       expect(() =>
-        strictBuilder({ minAspectRatio: 'abc' }),
+        strictBuilder({ minAspectRatio: 'abc' as unknown as IRatio }),
       ).toThrow(
-        /minAspectRatio must be a valid ratio greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
+        /minAspectRatio must be a ratio created with r\(\).*code=CALIPERS_E_ASSERT_CONDITION/,
       );
     });
 
@@ -220,9 +222,9 @@ export const runMediaQueryTests = (
         config: { errorHandling: { invalidValueMode: 'throw' } },
       });
 
-      expect(() => allowBuilder({ aspectRatio: '0/0' })).not.toThrow();
-      expect(() => logBuilder({ aspectRatio: '0/0' })).not.toThrow();
-      expect(() => throwBuilder({ aspectRatio: '0/0' })).toThrow(
+      expect(() => allowBuilder({ aspectRatio: api.r(0, 1) })).not.toThrow();
+      expect(() => logBuilder({ aspectRatio: api.r(0, 1) })).not.toThrow();
+      expect(() => throwBuilder({ aspectRatio: api.r(0, 1) })).toThrow(
         /aspectRatio must be a valid ratio greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
       );
     });
@@ -303,7 +305,7 @@ export const runMediaQueryTests = (
           });
 
           const props = {
-            aspectRatio: '0/0',
+            aspectRatio: api.r(0, 1),
             width: api.mPx(640),
             minWidth: api.mPx(320),
           };
@@ -333,7 +335,7 @@ export const runMediaQueryTests = (
         config: { errorHandling: { invalidValueMode: 'log' } },
       });
 
-      expect(() => logBuilder({ aspectRatio: '0/0' })).not.toThrow();
+      expect(() => logBuilder({ aspectRatio: api.r(0, 1) })).not.toThrow();
     });
 
     it('handles multiple factory instances with independent configs', () => {
@@ -341,7 +343,7 @@ export const runMediaQueryTests = (
       const lintModes = ['allow', 'log', 'throw'] as const;
 
       const props = {
-        aspectRatio: '0/0',
+        aspectRatio: api.r(0, 1),
         width: api.mPx(640),
         minWidth: api.mPx(320),
       };

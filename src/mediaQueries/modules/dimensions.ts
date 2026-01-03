@@ -1,4 +1,4 @@
-import type { IMeasurement } from '../../core';
+import type { IMeasurement, IRatio } from '../../core';
 import type {
   MediaQueryBuilderHelpers,
   MediaQueryValidator,
@@ -14,7 +14,7 @@ import {
   lintWidthRedundancy,
 } from '../linting/core';
 
-type MediaQueryRatio = number | string;
+type MediaQueryRatio = IRatio;
 
 export interface IMediaQueryDimensions {
   width?: IMeasurement;

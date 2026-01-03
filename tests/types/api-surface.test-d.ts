@@ -4,6 +4,14 @@ import {
   m,
   mPx,
   mPercent,
+  r,
+  isRatio,
+  normalizeRatio,
+  parseRatio,
+  ratioToFloat,
+  toFloat,
+  reduceRatio,
+  simplifyRatio,
   isMeasurement,
   isPercentMeasurement,
   assertPercentMeasurement,
@@ -36,6 +44,8 @@ import {
   type HzMeasurement,
   type DpiMeasurement,
   type FrMeasurement,
+  type IRatio,
+  type RatioParts,
 } from '../../dist/esm';
 import type { StyleRule } from '../../dist/esm/mediaQueries/types';
 import { mediaQueryOutputVanillaExtract } from '../../dist/esm/mediaQueries';
@@ -228,6 +238,16 @@ expectAssignable<IMeasurement<'px'>>(minPx);
 
 const maxPercent = measurementMax(mPercent(10), mPercent(20));
 expectAssignable<IMeasurement<'%'>>(maxPercent);
+
+expectAssignable<IRatio>(r(16, 9));
+expectAssignable<IRatio>(normalizeRatio(r(16, 9)));
+expectAssignable<IRatio>(reduceRatio(r(16, 9)));
+expectAssignable<IRatio>(simplifyRatio(r(16, 9)));
+expectAssignable<RatioParts | null>(parseRatio('16/9'));
+expectAssignable<number>(ratioToFloat(r(4, 3)));
+expectAssignable<number>(toFloat(r(4, 3)));
+expectAssignable<(value: unknown) => value is IRatio>(isRatio);
+expectAssignable<IRatio>(r(4, { simplify: true }));
 
 // assertCondition and hasCssMethod are exported with expected shapes
 assertCondition(true, 'should accept boolean');
