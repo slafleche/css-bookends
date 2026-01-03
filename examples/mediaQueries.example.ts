@@ -10,8 +10,10 @@ import { m } from "css-calipers";
 import {
   makeMediaQueryStyle,
   mediaQueryFactory,
+  mediaQueryOutputVanillaExtract,
 } from "css-calipers/mediaQueries";
 import type { IMediaQueryProps, StyleRule } from "css-calipers/mediaQueries";
+import type { StyleRule as VanillaStyleRule } from "@vanilla-extract/css";
 
 // Simple helper: grid component uses its own breakpoints and column labels.
 // This helper uses the default builder, which includes all modules.
@@ -83,6 +85,31 @@ const gridStyles = {
     columns_two: { gridTemplateColumns: "repeat(2, 1fr)" },
     columns_one: { gridTemplateColumns: "1fr" },
   }),
+};
+
+// This library stays CSS-in-JS agnostic; the helper below is optional and
+// only exists to smooth vanilla-extract usage when you want it.
+// Vanilla-extract helper: provide your project's selector map type.
+const vanillaExtractMedia = mediaQueryFactory({
+  queries: {
+    compact: { maxWidth: m(700) },
+  },
+  config: {
+    label: "vanilla-extract",
+    modules: ["core"],
+    output: (media: StyleRule) =>
+      mediaQueryOutputVanillaExtract<
+        { [selector: string]: VanillaStyleRule }
+      >(media),
+  },
+});
+
+const vanillaExtractStyles = {
+  selectors: {
+    ...vanillaExtractMedia({
+      compact: { display: "block" },
+    }),
+  },
 };
 
 // Advanced example: any-hover with custom validation + linting.
