@@ -9,7 +9,7 @@ import {
   type ErrorConfigStore,
 } from './errors';
 import type {
-  BrandedMeasurement,
+  InscribedMeasurement,
   IMeasurement,
   UnitAssertion,
   UnitGuard,
@@ -291,11 +291,11 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
     x: unknown,
   ): x is IMeasurement<string> => x instanceof Measurement;
 
-  function m(value: number): BrandedMeasurement<'px'>;
+  function m(value: number): InscribedMeasurement<'px'>;
   function m(
     value: number,
     options: { context?: string },
-  ): BrandedMeasurement<'px'>;
+  ): InscribedMeasurement<'px'>;
   function m<Unit extends string>(
     value: number,
     unit: Unit,
@@ -345,7 +345,7 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
   type UnitHelperFactory<Unit extends string> = ((
     value: number,
     context?: string,
-  ) => BrandedMeasurement<Unit>) & {
+  ) => InscribedMeasurement<Unit>) & {
     unit: Unit;
   };
 

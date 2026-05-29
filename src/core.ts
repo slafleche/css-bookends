@@ -21,6 +21,11 @@ import {
   type IRatio,
   type RatioParts,
 } from './ratio';
+import {
+  sciNotation,
+  isSciNotation,
+  type ISciNotation,
+} from './sciNotation';
 
 type UnitSymbol = UnitDefinitionRecord[keyof UnitDefinitionRecord]['unit'];
 
@@ -58,13 +63,20 @@ export interface IMeasurement<Unit extends string = string> {
   clamp(min: IMeasurement<Unit>, max: IMeasurement<Unit>): IMeasurement<Unit>;
 }
 
-export type BrandedMeasurement<Unit extends string> = IMeasurement<Unit> &
+export type InscribedMeasurement<Unit extends string> = IMeasurement<Unit> &
   UnitBrand<Unit>;
+
+/**
+ * @deprecated Renamed to `InscribedMeasurement`. This alias is kept for one
+ * release for backwards compatibility and will be removed in a future version.
+ */
+export type BrandedMeasurement<Unit extends string> =
+  InscribedMeasurement<Unit>;
 
 export type UnitHelper<Unit extends string = string> = ((
   value: number,
   context?: string,
-) => BrandedMeasurement<Unit>) & {
+) => InscribedMeasurement<Unit>) & {
   unit: Unit;
 };
 
@@ -112,5 +124,8 @@ export {
   toFloat,
   reduceRatio,
   simplifyRatio,
+  sciNotation,
+  isSciNotation,
 };
 export type { IRatio, RatioParts };
+export type { ISciNotation };

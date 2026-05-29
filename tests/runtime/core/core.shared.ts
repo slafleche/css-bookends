@@ -333,6 +333,96 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       );
     });
 
+    describe('unit-safety matrix', () => {
+      const mismatchedPairs = [
+        { l: 'px', r: 'em', left: mPx, right: mEm },
+        { l: 'em', r: 'px', left: mEm, right: mPx },
+        { l: 'px', r: '%', left: mPx, right: mPercent },
+        { l: '%', r: 'deg', left: mPercent, right: mDeg },
+        { l: 'deg', r: 'ms', left: mDeg, right: mMs },
+        { l: 'ms', r: 'khz', left: mMs, right: mKhz },
+        { l: 'dpi', r: 'deg', left: mDpi, right: mDeg },
+        { l: 'fr', r: 'px', left: mFr, right: mPx },
+        { l: 'vh', r: 'cqw', left: mVh, right: mCqw },
+        { l: 'cqw', r: 'px', left: mCqw, right: mPx },
+      ];
+
+      it.each(mismatchedPairs)(
+        'rejects every coupled operation for $l vs $r',
+        ({ left, right }) => {
+          const a = left(10);
+          const b = right(5);
+
+          expect(() => a.add(b)).toThrow(/CALIPERS_E_UNIT_MISMATCH/);
+          expect(() => a.subtract(b)).toThrow(/CALIPERS_E_UNIT_MISMATCH/);
+          expect(() => a.clamp(b, left(20))).toThrow(
+            /CALIPERS_E_UNIT_MISMATCH/,
+          );
+          expect(() => a.clamp(left(1), b)).toThrow(
+            /CALIPERS_E_UNIT_MISMATCH/,
+          );
+          expect(() => measurementMin(a, b)).toThrow(
+            /CALIPERS_E_UNIT_MISMATCH/,
+          );
+          expect(() => measurementMax(a, b)).toThrow(
+            /CALIPERS_E_UNIT_MISMATCH/,
+          );
+          expect(() => assertMatchingUnits(a, b, 'matrix')).toThrow(
+            /CALIPERS_E_UNIT_MISMATCH/,
+          );
+        },
+      );
+
+      it.each(mismatchedPairs)(
+        'equals/compare throw for $l vs $r by default but allow strict=false',
+        ({ left, right }) => {
+          const a = left(10);
+          const b = right(10);
+
+          expect(() => a.equals(b)).toThrow(/CALIPERS_E_UNIT_MISMATCH/);
+          expect(() => a.compare(b)).toThrow(/CALIPERS_E_UNIT_MISMATCH/);
+
+          expect(a.equals(b, false)).toBe(false);
+          expect(typeof a.compare(b, false)).toBe('number');
+        },
+      );
+
+      const unitPreserving = [
+        { unit: 'px', make: mPx },
+        { unit: 'em', make: mEm },
+        { unit: '%', make: mPercent },
+        { unit: 'deg', make: mDeg },
+        { unit: 'ms', make: mMs },
+        { unit: 'vh', make: mVh },
+        { unit: 'fr', make: mFr },
+        { unit: 'dpi', make: mDpi },
+      ];
+
+      it.each(unitPreserving)(
+        'keeps the $unit unit through arithmetic and range operations',
+        ({ unit, make }) => {
+          expect(make(8).add(make(2)).css()).toBe(`10${unit}`);
+          expect(make(8).subtract(make(2)).getValue()).toBe(6);
+          expect(make(8).multiply(2).getUnit()).toBe(unit);
+          expect(make(8).divide(2).getUnit()).toBe(unit);
+          expect(make(8).double().getUnit()).toBe(unit);
+          expect(make(8).half().getUnit()).toBe(unit);
+          expect(make(8).negation().getUnit()).toBe(unit);
+          expect(make(-8).absolute().getUnit()).toBe(unit);
+          expect(make(8.4).round().getUnit()).toBe(unit);
+          expect(make(8.4).floor().getUnit()).toBe(unit);
+          expect(make(8.4).ceil().getUnit()).toBe(unit);
+
+          const lo = make(1);
+          const hi = make(5);
+          expect(measurementMin(lo, hi)).toBe(lo);
+          expect(measurementMax(lo, hi)).toBe(hi);
+          expect(make(10).clamp(lo, hi).getValue()).toBe(5);
+          expect(make(3).clamp(lo, hi).getValue()).toBe(3);
+        },
+      );
+    });
+
     it('exposes helpers generated from unit definitions', () => {
       const percent = mPercent(50);
       expect(percent.css()).toBe('50%');

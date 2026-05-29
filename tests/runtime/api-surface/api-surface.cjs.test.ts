@@ -140,6 +140,8 @@ describe('API surface (CJS)', () => {
       'toFloat',
       'reduceRatio',
       'simplifyRatio',
+      'sciNotation',
+      'isSciNotation',
       'isPercentMeasurement',
       'assertPercentMeasurement',
       'getErrorConfig',
