@@ -140,8 +140,6 @@ describe('API surface (ESM)', () => {
       'toFloat',
       'reduceRatio',
       'simplifyRatio',
-      'sciNotation',
-      'isSciNotation',
       'isPercentMeasurement',
       'assertPercentMeasurement',
       'getErrorConfig',

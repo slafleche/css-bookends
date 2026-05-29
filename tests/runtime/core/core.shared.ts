@@ -235,6 +235,25 @@ export const runCoreTests = (label: string, api: CoreApi): void => {
       );
     });
 
+    it('emits plain decimal css, never scientific notation', () => {
+      // normal values are unchanged
+      expect(m(10).css()).toBe('10px');
+      expect(m(3.14).css()).toBe('3.14px');
+      expect(m(1).multiply(100000000000000000).css()).toBe(
+        '100000000000000000px',
+      );
+      // magnitudes that JS would stringify in exponential form
+      expect(m(1).multiply(1e21).css()).toBe(
+        '1000000000000000000000px',
+      );
+      expect(m(1).divide(1e7).css()).toBe('0.0000001px');
+      expect(m(1.5).divide(1e7).css()).toBe('0.00000015px');
+      expect(m(-1).divide(1e7).css()).toBe('-0.0000001px');
+      expect(m(1.23).multiply(1e21).css()).toBe(
+        '1230000000000000000000px',
+      );
+    });
+
     it('performs arithmetic safely within the same unit', () => {
       const base = m(10);
       expect(base.add(5).css()).toBe('15px');

@@ -21,11 +21,6 @@ import {
   type IRatio,
   type RatioParts,
 } from './ratio';
-import {
-  sciNotation,
-  isSciNotation,
-  type ISciNotation,
-} from './sciNotation';
 
 type UnitSymbol = UnitDefinitionRecord[keyof UnitDefinitionRecord]['unit'];
 
@@ -124,8 +119,5 @@ export {
   toFloat,
   reduceRatio,
   simplifyRatio,
-  sciNotation,
-  isSciNotation,
 };
 export type { IRatio, RatioParts };
-export type { ISciNotation };
