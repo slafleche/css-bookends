@@ -5,7 +5,6 @@ import type {
 import { applyMediaQueryValidation } from './helpers';
 import {
   assertCondition,
-  assertMatchingUnits,
   isRatio,
   ratioToFloat,
   type IRatio,
@@ -19,7 +18,6 @@ export type MediaQueryValidationCheck<TConfig> = (config: TConfig) => void;
 
 export type MediaQueryCoreHelpers = {
   assertCondition: typeof assertCondition;
-  assertMatchingUnits: typeof assertMatchingUnits;
 };
 
 export type MediaQueryValidation = ReturnType<
@@ -37,7 +35,7 @@ const toValidationResult = (
 export const createMediaQueryValidation = (
   core: MediaQueryCoreHelpers,
 ) => {
-  const { assertCondition, assertMatchingUnits } = core;
+  const { assertCondition } = core;
 
   const runMediaQueryValidation = <TConfig>(
     config: TConfig,
@@ -63,11 +61,9 @@ export const createMediaQueryValidation = (
 
   const validateMinMaxWidth = (props: IMediaQueryCore): void => {
     if (!props.minWidth || !props.maxWidth) return;
-    assertMatchingUnits(
-      props.minWidth,
-      props.maxWidth,
-      'mediaQueries.minMaxWidth',
-    );
+    // Mixed units are valid CSS — each bound is evaluated independently — so we
+    // only enforce ordering when the units match and the comparison is meaningful.
+    if (props.minWidth.getUnit() !== props.maxWidth.getUnit()) return;
     assertCondition(
       props.minWidth.getValue() <= props.maxWidth.getValue(),
       'minWidth must be less than or equal to maxWidth',
@@ -102,11 +98,8 @@ export const createMediaQueryValidation = (
     props: IMediaQueryDimensions,
   ): void => {
     if (!props.minHeight || !props.maxHeight) return;
-    assertMatchingUnits(
-      props.minHeight,
-      props.maxHeight,
-      'mediaQueries.minMaxHeight',
-    );
+    // Mixed units are valid CSS; only enforce ordering when units match.
+    if (props.minHeight.getUnit() !== props.maxHeight.getUnit()) return;
     assertCondition(
       props.minHeight.getValue() <= props.maxHeight.getValue(),
       'minHeight must be less than or equal to maxHeight',
@@ -218,13 +211,8 @@ export const createMediaQueryValidation = (
     if (props.maxResolution) {
       assertPositive(props.maxResolution, 'maxResolution');
     }
-    if (props.minResolution && props.maxResolution) {
-      assertMatchingUnits(
-        props.minResolution,
-        props.maxResolution,
-        'mediaQueries.resolutionUnits',
-      );
-    }
+    // Resolution bounds may use different units (dpi, dpcm, dppx, x) — all
+    // valid CSS — so we no longer require min/max to share a unit.
   };
 
   return {
@@ -241,7 +229,6 @@ export const createMediaQueryValidation = (
 
 const defaultMediaQueryValidation = createMediaQueryValidation({
   assertCondition,
-  assertMatchingUnits,
 });
 
 export const {

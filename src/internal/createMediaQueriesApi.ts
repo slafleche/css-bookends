@@ -37,15 +37,11 @@ import { mediaQueryOutputVanillaExtract } from '../mediaQueries/libraryHelpers/v
 import type { MediaQueryBuilderHelpers } from '../mediaQueries/helpers';
 import type { MediaQueryModulesList } from '../mediaQueries/moduleRegistry';
 
-type MediaQueriesCore = Pick<
-  CoreApi,
-  'assertCondition' | 'assertMatchingUnits'
->;
+type MediaQueriesCore = Pick<CoreApi, 'assertCondition'>;
 
 export const createMediaQueriesApi = (core: MediaQueriesCore) => {
   const validation = createMediaQueryValidation({
     assertCondition: core.assertCondition,
-    assertMatchingUnits: core.assertMatchingUnits,
   });
 
   const emitCoreFeatures = createEmitCoreFeatures(validation);

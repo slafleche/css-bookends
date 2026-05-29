@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { runMediaQueryTests } from "./mediaQueries.shared";
 
-import { mDpi, mPx, r } from "../../../src";
+import { mDpi, mDppx, mEm, mPx, r } from "../../../src";
 import {
   buildMediaQueryFromFeatures,
   buildMediaQueryString,
@@ -205,5 +205,48 @@ describe("mediaQueries (src) factory output mappers", () => {
         },
       },
     });
+  });
+});
+
+describe("mediaQueries (src) mixed-unit bounds", () => {
+  it("accepts mixed-unit min/max width (valid CSS)", () => {
+    expect(
+      buildMediaQueryString({ minWidth: mPx(320), maxWidth: mEm(60) }),
+    ).toBe("screen and (min-width: 320px) and (max-width: 60em)");
+  });
+
+  it("accepts mixed-unit min/max resolution", () => {
+    expect(
+      buildMediaQueryString({
+        minResolution: mDpi(96),
+        maxResolution: mDppx(2),
+      }),
+    ).toBe(
+      "screen and (min-resolution: 96dpi) and (max-resolution: 2dppx)",
+    );
+  });
+
+  it("still enforces min <= max ordering when units match", () => {
+    const factory = mediaQueryFactory({
+      queries: { bad: { minWidth: mPx(1000), maxWidth: mPx(500) } },
+      config: {
+        label: "ordering",
+        errorHandling: { invalidValueMode: "throw" },
+      },
+    });
+    expect(() => factory({ bad: { color: "red" } })).toThrow(
+      "minWidth must be less than or equal to maxWidth",
+    );
+  });
+
+  it("does not enforce ordering across units, even in throw mode", () => {
+    const factory = mediaQueryFactory({
+      queries: { ok: { minWidth: mPx(1000), maxWidth: mEm(10) } },
+      config: {
+        label: "mixed",
+        errorHandling: { invalidValueMode: "throw" },
+      },
+    });
+    expect(() => factory({ ok: { color: "red" } })).not.toThrow();
   });
 });
