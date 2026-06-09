@@ -56,15 +56,13 @@ const style = {
 };
 ```
 
-If you prefer, you can also import unit helpers from dedicated subpaths. For example, `mPercent` is available from the root entrypoint and from `css-calipers/units/percent`, and all unit helpers are aggregated under `css-calipers/units`.
+If you prefer, you can also import unit helpers from dedicated subpaths. For example, `mPercent` is available from the root entrypoint and from `@css-bookends/css-calipers/units/percent`, and all unit helpers are aggregated under `@css-bookends/css-calipers/units`.
 
 ---
 
 ## Status & support
 
-> API surface and docs may change between `0.x` releases until the first stable version.
-
-- Status: early `0.x` release. Backwards compatibility is not guaranteed until `1.0.0`.
+- Status: stable `1.0` release of the measurement layer, part of the [CSS-Bookends](https://github.com/slafleche/css-bookends) umbrella.
 - Questions or bugs: open an issue on GitHub (see the repository link at the top of this page or in `package.json`).
 - Tooling: tested primarily with TypeScript 5.6+ on Node 18+.
 - Support: this is a solo, early-stage project. If it saves you time, you can [buy me a coffee](https://buymeacoffee.com/slafleche) to support continued work.
@@ -73,25 +71,15 @@ If you prefer, you can also import unit helpers from dedicated subpaths. For exa
 
 ## Media queries
 
-Media queries have moved out of CSS-Calipers. From `0.15` on, CSS-Calipers is
-purely the measurement layer.
+Media queries are not part of this package. They live in
+[`@css-bookends/media-queries`](https://www.npmjs.com/package/@css-bookends/media-queries),
+a separate book in the [CSS-Bookends](https://github.com/slafleche/css-bookends)
+umbrella that builds on this measurement lexicon. Install it alongside this
+package when you need them.
 
-CSS-Calipers itself is part of
-[CSS-Bookends](https://github.com/slafleche/css-bookends): it is the measurement
-lexicon at the centre of the umbrella. The first CSS-Bookends beta gives you
-exactly what `css-calipers@0.14` does today, the same measurement layer and the
-same media query helper, just split into two installable pieces (`css-calipers`
-plus `@css-bookends/media-queries`). Nothing is lost.
-
-If you use the media query helper:
-
-- **Switch to CSS-Bookends** and add `@css-bookends/media-queries` alongside
-  `css-calipers`. Same helper, now maintained in the umbrella.
-- **Or stay on `css-calipers@0.14`**, which still bundles the media query helper
-  and remains the `latest` release for now.
-
-CSS-Bookends is the long-term home for everything beyond measurement (spacing,
-colours, borders, and more), so moving over is the recommended path.
+(The original unscoped `css-calipers` bundled a media query helper and is now
+deprecated; use `@css-bookends/css-calipers` for measurement and add
+`@css-bookends/media-queries` for media queries.)
 
 ---
 
