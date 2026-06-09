@@ -52,8 +52,10 @@ fi
 echo "Mirroring $SRC -> $DEST ..."
 rsync "${RSYNC_OPTS[@]}" "$SRC/" "$DEST/"
 
-# Carry the funding config (GitHub Sponsor button / buy-me-a-coffee) over from
-# the monorepo root, so the mirror always has it regardless of its prior state.
+# Reset the mirror's .github to exactly what we want: just the funding config.
+# The mirror has no CI of its own (the monorepo is the source of truth and runs
+# CI); a stale workflow here only produces red Xs against a removed lockfile.
+rm -rf "$DEST/.github"
 mkdir -p "$DEST/.github"
 cp "$REPO_ROOT/.github/FUNDING.yml" "$DEST/.github/FUNDING.yml"
 
