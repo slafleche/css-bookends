@@ -19,7 +19,8 @@
     "lint": "pnpm -r lint",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "pnpm -r build && changeset publish"
+    "release": "pnpm -r build && changeset publish",
+    "release:beta": "pnpm -r build && changeset publish --tag beta"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0"

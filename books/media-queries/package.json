@@ -1,6 +1,6 @@
 {
   "name": "@css-bookends/media-queries",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Experimental media query helpers, built on css-calipers. Part of the CSS-Bookends umbrella.",
   "license": "MIT",
   "repository": {
@@ -9,7 +9,6 @@
     "directory": "books/media-queries"
   },
   "author": "slafleche",
-  "private": true,
   "publishConfig": {
     "access": "public"
   },
