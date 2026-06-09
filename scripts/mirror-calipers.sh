@@ -67,6 +67,17 @@ VERSION="$(node -p "require('$SRC/package.json').version")"
 TAG="v$VERSION"
 
 cd "$DEST"
+
+# This repo is the standalone css-calipers: rewrite the scoped name / docs / repo
+# link to the unscoped identity. (`@css-bookends/media-queries` refs are left
+# alone, they correctly point at the book.)
+npm pkg set name=css-calipers >/dev/null
+npm pkg set repository.url="git+https://github.com/slafleche/css-calipers.git" >/dev/null
+npm pkg delete repository.directory >/dev/null 2>&1 || true
+for f in README.md README_MEASUREMENT.md; do
+  [ -f "$f" ] && sed -i '' 's#@css-bookends/css-calipers#css-calipers#g' "$f"
+done
+
 git add -A
 if git diff --cached --quiet; then
   echo "No file changes to mirror."

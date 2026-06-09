@@ -71,15 +71,17 @@ If you prefer, you can also import unit helpers from dedicated subpaths. For exa
 
 ## Media queries
 
-Media queries are not part of this package. They live in
+Media queries are not part of CSS-Calipers, which is purely the measurement
+layer. They live in
 [`@css-bookends/media-queries`](https://www.npmjs.com/package/@css-bookends/media-queries),
-a separate book in the [CSS-Bookends](https://github.com/slafleche/css-bookends)
-umbrella that builds on this measurement lexicon. Install it alongside this
-package when you need them.
+a book in the [CSS-Bookends](https://github.com/slafleche/css-bookends) umbrella
+that builds on this lexicon.
 
-(The original unscoped `css-calipers` bundled a media query helper and is now
-deprecated; use `@css-bookends/css-calipers` for measurement and add
-`@css-bookends/media-queries` for media queries.)
+**Upgrading to v1?** The only change is media queries. If you never used the media
+query helper, v1 is a drop-in, nothing to change, no functional difference. If you
+did use it, switch to [CSS-Bookends](https://github.com/slafleche/css-bookends),
+which has the same measurement layer plus the media query helper and the rest of
+the umbrella.
 
 ---
 
