@@ -1,0 +1,53 @@
+{
+  "name": "@css-bookends/supports-fallback",
+  "version": "0.1.0",
+  "description": "Compiler-agnostic @supports fallback builder: returns plain { selector, style } data for any styling tool. A book in the CSS-Bookends umbrella.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slafleche/css-bookends.git",
+    "directory": "books/supports-fallback"
+  },
+  "author": "slafleche",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "type": "commonjs",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.60.0",
+    "@typescript-eslint/parser": "^8.60.0",
+    "@vanilla-extract/css": "^1.20.1",
+    "eslint": "^9.39.2",
+    "typescript": "^5.6.3",
+    "vitest": "^4.1.7"
+  },
+  "scripts": {
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc -p tsconfig.build.cjs.json",
+    "build:esm": "tsc -p tsconfig.build.esm.json && node scripts/emit-esm-package.mjs",
+    "test": "npm run build && npm run test:src && npm run test:tsc && npm run lint",
+    "test:src": "vitest run tests/runtime/supportsFallback.src.test.ts",
+    "test:tsc": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings=0"
+  }
+}
