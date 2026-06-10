@@ -28,7 +28,7 @@ export function printer<Raw, Store, Out, Cfg, Opts = void>(
     };
 
     const cfg = { ...base.defaults, ...over.config } as Cfg;
-    const toStore = (raw: Raw): Store => press.storage(press.input(raw, cfg), cfg);
+    const toStore = (raw?: Raw): Store => press.storage(press.input(raw, cfg), cfg);
 
     const names = Object.keys(press.outputs);
     if (names.length === 0) {
@@ -45,7 +45,7 @@ export function printer<Raw, Store, Out, Cfg, Opts = void>(
       outputs[name] = (store: Store, opts?: Opts): Out => render(store, cfg, opts);
     }
 
-    const book = ((raw: Raw, opts?: Opts): Out =>
+    const book = ((raw?: Raw, opts?: Opts): Out =>
       outputs[pick](toStore(raw), opts)) as Book<Raw, Store, Out, Cfg, Opts>;
     book.store = toStore;
     book.outputs = outputs;

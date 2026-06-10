@@ -12,17 +12,19 @@ interface Store {
 }
 interface Cfg {
   unit: string;
+  base: number;
 }
 
 const paddingPress: Press<Raw, Store, string, Cfg> = {
-  defaults: { unit: 'px' },
-  // page 1 — accept a number or an axis object, parse to the canonical store
-  input: (raw) => {
-    if (typeof raw === 'number') {
-      return { top: raw, right: raw, bottom: raw, left: raw };
+  defaults: { unit: 'px', base: 0 },
+  // page 1 — accept nothing (use the global default), a number, or an axis object
+  input: (raw, cfg) => {
+    const value = raw ?? cfg.base;
+    if (typeof value === 'number') {
+      return { top: value, right: value, bottom: value, left: value };
     }
-    const x = raw.x ?? raw.all ?? 0;
-    const y = raw.y ?? raw.all ?? 0;
+    const x = value.x ?? value.all ?? cfg.base;
+    const y = value.y ?? value.all ?? cfg.base;
     return { top: y, right: x, bottom: y, left: x };
   },
   // page 2 — already canonical here
@@ -41,6 +43,11 @@ const paddingPress: Press<Raw, Store, string, Cfg> = {
 const makePadding = printer(paddingPress);
 
 describe('printer', () => {
+  it('is callable with no args and prints the global defaults', () => {
+    expect(makePadding()()).toBe('padding:0px 0px 0px 0px');
+    expect(makePadding({ config: { base: 8 } })()).toBe('padding:8px 8px 8px 8px');
+  });
+
   it('runs input -> storage -> default output on a bare call', () => {
     expect(makePadding()(4)).toBe('padding:4px 4px 4px 4px');
   });

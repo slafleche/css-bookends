@@ -11,8 +11,12 @@
  *   3. output   one or more renderers from the store to CSS (longform, shorthand, ...)
  */
 
-/** Page 1: parse a permissive raw input into the canonical store. */
-export type InputPage<Raw, Store, Cfg> = (raw: Raw, cfg: Cfg) => Store;
+/**
+ * Page 1: parse a permissive raw input into the canonical store.
+ * `raw` is optional: a bare call (`borders()`) passes `undefined`, and the input
+ * page is expected to seed the store from `cfg` (the global defaults).
+ */
+export type InputPage<Raw, Store, Cfg> = (raw: Raw | undefined, cfg: Cfg) => Store;
 
 /** Page 2: normalize the canonical store into its final, trusted form. */
 export type StoragePage<Store, Cfg> = (store: Store, cfg: Cfg) => Store;
@@ -44,10 +48,10 @@ export type BoundOutputs<Store, Out, Opts> = Record<string, (store: Store, opts?
 
 /** A printed book: callable (renders the default output), with its pages exposed. */
 export interface Book<Raw, Store, Out, Cfg, Opts = void> {
-  /** render `raw` through input -> storage -> default output. */
-  (raw: Raw, opts?: Opts): Out;
+  /** render `raw` through input -> storage -> default output. A bare call uses the global defaults. */
+  (raw?: Raw, opts?: Opts): Out;
   /** run pages 1+2: raw -> canonical store (for composing across books). */
-  store(raw: Raw): Store;
+  store(raw?: Raw): Store;
   /** page-3 renderers, config pre-bound, keyed by name. */
   outputs: BoundOutputs<Store, Out, Opts>;
   /** the fully resolved press, to re-print with further overrides. */
