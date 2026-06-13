@@ -11,9 +11,15 @@ importers:
       '@changesets/cli':
         specifier: ^2.31.0
         version: 2.31.0(@types/node@24.12.4)
+      prettier:
+        specifier: ^3.8.4
+        version: 3.8.4
 
   bookpress:
     devDependencies:
+      '@css-bookends/css-calipers':
+        specifier: workspace:*
+        version: link:../lexicons/calipers
       '@eslint/js':
         specifier: ^9.39.2
         version: 9.39.4
@@ -379,6 +385,9 @@ importers:
 
   packages/shelf:
     dependencies:
+      '@css-bookends/colours':
+        specifier: workspace:*
+        version: link:../../lexicons/colours
       '@css-bookends/css-calipers':
         specifier: workspace:*
         version: link:../../lexicons/calipers
@@ -1642,6 +1651,11 @@ packages:
   prettier@2.8.8:
     resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
     engines: {node: '>=10.13.0'}
+    hasBin: true
+
+  prettier@3.8.4:
+    resolution: {integrity: sha512-N2MylSdi48+5N/6S5j+maeHbUSIzzZ5uOcX5Hm4QpV8Dkb1HFjfAKTKX6yNPJQD9AhcT3ifHNB66tWTTJDi11Q==}
+    engines: {node: '>=14'}
     hasBin: true
 
   pretty-format@29.7.0:
@@ -3246,6 +3260,8 @@ snapshots:
   prelude-ls@1.2.1: {}
 
   prettier@2.8.8: {}
+
+  prettier@3.8.4: {}
 
   pretty-format@29.7.0:
     dependencies:

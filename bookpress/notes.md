@@ -16,7 +16,7 @@ it to identity so a press can omit it when input already yields the canonical st
 
 ## Shelf composition  (todo)
 
-`printer` makes one book. The project-level composition root (a `shelfFactory`
+`bookPress` makes one book. The project-level composition root (a `shelfFactory`
 wiring many books with shared config) is not here yet. Decide whether it belongs
 in bookpress or in each project.
 

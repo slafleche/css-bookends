@@ -1,19 +1,19 @@
 ---
 name: authoring-a-book
-description: How to build or rework a CSS-Bookends book with bookpress, the printer, the press, and the three pages (input, storage, output). Use whenever adding or changing a book/helper in this repo.
+description: How to build or rework a CSS-Bookends book with bookpress, the bookPress, the press, and the three pages (input, storage, output). Use whenever adding or changing a book/helper in this repo.
 ---
 
 # authoring-a-book
 
 A **book** is a workable library for one CSS concern (borders, shadows, spacing).
-Every book is stamped out by the **printer** from `@css-bookends/bookpress`, from a
+Every book is stamped out by the **bookPress** from `@css-bookends/bookpress`, from a
 **press** definition made of three **pages**. See `/ARCHITECTURE.md` and
 `/bookpress/README.md` for the canonical model.
 
 ## The press: three pages + defaults
 
 ```ts
-import { printer, type Press } from '@css-bookends/bookpress';
+import { bookPress, type Press } from '@css-bookends/bookpress';
 
 const press: Press<Raw, Store, Out, Cfg, Opts> = {
   defaults: { /* config defaults */ },
@@ -23,7 +23,7 @@ const press: Press<Raw, Store, Out, Cfg, Opts> = {
   default: 'short',
 };
 
-export const makeBorders = printer(press);
+export const makeBorders = bookPress(press);
 ```
 
 ## The three pages
@@ -41,9 +41,9 @@ export const makeBorders = printer(press);
 - **Compiler-agnostic (hard rule).** No core package imports a CSS compiler
   (vanilla-extract etc.). Pages return plain data and strings; tools consume them.
   Examples MAY use a compiler, as a devDependency only.
-- **Pages are overridable and composable.** The printer can rewrite any page or the
+- **Pages are overridable and composable.** The bookPress can rewrite any page or the
   whole press: `makeBorders({ storage: mine })`, or reuse another book's pages via
-  `book.store` / `book.outputs`, or `printer(book.press)({ ... })`.
+  `book.store` / `book.outputs`, or `bookPress(book.press)({ ... })`.
 - **Types, tests, notes.** Put the input contract and store/output types in
   `src/types.ts` (lock big input designs in a `design.md`, see `books/borders/`).
   Bring a runtime test under `tests/runtime/`. Add a `notes.md` of known debt.

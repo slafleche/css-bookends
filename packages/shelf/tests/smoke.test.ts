@@ -14,4 +14,12 @@ describe('css-bookends bookshelf', () => {
     expect(typeof shelf.mediaQueryFactory).toBe('function');
     expect(typeof shelf.buildMediaQueryString).toBe('function');
   });
+
+  it('exposes a colours book produced by the factory (not the raw helper)', () => {
+    expect(typeof shelf.colours).toBe('function'); // the factory-made instance
+    expect(typeof shelf.bookPressColours).toBe('function'); // the factory itself
+    expect('color' in shelf).toBe(false); // raw helper is NOT surfaced
+    expect(shelf.colours('#3366cc').css()).toBe('rgb(51 102 204)');
+    expect(shelf.colours('#3366cc').css(shelf.colorFormats.hex)).toBe('#3366cc');
+  });
 });

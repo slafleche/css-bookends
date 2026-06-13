@@ -4,14 +4,14 @@ A design record for two open bookpress questions:
 
 - **a)** how to override a page (input / storage / output) without overwriting the
   whole thing, and
-- **b)** how that mechanism fits into the printer (the factory).
+- **b)** how that mechanism fits into the bookPress (the factory).
 
 Backed by a survey of how mainstream libraries solve the same problem. Sources are
 listed once at the bottom; inline pointers reference them by name.
 
 ## The problem
 
-`printer` resolves overrides replace-only today (`printer.ts`):
+`bookPress` resolves overrides replace-only today (`bookPress.ts`):
 
 ```
 input:   over.input ?? base.input        // whole page swapped
@@ -62,7 +62,7 @@ rest), which is what we already do. Only the *pages* need the enhancer form.
    input, storage, and each named output.
 3. **Decorator-vs-fallback is the author's choice**, expressed by where they call
    `base` inside the wrapper. bookpress does not impose a default.
-4. **Composition order = re-print stacking.** `printer(book.press)(...)` is the
+4. **Composition order = re-print stacking.** `bookPress(book.press)(...)` is the
    compose step; each re-print adds one onion layer, newest outermost. Document
    this, because order is the #1 decorator footgun.
 5. **Config keeps shallow `Partial` merge.** Only pages get the enhancer form.
@@ -71,7 +71,7 @@ rest), which is what we already do. Only the *pages* need the enhancer form.
 
 - Exact `PressOverrides` surface for the wrap channel (a parallel `wrap` field vs.
   a union on the existing page keys) — to be sketched against `types.ts` +
-  `printer.ts`, weighing the type cost against borders' function-valued outputs.
+  `bookPress.ts`, weighing the type cost against borders' function-valued outputs.
 - How this subsumes the `notes.md` "output access per call" question (once outputs
   can be wrapped + selected, picking an output is just config feeding the pick).
 

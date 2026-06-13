@@ -1,95 +1,126 @@
+import { m, type IMeasurement } from '@css-bookends/css-calipers';
 import { describe, expect, it } from 'vitest';
-import { printer, type Press } from '../../src';
 
-/* A tiny, dependency-free "padding" book used to exercise the printer. */
+import { publishBook, type Manuscript } from '../../src';
 
-type Raw = number | { all?: number; x?: number; y?: number };
+/*
+ * A throwaway demo book to exercise the engine (not a real helper). Its value is a
+ * css-calipers measurement (`m()`); its result exposes `.css()` (required) plus a
+ * `.double()` alternate render, mirroring how a real book's result is richer than
+ * just `.css()` (e.g. colours' ResolvedColour).
+ *
+ * css-calipers is a devDependency only: it does not depend on bookpress (no cycle),
+ * and bookpress keeps zero runtime dependencies.
+ */
+type Raw = number;
 interface Store {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
+  size: IMeasurement;
 }
 interface Cfg {
-  unit: string;
   base: number;
+  unit: string;
+}
+interface DemoOut {
+  css(): string;
+  double(): string;
 }
 
-const paddingPress: Press<Raw, Store, string, Cfg> = {
-  defaults: { unit: 'px', base: 0 },
-  // page 1 — accept nothing (use the global default), a number, or an axis object
-  input: (raw, cfg) => {
-    const value = raw ?? cfg.base;
-    if (typeof value === 'number') {
-      return { top: value, right: value, bottom: value, left: value };
-    }
-    const x = value.x ?? value.all ?? cfg.base;
-    const y = value.y ?? value.all ?? cfg.base;
-    return { top: y, right: x, bottom: y, left: x };
-  },
-  // page 2 — already canonical here
-  storage: (store) => store,
-  // page 3 — two valid renderings of the same store
-  outputs: {
-    long: (s, cfg) =>
-      `padding-top:${s.top}${cfg.unit};padding-right:${s.right}${cfg.unit};` +
-      `padding-bottom:${s.bottom}${cfg.unit};padding-left:${s.left}${cfg.unit}`,
-    short: (s, cfg) =>
-      `padding:${s.top}${cfg.unit} ${s.right}${cfg.unit} ${s.bottom}${cfg.unit} ${s.left}${cfg.unit}`,
-  },
-  default: 'short',
+const demoManuscript: Manuscript<Raw, Store, DemoOut, Cfg> = {
+  defaults: { base: 0, unit: 'px' },
+  input: (raw, cfg) => ({ size: m(raw ?? cfg.base, cfg.unit) }), // step 1
+  storage: (s) => s, // step 2 (already canonical)
+  output: (s) => ({
+    css: () => s.size.css(),
+    double: () => s.size.double().css(),
+  }), // step 3 (result with .css() and a richer .double())
 };
 
-const makePadding = printer(paddingPress);
+const makeDemo = publishBook(demoManuscript);
 
-describe('printer', () => {
-  it('is callable with no args and prints the global defaults', () => {
-    expect(makePadding()()).toBe('padding:0px 0px 0px 0px');
-    expect(makePadding({ config: { base: 8 } })()).toBe('padding:8px 8px 8px 8px');
+describe('publishBook', () => {
+  it('is callable with no args and uses the global defaults', () => {
+    expect(makeDemo()().css()).toBe('0px');
+    expect(makeDemo({ config: { base: 8 } })().css()).toBe('8px');
   });
 
-  it('runs input -> storage -> default output on a bare call', () => {
-    expect(makePadding()(4)).toBe('padding:4px 4px 4px 4px');
+  it('runs input -> storage -> output on a bare call', () => {
+    expect(makeDemo()(4).css()).toBe('4px');
   });
 
-  it('accepts many input shapes (the input page)', () => {
-    expect(makePadding()({ x: 2, y: 8 })).toBe('padding:8px 2px 8px 2px');
+  it('the result is richer than css (a .double() alternate render)', () => {
+    expect(makeDemo()(4).double()).toBe('8px');
   });
 
-  it('exposes named outputs with config pre-bound', () => {
-    const padding = makePadding();
-    const store = padding.store(4);
-    expect(padding.outputs.long(store)).toBe(
-      'padding-top:4px;padding-right:4px;padding-bottom:4px;padding-left:4px',
-    );
+  it('store() runs input + storage for composing across books', () => {
+    expect(makeDemo().store(4).size.css()).toBe('4px');
   });
 
-  it('overrides config at print time', () => {
-    expect(makePadding({ config: { unit: 'rem' } })(4)).toBe('padding:4rem 4rem 4rem 4rem');
+  it('overrides config at publish time', () => {
+    expect(makeDemo({ config: { unit: 'rem' } })(4).css()).toBe('4rem');
   });
 
-  it('rewrites a single page (storage) while keeping the rest', () => {
-    const noTop = makePadding({ storage: (s) => ({ ...s, top: 0 }) });
-    expect(noTop(4)).toBe('padding:0px 4px 4px 4px');
+  it('replaces a single step (storage) while keeping the rest', () => {
+    expect(makeDemo({ storage: (s) => ({ size: s.size.add(1) }) })(4).css()).toBe('5px');
   });
 
-  it('rewrites which output a bare call uses', () => {
-    expect(makePadding({ default: 'long' })(4)).toBe(
-      'padding-top:4px;padding-right:4px;padding-bottom:4px;padding-left:4px',
-    );
-  });
-
-  it('re-prints from a book, adding a whole new output', () => {
-    const padding = makePadding();
-    const csv = printer(padding.press)({
-      outputs: { csv: (s) => `${s.top},${s.right},${s.bottom},${s.left}` },
-      default: 'csv',
+  it('re-publishes from a book, replacing the output', () => {
+    const demo = makeDemo();
+    const reissued = publishBook(demo.manuscript)({
+      output: (s) => ({ css: () => s.size.double().css(), double: () => s.size.double().css() }),
     });
-    expect(csv(4)).toBe('4,4,4,4');
+    expect(reissued(4).css()).toBe('8px');
+  });
+});
+
+describe('publishBook — wrap (onion)', () => {
+  it('wrap.storage decorates the base step (wrap-only wraps base)', () => {
+    const bumped = makeDemo({
+      wrap: { storage: (base) => (s, cfg) => ({ size: base(s, cfg).size.add(100) }) },
+    });
+    expect(bumped(4).css()).toBe('104px');
   });
 
-  it('throws when the default output is missing', () => {
-    const bad = printer({ ...paddingPress, default: 'nope' });
-    expect(() => bad()).toThrow();
+  it('wrap.input composes around base (runs before base parses)', () => {
+    const offset = makeDemo({
+      wrap: { input: (base) => (raw, cfg) => base((raw ?? 0) + 10, cfg) },
+    });
+    expect(offset(4).css()).toBe('14px');
+  });
+
+  it('wrap.output decorates the result', () => {
+    const bracketed = makeDemo({
+      wrap: {
+        output: (base) => (s, cfg, opts) => {
+          const r = base(s, cfg, opts);
+          return { ...r, css: () => `[${r.css()}]` };
+        },
+      },
+    });
+    expect(bracketed(4).css()).toBe('[4px]');
+  });
+
+  it('replace + wrap compose: the wrap receives the replaced step', () => {
+    const r = makeDemo({
+      storage: () => ({ size: m(1) }), // replace: 1px
+      wrap: { storage: (base) => (s, cfg) => ({ size: base(s, cfg).size.add(10) }) },
+    });
+    expect(r(4).css()).toBe('11px'); // 1 (replaced) + 10 (wrap)
+  });
+
+  it('onion: re-publishing stacks wraps newest-outermost', () => {
+    const order: string[] = [];
+    const ring =
+      (label: string) =>
+      (base: Manuscript<Raw, Store, DemoOut, Cfg>['storage']) =>
+      (s: Store, cfg: Cfg): Store => {
+        order.push(label);
+        return base(s, cfg);
+      };
+
+    const inner = makeDemo({ wrap: { storage: ring('inner') } });
+    const outer = publishBook(inner.manuscript)({ wrap: { storage: ring('outer') } });
+
+    outer(4);
+    expect(order).toEqual(['outer', 'inner']); // newest ring runs first / outermost
   });
 });

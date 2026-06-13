@@ -342,7 +342,7 @@ describe('colours — gaps (not yet supported)', () => {
   it.todo('conveniences: complement (hue + 180), invert, grayscale');
   it.todo('additional blend modes beyond multiply / screen');
 
-  // Outputs (the book exposes format selection via .css(format); these remain)
-  it.todo('alpha-aware hex output (#rrggbbaa)');
+  // Outputs (the book exposes format selection via .css(format); alpha-aware hex
+  // is done as colorFormats.hexAlpha. These remain.)
   it.todo('lab() / lch() / display-p3 / color() function outputs');
 });

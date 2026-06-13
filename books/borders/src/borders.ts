@@ -1,4 +1,4 @@
-import { printer, type Press } from '@css-bookends/bookpress';
+import { bookPress, type Press } from '@css-bookends/bookpress';
 import { color, type ColorWrapper } from '@css-bookends/colours';
 import { m, type IMeasurement } from '@css-bookends/css-calipers';
 
@@ -209,5 +209,5 @@ const bordersPress: Press<BordersInput, Store, ResolvedBorders, BordersConfig> =
  * borders book. A bare call renders the global defaults.
  */
 export function makeBorders(config: Partial<BordersConfig> = {}): Borders {
-  return printer(bordersPress)({ config }) as Borders;
+  return bookPress(bordersPress)({ config }) as Borders;
 }

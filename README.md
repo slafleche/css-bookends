@@ -92,6 +92,36 @@ CSS remains the final specification. This system does not replace it, restrict
 it, or redefine it. It enforces correctness at authoring time and emits fully
 inspectable CSS.
 
+## Terminology
+
+A glossary of the architecture terms used across this repo. See `ARCHITECTURE.md`
+for the model and `AGENTS.md` for the rules that enforce these.
+
+- **lexicon** : a foundational vocabulary, typed values and the operations on them
+  (measurement, colours, spacing). Depends on little or nothing else.
+- **book** : a standalone helper for one CSS concern (borders, shadows, ...),
+  built on one or more lexicons. Takes typed tokens, emits plain CSS.
+- **page** : one of a book's three stages, `input` (accept many shapes) ->
+  `storage` (one canonical internal shape) -> `output` (render to CSS).
+- **press** : the definition of a book, its three pages plus config defaults.
+- **bookPress** : the factory engine in `@css-bookends/bookpress` that stamps a book
+  from a press, able to override any single page or the whole press.
+- **bookpress** : the package that provides the `bookPress` and the press types.
+- **`bookPress<BookName>`** : a book's factory function, named with the `bookPress`
+  prefix (for example `bookPressColours`, `bookPressBorders`). The metaphor: the
+  bookPress presses a book from its press. Calling it returns a configured book. This
+  is the only sanctioned way to obtain a helper; the raw value-helper is never
+  imported directly.
+- **default instance** : each package calls its own factory once with the built-in
+  defaults and exports the result (for example `colours`). Import this instance,
+  not the raw helper.
+- **shelf** (`@css-bookends/shelf`) : the aggregate composition root. It pulls in
+  every book's default instance and re-exports them, so a single import gives you
+  the whole preconfigured set.
+- **`.css()`** : the single render terminal. Every helper renders its final output
+  through `.css()`; the output variant is chosen by config or a typed format object
+  (for example `colorFormats.hex`), never by a per-format render method.
+
 ## Installation
 
 Install only the pieces you want; nothing pulls in the rest of the umbrella.

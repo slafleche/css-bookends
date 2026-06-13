@@ -12,7 +12,7 @@
  *     each modification returns a NEW resolved colour (already how `ColorWrapper`
  *     behaves, so no new cost beyond a small adapter allocation).
  */
-import { printer, type Press } from '@css-bookends/bookpress';
+import { bookPress, type Press } from '@css-bookends/bookpress';
 import type { DegMeasurement } from '@css-bookends/css-calipers';
 
 import {
@@ -207,9 +207,9 @@ const coloursPress: Press<ColourInput, ColorWrapper, ResolvedColour, ColoursConf
 export type Colours = (input?: ColourInput) => ResolvedColour;
 
 /**
- * makeColours: the colours factory. Give it defaults + default output format, get
+ * bookPressColours: the colours factory. Give it defaults + default output format, get
  * a colours book. A bare call resolves the configured base colour.
  */
-export function makeColours(config: Partial<ColoursConfig> = {}): Colours {
-  return printer(coloursPress)({ config }) as Colours;
+export function bookPressColours(config: Partial<ColoursConfig> = {}): Colours {
+  return bookPress(coloursPress)({ config }) as Colours;
 }

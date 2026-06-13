@@ -1,2 +1,2 @@
-export * from './printer';
+export * from './publishBook';
 export * from './types';

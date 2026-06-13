@@ -1,14 +1,14 @@
 import { m } from '@css-bookends/css-calipers';
 import { describe, expect, it } from 'vitest';
 
-import { colorFormats, makeColours } from '../../src';
+import { colorFormats, bookPressColours } from '../../src';
 
-const colours = makeColours();
+const colours = bookPressColours();
 
 describe('colours book — factory + bare call', () => {
   it('a bare call resolves the configured base colour', () => {
-    expect(makeColours()().css()).toBe('rgb(0 0 0)'); // default base 'black'
-    expect(makeColours({ base: 'red' })().css()).toBe('rgb(255 0 0)');
+    expect(bookPressColours()().css()).toBe('rgb(0 0 0)'); // default base 'black'
+    expect(bookPressColours({ base: 'red' })().css()).toBe('rgb(255 0 0)');
   });
 
   it('delegates parsing to the existing color() helper', () => {
@@ -22,9 +22,9 @@ describe('colours book — output is always .css(), format is a typed object', (
 
   it('.css() renders the factory-configured format', () => {
     expect(c.css()).toBe('rgb(51 102 204)'); // default colorFormats.css
-    expect(makeColours({ output: colorFormats.hex })('#3366cc').css()).toBe('#3366cc');
+    expect(bookPressColours({ output: colorFormats.hex })('#3366cc').css()).toBe('#3366cc');
     expect(
-      makeColours({ output: colorFormats.oklch })('#3366cc').css().startsWith('oklch('),
+      bookPressColours({ output: colorFormats.oklch })('#3366cc').css().startsWith('oklch('),
     ).toBe(true);
   });
 

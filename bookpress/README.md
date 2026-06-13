@@ -9,7 +9,7 @@ The press that makes books.
 - **book** : a workable library for one CSS concern (borders, shadows, ...),
   built by combining three pages.
 - **press** : the definition of a book, its three pages plus config defaults.
-- **printer** : the factory in this package. Give it a press, get a function that
+- **bookPress** : the factory in this package. Give it a press, get a function that
   stamps out a book, able to rewrite any page or the whole press.
 
 ## The three pages of every book
@@ -24,7 +24,7 @@ See [`/ARCHITECTURE.md`](../ARCHITECTURE.md) for the full model.
 ## Usage
 
 ```ts
-import { printer, type Press } from '@css-bookends/bookpress';
+import { bookPress, type Press } from '@css-bookends/bookpress';
 
 const press: Press<Raw, Store, string, Cfg> = {
   defaults: { unit: 'px' },
@@ -37,7 +37,7 @@ const press: Press<Raw, Store, string, Cfg> = {
   default: 'short',
 };
 
-const makeBorders = printer(press);
+const makeBorders = bookPress(press);
 
 const borders = makeBorders();                            // defaults
 const rem     = makeBorders({ config: { unit: 'rem' } }); // config override
@@ -46,7 +46,7 @@ const custom  = makeBorders({ storage: myStorage });      // rewrite one page
 borders(input);                  // input -> storage -> default output
 borders.outputs.long(store);     // a named output, config pre-bound
 borders.store(input);            // pages 1+2 only, to compose across books
-printer(borders.press)({ ... }); // re-print, rewriting the whole press
+bookPress(borders.press)({ ... }); // re-print, rewriting the whole press
 ```
 
 ## Compiler-agnostic

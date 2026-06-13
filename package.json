@@ -17,12 +17,15 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "changeset": "changeset",
     "version": "changeset version",
     "release": "bash scripts/release-all.sh",
     "release:npm-only": "pnpm -r build && changeset publish"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0"
+    "@changesets/cli": "^2.31.0",
+    "prettier": "^3.8.4"
   }
 }

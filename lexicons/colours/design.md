@@ -11,12 +11,12 @@ This file is the spec. Everything marked "supported" is verified by
 that same file, so the doc and the tests stay in lockstep.
 
 Canonical runtime lives in `src/colorWrap.ts` (kept as-is). The book wiring
-(`src/colours.ts`, `makeColours`) is built (pass 1) and delegates entirely to that
+(`src/colours.ts`, `bookPressColours`) is built (pass 1) and delegates entirely to that
 wrapper; a later pass rewrites the internals (chroma-js -> culori, see `notes.md`).
 
 | Page | Status |
 | --- | --- |
-| Structure (book shape) | Built (pass 1: `makeColours` delegates to `colorWrap`) |
+| Structure (book shape) | Built (pass 1: `bookPressColours` delegates to `colorWrap`) |
 | 1. Input | Implemented via `color()` + `color.create.*` |
 | 2. Storage + modifications | Implemented (immutable `ColorWrapper`) |
 | 3. Output | Implemented (several formats), some still reach through `unsafeColor` |
@@ -43,7 +43,7 @@ outputs) with a lexicon-grade value algebra living on the resolved result.
 
 Built surface (pass 1, in `src/colours.ts`):
 
-- `makeColours(config)` - the factory (printer + press), config = default output
+- `bookPressColours(config)` - the factory (bookPress + press), config = default output
   format (`output`), base colour (`base`), and `cssOptions`.
 - A `ResolvedColour` returned per call: the single render terminal
   `.css(format?: CssFormat)` (format defaults to `config.output`), format
@@ -173,7 +173,7 @@ Two files form the contract:
   - `colours - outputs (supported)` covers the Outputs table.
   - `colours - gaps (not yet supported)` holds an `it.todo` per gap above; convert
     each to a real assertion as it is implemented.
-- `tests/runtime/colours.book.src.test.ts` - the book contract: `makeColours`
+- `tests/runtime/colours.book.src.test.ts` - the book contract: `bookPressColours`
   factory + bare call, `.css()` rendering `config.output` (and `.css(format)`
   overriding per call), and modifications returning navigable resolved colours.
 

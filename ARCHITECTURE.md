@@ -11,11 +11,22 @@ all lexicons/books are being reworked toward.
   built by combining three pages.
 - **page** : one of a book's three stages, `input` -> `storage` -> `output(s)`.
 - **press** : the definition of a book, its three pages plus config defaults.
-- **printer** : the factory (in `@css-bookends/bookpress`) that stamps a book from
-  a press, able to rewrite any page or the whole press. This is the "factory" the
-  sections below describe, made concrete.
-- **shelf** : the per-project composition root that wires books together with
-  shared config.
+- **bookPress** : the factory engine (in `@css-bookends/bookpress`) that stamps a
+  book from a press, able to rewrite any single page or the whole press. This is
+  the "factory" the sections below describe, made concrete.
+- **bookpress** : the package that provides the `bookPress` and the press types.
+- **`bookPress<BookName>`** : a book's factory function, named with the `bookPress`
+  prefix (for example `bookPressColours`, `bookPressBorders`). Calling it returns a
+  configured book. This is the only sanctioned way to obtain a helper; the raw
+  value-helper is never imported directly.
+- **default instance** : each package calls its own factory once with the built-in
+  defaults and exports the result (for example `colours`). Consumers import this
+  instance, not the raw helper.
+- **shelf** : the per-project / aggregate composition root that wires books
+  together with shared config and re-exports their default instances.
+
+This list is kept in sync with the glossary in `README.md` (user-facing) and the
+rules in `AGENTS.md`. Update all three together.
 
 ## Goal: a stable public surface that absorbs internal change
 

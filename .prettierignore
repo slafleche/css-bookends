@@ -1,0 +1,12 @@
+# Build + tooling output
+node_modules/
+dist/
+coverage/
+.turbo/
+
+# Generated / lockfiles
+pnpm-lock.yaml
+
+# VitePress
+**/docs/.vitepress/dist/
+**/docs/.vitepress/cache/

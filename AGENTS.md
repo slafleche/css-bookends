@@ -5,6 +5,43 @@ factory + book model, and each package's `design.md` / `notes.md` for specifics.
 
 ## Global rules
 
+### Consume helpers from a factory, never import directly (absolute)
+
+Every helper (lexicon or book) is produced by a factory. Consume the factory, or
+an instance the composition root made from it, never the raw helper/value-function
+imported straight from its module.
+
+- **Factory naming: `bookPress<BookName>`.** A book's factory is named with the
+  `bookPress` prefix plus the book's name, e.g. `bookPressColours`,
+  `bookPressBorders`, `bookPressShadows`. The metaphor: the `bookpress` package's
+  `bookPress` presses a book from its press. Do NOT use `make*` / `create*` for a
+  book factory.
+
+There are two levels of composition, both of which call factories and re-export
+configured instances:
+
+- **Per-package default instance.** Each helper package ships a file that calls its
+  own factory once with the built-in defaults and exports the configured instance
+  (e.g. `lexicons/colours/src/default.ts` exports `colours = bookPressColours()`). Import
+  that instance, not the raw helper. This file is the helper's stable footprint:
+  rewire it and every call site follows.
+- **The shelf (aggregate root).** Importing `@css-bookends/shelf` gives you a file
+  that pulls in every helper's default instance and re-exports them, so one import
+  gets the whole preconfigured set. It does NOT flat re-export raw helpers, so the
+  raw value-helper is not reachable through it (e.g. `colours` and `bookPressColours` are
+  exposed; `color()` is not).
+- **Call sites use the instance** (`colours('#fff').css()`), from the shelf or the
+  package's default file, or call the factory for a differently-configured one
+  (`bookPressColours({ ... })`).
+- **Never reach past the factory** to import the underlying helper, even when it is
+  exported from its own package for the factory's use.
+
+Why: the factory is the override seam. It lets you rewrite any page (input,
+storage, output) or the whole press, and swap internals (libraries, sources) with
+zero changes at call sites (see `bookpress/composition.md` and `bookPress`). A direct
+import bypasses that seam and freezes every call site to one implementation, which
+is exactly what this architecture exists to prevent.
+
 ### Output is always `.css()` (absolute)
 
 Every helper in CSS-Bookends, lexicon or book, renders its final output through a

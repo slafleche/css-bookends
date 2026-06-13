@@ -1,7 +1,7 @@
 {
   "name": "@css-bookends/bookpress",
   "version": "0.1.0",
-  "description": "The press that makes books. A printer combines the three pages (input, storage, output) of a CSS helper into a workable, overridable library. The composition machinery of CSS-Bookends.",
+  "description": "The press that binds books. The publishBook engine combines the three pages (input, storage, output) of a CSS helper into a workable, overridable library. The composition machinery of CSS-Bookends.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -32,6 +32,7 @@
     "./package.json": "./package.json"
   },
   "devDependencies": {
+    "@css-bookends/css-calipers": "workspace:*",
     "@eslint/js": "^9.39.2",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.60.0",
