@@ -16,7 +16,9 @@ export type SupportsFallbackRule<Style> = {
 const wrapQuery = (query: string): string => {
   const trimmed = query.trim();
   if (!trimmed.length) {
-    throw new Error('createSupportsFallback requires a non-empty query.');
+    throw new Error(
+      'createSupportsFallback requires a non-empty query.',
+    );
   }
   if (trimmed.startsWith('(') && trimmed.endsWith(')')) {
     return trimmed;
@@ -44,7 +46,11 @@ export const createSupportsFallback = (query: string) => {
     supported,
     fallback,
   }: SupportsFallbackConfig<Style>): SupportsFallbackRule<Style>[] => {
-    const selectors = Array.isArray(selector) ? selector : [selector];
+    const selectors = Array.isArray(selector)
+      ? selector
+      : [
+          selector,
+        ];
     return selectors.map((target) => ({
       selector: target,
       style: {

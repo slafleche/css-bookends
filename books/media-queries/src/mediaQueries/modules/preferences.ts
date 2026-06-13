@@ -21,7 +21,12 @@ export const emitPreferencesFeatures = (
   validate?: MediaQueryPreferencesValidator,
 ): void => {
   if (
-    !applyMediaQueryValidation(props, helpers, validate, 'preferences')
+    !applyMediaQueryValidation(
+      props,
+      helpers,
+      validate,
+      'preferences',
+    )
   ) {
     return;
   }

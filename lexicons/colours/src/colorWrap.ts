@@ -21,15 +21,15 @@
  * opt into modern color spaces when needed while keeping sRGB
  * fallbacks.
  */
-import chroma, { type Color } from 'chroma-js';
 import type { DegMeasurement } from '@css-bookends/css-calipers';
-import { converter, type Oklch,parse } from 'culori';
+import chroma, { type Color } from 'chroma-js';
+import { converter, type Oklch, parse } from 'culori';
 
 // Dev-time validation warnings are surfaced in non-release builds and stay quiet
 // in production. (Inlined from the portfolio's runtime-env helper.)
 const notRelease = (): boolean =>
-  (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process?.env
-    ?.NODE_ENV !== 'production';
+  (globalThis as { process?: { env?: { NODE_ENV?: string } } })
+    .process?.env?.NODE_ENV !== 'production';
 
 export type { Color } from 'chroma-js';
 
@@ -263,7 +263,7 @@ const create: ColorCreators = {
     }
     return wrap(`hsla(${H}, ${S}%, ${L}%, ${Number(A.toFixed(3))})`);
   },
-  oklch: ((
+  oklch: (
     first: number | string,
     c?: number,
     h?: number,
@@ -285,7 +285,7 @@ const create: ColorCreators = {
       alpha: normalizeAlpha(alpha) ?? 1,
     };
     return culoriOklchToWrapper(normalized);
-  }),
+  },
 };
 
 const toRgbChannel = (channel: number) =>
@@ -300,9 +300,7 @@ const formatRgba = (value: Color): string => {
   const alpha = value.alpha();
   const formattedAlpha =
     alpha === 1 ? '1' : Number(alpha.toFixed(3)).toString();
-  return `rgba(${toRgbChannel(r)}, ${toRgbChannel(g)}, ${toRgbChannel(
-    b,
-  )}, ${formattedAlpha})`;
+  return `rgba(${toRgbChannel(r)}, ${toRgbChannel(g)}, ${toRgbChannel(b)}, ${formattedAlpha})`;
 };
 
 const isInGamut = (oklch: CuloriOKLCH) => {
@@ -450,8 +448,7 @@ export function wrap(input: ColorInput): ColorWrapper {
     mode: 'multiply' | 'screen',
     options?: BlendOptions,
   ): ColorWrapper => {
-    const fallback =
-      mode === 'multiply' ? '#ffffff' : '#000000';
+    const fallback = mode === 'multiply' ? '#ffffff' : '#000000';
     const targetColor = toColor(options?.stripColor ?? fallback);
     const [
       r,

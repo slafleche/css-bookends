@@ -19,7 +19,12 @@ export const emitEnvironmentFeatures = (
   validate?: MediaQueryEnvironmentValidator,
 ): void => {
   if (
-    !applyMediaQueryValidation(props, helpers, validate, 'environment')
+    !applyMediaQueryValidation(
+      props,
+      helpers,
+      validate,
+      'environment',
+    )
   ) {
     return;
   }

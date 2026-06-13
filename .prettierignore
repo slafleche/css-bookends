@@ -7,6 +7,10 @@ coverage/
 # Generated / lockfiles
 pnpm-lock.yaml
 
+# Markdown is hand-formatted in this repo (aligned tables, column-aligned code
+# comments in fenced blocks). Prettier reflows those, so keep it off all docs.
+*.md
+
 # VitePress
 **/docs/.vitepress/dist/
 **/docs/.vitepress/cache/

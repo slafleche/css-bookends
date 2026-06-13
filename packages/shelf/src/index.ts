@@ -9,12 +9,16 @@ export * from '@css-bookends/media-queries';
 // defaults); the shelf re-exports that, so importing the shelf gives you the
 // preconfigured book. The raw `color()` value-helper is intentionally not
 // surfaced. Use `colours` for defaults, or `bookPressColours` for a custom one.
-export { colours, colorFormats, bookPressColours } from '@css-bookends/colours';
 export type {
+  ColourInput,
   Colours,
   ColoursConfig,
-  ColourInput,
   CssFormat,
   FormatName,
   ResolvedColour,
+} from '@css-bookends/colours';
+export {
+  bookPressColours,
+  colorFormats,
+  colours,
 } from '@css-bookends/colours';

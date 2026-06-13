@@ -1,8 +1,18 @@
-
-import { expectAssignable, expectNotAssignable, expectType } from 'tsd';
-
-import type { IMeasurement, IRatio } from '@css-bookends/css-calipers';
+import type {
+  IMeasurement,
+  IRatio,
+} from '@css-bookends/css-calipers';
 import { mPx, r } from '@css-bookends/css-calipers';
+import {
+  expectAssignable,
+  expectNotAssignable,
+  expectType,
+} from 'tsd';
+
+import type {
+  IMediaQueryProps,
+  MediaQueryModulePropsMap,
+} from '../../dist/esm';
 import {
   buildMediaQueryFromFeatures,
   buildMediaQueryString,
@@ -10,10 +20,6 @@ import {
   defineMediaQueryModules,
   emitDimensionsFeatures,
   mediaQueryFactory,
-} from '../../dist/esm';
-import type {
-  IMediaQueryProps,
-  MediaQueryModulePropsMap,
 } from '../../dist/esm';
 
 const width = mPx(640);
@@ -45,7 +51,8 @@ const builder = createMediaQueryBuilder({
 expectType<string>(builder({ width }));
 
 const coreModules = defineMediaQueryModules('core');
-type CoreProps = MediaQueryModulePropsMap[(typeof coreModules)[number]];
+type CoreProps =
+  MediaQueryModulePropsMap[(typeof coreModules)[number]];
 expectNotAssignable<CoreProps>({ minWidth: width, hover: 'hover' });
 const coreFactory = mediaQueryFactory({
   queries: {
@@ -61,8 +68,11 @@ const coreFactory = mediaQueryFactory({
 expectAssignable<unknown>(coreFactory);
 
 const customModules = defineMediaQueryModules('custom');
-type CustomProps = MediaQueryModulePropsMap[(typeof customModules)[number]];
-expectAssignable<CustomProps>({ customFeatures: { 'custom-flag': 'on' } });
+type CustomProps =
+  MediaQueryModulePropsMap[(typeof customModules)[number]];
+expectAssignable<CustomProps>({
+  customFeatures: { 'custom-flag': 'on' },
+});
 expectNotAssignable<CustomProps>({ hover: 'hover' });
 const customAllowedFactory = mediaQueryFactory({
   queries: {

@@ -1,0 +1,31 @@
+{
+  "name": "@css-bookends/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Shared ESLint flat config for CSS-Bookends packages.",
+  "license": "MIT",
+  "author": "slafleche",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slafleche/css-bookends.git",
+    "directory": "packages/eslint-config"
+  },
+  "type": "commonjs",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "dependencies": {
+    "@eslint/js": "^9.39.2",
+    "typescript-eslint": "^8.59.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "eslint-plugin-unused-imports": "^4.4.1",
+    "eslint-plugin-promise": "^7.3.0"
+  },
+  "peerDependencies": {
+    "eslint": "^9",
+    "typescript": ">=5"
+  }
+}

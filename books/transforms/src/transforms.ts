@@ -1,5 +1,4 @@
 import type { IMeasurement } from '@css-bookends/css-calipers';
-
 import type * as CSS_TYPES from 'csstype';
 
 type LengthValue = IMeasurement | null | undefined;

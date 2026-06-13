@@ -1,11 +1,7 @@
-import type { IMeasurement } from "@css-bookends/css-calipers";
-import type { ComplexStyleRule, StyleRule } from "./types";
-import type { MediaQueryBuilderHelpers } from "./helpers";
-import { createMediaQueryBuilder } from "./helpers";
-import {
-  defaultMediaQueryValidation,
-  type MediaQueryValidation,
-} from "./validation";
+import type { IMeasurement } from '@css-bookends/css-calipers';
+
+import type { MediaQueryBuilderHelpers } from './helpers';
+import { createMediaQueryBuilder } from './helpers';
 import {
   emitCustomFeatures,
   emitDimensionsFeatures,
@@ -21,10 +17,16 @@ import {
   IMediaQueryInteraction,
   IMediaQueryPreferences,
   IMediaQueryResolutionRange,
-} from "./modules";
+} from './modules';
+import type { ComplexStyleRule, StyleRule } from './types';
+import {
+  defaultMediaQueryValidation,
+  type MediaQueryValidation,
+} from './validation';
 
 export interface IMediaQueryProps
-  extends IMediaQueryCore,
+  extends
+    IMediaQueryCore,
     IMediaQueryDimensions,
     IMediaQueryResolutionRange,
     IMediaQueryInteraction,
@@ -34,7 +36,7 @@ export interface IMediaQueryProps
     IMediaQueryCustomFeatures {}
 
 export interface IMediaQueryCore {
-  type?: "all" | "print" | "screen";
+  type?: 'all' | 'print' | 'screen';
   minWidth?: IMeasurement;
   maxWidth?: IMeasurement;
 }
@@ -50,49 +52,49 @@ export type IMediaQueryStyles<T extends IMediaQueries> = Partial<
   Record<keyof T, StyleRule>
 >;
 
-export const createEmitCoreFeatures = (
-  validation: MediaQueryValidation,
-) => (
-  props: IMediaQueryCore,
-  helpers: MediaQueryBuilderHelpers,
-): void => {
-  const {
-    runMediaQueryValidation,
-    validateMinMaxWidth,
-    validateWidthValuesPositive,
-  } = validation;
-
-  if (
-    !runMediaQueryValidation(
-      props,
-      helpers,
+export const createEmitCoreFeatures =
+  (validation: MediaQueryValidation) =>
+  (
+    props: IMediaQueryCore,
+    helpers: MediaQueryBuilderHelpers,
+  ): void => {
+    const {
+      runMediaQueryValidation,
       validateMinMaxWidth,
-      "core",
-      "minWidth must be less than or equal to maxWidth"
-    )
-  ) {
-    return;
-  }
-  if (
-    !runMediaQueryValidation(
-      props,
-      helpers,
       validateWidthValuesPositive,
-      "core",
-      "width values must be greater than 0"
-    )
-  ) {
-    return;
-  }
-  const { addFeature } = helpers;
+    } = validation;
 
-  if (props.minWidth) {
-    addFeature("min-width", props.minWidth);
-  }
-  if (props.maxWidth) {
-    addFeature("max-width", props.maxWidth);
-  }
-};
+    if (
+      !runMediaQueryValidation(
+        props,
+        helpers,
+        validateMinMaxWidth,
+        'core',
+        'minWidth must be less than or equal to maxWidth',
+      )
+    ) {
+      return;
+    }
+    if (
+      !runMediaQueryValidation(
+        props,
+        helpers,
+        validateWidthValuesPositive,
+        'core',
+        'width values must be greater than 0',
+      )
+    ) {
+      return;
+    }
+    const { addFeature } = helpers;
+
+    if (props.minWidth) {
+      addFeature('min-width', props.minWidth);
+    }
+    if (props.maxWidth) {
+      addFeature('max-width', props.maxWidth);
+    }
+  };
 
 export const emitCoreFeatures = createEmitCoreFeatures(
   defaultMediaQueryValidation,
@@ -100,7 +102,7 @@ export const emitCoreFeatures = createEmitCoreFeatures(
 
 const emitBaseFeatures = (
   props: IMediaQueryProps,
-  helpers: MediaQueryBuilderHelpers
+  helpers: MediaQueryBuilderHelpers,
 ): void => {
   emitCoreFeatures(props, helpers);
   emitDimensionsFeatures(props, helpers);
@@ -130,7 +132,7 @@ export const makeMediaQueryStyle =
     });
 
     const mediaQuery: ComplexStyleRule = {
-      "@media": result,
+      '@media': result,
     };
     return mediaQuery;
   };

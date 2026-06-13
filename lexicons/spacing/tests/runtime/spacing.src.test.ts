@@ -1,7 +1,7 @@
 import { m } from '@css-bookends/css-calipers';
 import { describe, expect, it } from 'vitest';
 
-import { margins,paddings } from '../../src/spacing';
+import { margins, paddings } from '../../src/spacing';
 
 describe('spacing.helper', () => {
   it('applies shared axis shortcuts', () => {

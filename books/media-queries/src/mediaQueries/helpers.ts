@@ -1,4 +1,7 @@
-import type { IMeasurement, IRatio } from '@css-bookends/css-calipers';
+import type {
+  IMeasurement,
+  IRatio,
+} from '@css-bookends/css-calipers';
 import { hasCssMethod } from '@css-bookends/css-calipers';
 
 type MediaQueryFeatureValue = string | number | IMeasurement | IRatio;
@@ -45,7 +48,9 @@ export type MediaQueryExtensionHandler<TConfig> = (
 type MediaQueryBuilderOptions<TConfig> = {
   emitBase: MediaQueryExtensionHandler<TConfig>;
   emitExtensions?: MediaQueryExtensionHandler<TConfig>;
-  resolveType?: (config: TConfig) => 'all' | 'print' | 'screen' | undefined;
+  resolveType?: (
+    config: TConfig,
+  ) => 'all' | 'print' | 'screen' | undefined;
   config?: MediaQueryBuilderConfig;
 };
 
@@ -56,11 +61,13 @@ export const formatMediaQueryValue = (
 export const buildMediaQueryStringFromParts = (
   mediaType: 'all' | 'print' | 'screen',
   parts: string[],
-): string => (parts.length ? `${mediaType} and ${parts.join(' and ')}` : mediaType);
+): string =>
+  parts.length
+    ? `${mediaType} and ${parts.join(' and ')}`
+    : mediaType;
 
-export const createMediaQueryFeatureEmitter = (
-  parts: string[],
-): MediaQueryFeatureEmitter =>
+export const createMediaQueryFeatureEmitter =
+  (parts: string[]): MediaQueryFeatureEmitter =>
   (name, value) => {
     parts.push(`(${name}: ${formatMediaQueryValue(value)})`);
   };
@@ -102,7 +109,8 @@ export const createMediaQueryBuilder = <TConfig>(
     const helpers: MediaQueryBuilderHelpers = {
       addFeature: createMediaQueryFeatureEmitterWithTracking(parts, {
         emitted: emittedFeatures,
-        lintingMode: options.config?.errorHandling?.lintingMode ?? 'throw',
+        lintingMode:
+          options.config?.errorHandling?.lintingMode ?? 'throw',
       }),
       config: options.config ?? {},
     };
@@ -121,7 +129,9 @@ const normalizeValidationResult = (
   if (result === undefined || result === null) return { valid: true };
   if (typeof result === 'boolean') return { valid: result };
   if (typeof result === 'string') {
-    return result ? { valid: false, message: result } : { valid: true };
+    return result
+      ? { valid: false, message: result }
+      : { valid: true };
   }
   return result;
 };
@@ -136,9 +146,12 @@ export const applyMediaQueryValidation = <TConfig>(
   const normalized = normalizeValidationResult(validator(config));
   if (normalized.valid) return true;
 
-  const mode = helpers.config.errorHandling?.invalidValueMode ?? 'throw';
+  const mode =
+    helpers.config.errorHandling?.invalidValueMode ?? 'throw';
   if (mode === 'log') {
-    const suffix = normalized.message ? `: ${normalized.message}` : '';
+    const suffix = normalized.message
+      ? `: ${normalized.message}`
+      : '';
     const prefix = context
       ? `Media query ${context} validation failed`
       : 'Media query validation failed';
@@ -159,15 +172,23 @@ export const buildMediaQueryFromFeatures = (
   mediaType: 'all' | 'print' | 'screen' = 'screen',
 ): string => {
   const parts: string[] = [];
-  const addFeature = createMediaQueryFeatureEmitterWithTracking(parts, {
-    emitted: new Set<string>(),
-    lintingMode: 'throw',
-  });
+  const addFeature = createMediaQueryFeatureEmitterWithTracking(
+    parts,
+    {
+      emitted: new Set<string>(),
+      lintingMode: 'throw',
+    },
+  );
 
-  Object.entries(features).forEach(([name, value]) => {
-    if (value === undefined || value === null) return;
-    addFeature(name, value);
-  });
+  Object.entries(features).forEach(
+    ([
+      name,
+      value,
+    ]) => {
+      if (value === undefined || value === null) return;
+      addFeature(name, value);
+    },
+  );
 
   return buildMediaQueryStringFromParts(mediaType, parts);
 };

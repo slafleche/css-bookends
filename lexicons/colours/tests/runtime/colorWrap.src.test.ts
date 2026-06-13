@@ -55,7 +55,11 @@ describe('colorWrap.helper', () => {
   });
 
   it('desaturate(1) produces grayscale', () => {
-    const [r, g, b] = color('#E03035').desaturate(1).value().rgb(false);
+    const [
+      r,
+      g,
+      b,
+    ] = color('#E03035').desaturate(1).value().rgb(false);
     expect(Math.abs(r - g)).toBeLessThanOrEqual(1);
     expect(Math.abs(g - b)).toBeLessThanOrEqual(1);
     expect(Math.abs(r - b)).toBeLessThanOrEqual(1);
@@ -75,8 +79,7 @@ describe('colorWrap.helper', () => {
     expect(base.css()).toBe('rgb(255 0 0 / 0.4)');
     expect(baseOklch).toBeDefined();
     expect(shiftedOklch).toBeDefined();
-    const expectedHue =
-      ((baseOklch!.h ?? 0) + 120 + 360) % 360;
+    const expectedHue = ((baseOklch!.h ?? 0) + 120 + 360) % 360;
     expect(
       circularDiff(shiftedOklch!.h ?? 0, expectedHue),
     ).toBeLessThanOrEqual(10);
@@ -95,8 +98,7 @@ describe('colorWrap.helper', () => {
 
     expect(baseOklch).toBeDefined();
     expect(shiftedOklch).toBeDefined();
-    const expectedHue =
-      ((baseOklch!.h ?? 0) - 120 + 360) % 360;
+    const expectedHue = ((baseOklch!.h ?? 0) - 120 + 360) % 360;
     expect(
       circularDiff(shiftedOklch!.h ?? 0, expectedHue),
     ).toBeLessThanOrEqual(10);
@@ -111,7 +113,11 @@ describe('colorWrap.helper', () => {
       g,
       b,
     ] = blended.value().rgb(false);
-    expect([Math.round(r), Math.round(g), Math.round(b)]).toEqual([
+    expect([
+      Math.round(r),
+      Math.round(g),
+      Math.round(b),
+    ]).toEqual([
       231,
       231,
       231,
@@ -128,7 +134,11 @@ describe('colorWrap.helper', () => {
       g,
       b,
     ] = blended.value().rgb(false);
-    expect([Math.round(r), Math.round(g), Math.round(b)]).toEqual([
+    expect([
+      Math.round(r),
+      Math.round(g),
+      Math.round(b),
+    ]).toEqual([
       17,
       17,
       17,
@@ -203,17 +213,25 @@ describe('colours — inputs (supported)', () => {
 
   it('create.rgba accepts 0-255 and 0-1 channels, with optional alpha', () => {
     expect(color.create.rgba(255, 0, 0).css()).toBe('rgb(255 0 0)');
-    expect(color.create.rgba(1, 0, 0, 0.5).css()).toBe('rgb(255 0 0 / 0.5)');
+    expect(color.create.rgba(1, 0, 0, 0.5).css()).toBe(
+      'rgb(255 0 0 / 0.5)',
+    );
   });
 
   it('create.hsl accepts percent and 0-1 saturation/lightness', () => {
     expect(color.create.hsl(120, 100, 50).css()).toBe('rgb(0 255 0)');
-    expect(color.create.hsl(120, 1, 0.5, 0.5).css()).toBe('rgb(0 255 0 / 0.5)');
+    expect(color.create.hsl(120, 1, 0.5, 0.5).css()).toBe(
+      'rgb(0 255 0 / 0.5)',
+    );
   });
 
   it('create.oklch accepts a string or l/c/h numbers', () => {
-    expect(color.create.oklch('70% 0.1 200').css()).toBe('rgb(64 177 183)');
-    expect(color.create.oklch(0.7, 0.1, 200).css()).toBe('rgb(64 177 183)');
+    expect(color.create.oklch('70% 0.1 200').css()).toBe(
+      'rgb(64 177 183)',
+    );
+    expect(color.create.oklch(0.7, 0.1, 200).css()).toBe(
+      'rgb(64 177 183)',
+    );
   });
 
   it('color.lch and color.oklch (culori object) construct colours', () => {
@@ -267,7 +285,11 @@ describe('colours — modifications (supported)', () => {
 
   it('saturate increases chroma; desaturate(1) is grayscale', () => {
     expect(base.saturate().css()).toBe('rgb(0 87 250)');
-    const [r, g, b] = color('#E03035').desaturate(1).value().rgb(false);
+    const [
+      r,
+      g,
+      b,
+    ] = color('#E03035').desaturate(1).value().rgb(false);
     expect(Math.abs(r - g)).toBeLessThanOrEqual(1);
     expect(Math.abs(g - b)).toBeLessThanOrEqual(1);
   });
@@ -315,8 +337,12 @@ describe('colours — outputs (supported)', () => {
     expect(culori?.l).toBeCloseTo(0.5325, 3);
     const modern = toModernOKLCH(c);
     expect(modern?.l).toBeCloseTo(53.248, 2);
-    expect(fmtOKLCH({ l: 50, c: 0.1, h: 200 })).toBe('oklch(50.000% 0.1000 200)');
-    expect(oklchToRgbString({ l: 50, c: 0.1, h: 200 })).toBe('rgb(0 116 122)');
+    expect(fmtOKLCH({ l: 50, c: 0.1, h: 200 })).toBe(
+      'oklch(50.000% 0.1000 200)',
+    );
+    expect(oklchToRgbString({ l: 50, c: 0.1, h: 200 })).toBe(
+      'rgb(0 116 122)',
+    );
   });
 
   it('colorModern emits oklch(); colorFallback emits rgb()', () => {
@@ -332,9 +358,13 @@ describe('colours — outputs (supported)', () => {
  * ------------------------------------------------------------------ */
 describe('colours — gaps (not yet supported)', () => {
   // Inputs
-  it.todo('color() accepts a bare OKLCH object ({ l, c, h }) directly');
+  it.todo(
+    'color() accepts a bare OKLCH object ({ l, c, h }) directly',
+  );
   it.todo('"transparent" can be kept as a symbolic input keyword');
-  it.todo('lab() / lch() / display-p3 / hwb string inputs as first-class');
+  it.todo(
+    'lab() / lch() / display-p3 / hwb string inputs as first-class',
+  );
 
   // Modifications
   it.todo('absolute setters: setLightness / setChroma / setHue');

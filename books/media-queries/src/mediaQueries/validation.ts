@@ -1,20 +1,23 @@
+import type { IMeasurement } from '@css-bookends/css-calipers';
+import {
+  assertCondition,
+  type IRatio,
+  isRatio,
+  ratioToFloat,
+} from '@css-bookends/css-calipers';
+
 import type {
   MediaQueryBuilderHelpers,
   MediaQueryValidationResult,
 } from './helpers';
 import { applyMediaQueryValidation } from './helpers';
-import {
-  assertCondition,
-  isRatio,
-  ratioToFloat,
-  type IRatio,
-} from '@css-bookends/css-calipers';
 import type { IMediaQueryCore } from './mediaQueries';
 import type { IMediaQueryDimensions } from './modules/dimensions';
 import type { IMediaQueryResolutionRange } from './modules/resolution';
-import type { IMeasurement } from '@css-bookends/css-calipers';
 
-export type MediaQueryValidationCheck<TConfig> = (config: TConfig) => void;
+export type MediaQueryValidationCheck<TConfig> = (
+  config: TConfig,
+) => void;
 
 export type MediaQueryCoreHelpers = {
   assertCondition: typeof assertCondition;
@@ -99,7 +102,8 @@ export const createMediaQueryValidation = (
   ): void => {
     if (!props.minHeight || !props.maxHeight) return;
     // Mixed units are valid CSS; only enforce ordering when units match.
-    if (props.minHeight.getUnit() !== props.maxHeight.getUnit()) return;
+    if (props.minHeight.getUnit() !== props.maxHeight.getUnit())
+      return;
     assertCondition(
       props.minHeight.getValue() <= props.maxHeight.getValue(),
       'minHeight must be less than or equal to maxHeight',

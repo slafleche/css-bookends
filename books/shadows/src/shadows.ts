@@ -1,8 +1,6 @@
-import { type IMeasurement,m } from '@css-bookends/css-calipers';
-
-import type * as CSS_TYPES from 'csstype';
-
 import { color, type ColorWrapper } from '@css-bookends/colours';
+import { type IMeasurement, m } from '@css-bookends/css-calipers';
+import type * as CSS_TYPES from 'csstype';
 
 // Neutral built-in defaults (inherited from the portfolio drop-shadow tokens;
 // review them, see notes.md). Callers override any field per call.
@@ -49,9 +47,7 @@ const boxShadowValue = (
   input: IBoxShadowTokens = {},
 ): CSS_TYPES.Property.BoxShadow => {
   if (isBoxShadowList(input)) {
-    return input
-      .map((entry) => formatBoxShadow(entry))
-      .join(', ');
+    return input.map((entry) => formatBoxShadow(entry)).join(', ');
   }
   return formatBoxShadow(input);
 };

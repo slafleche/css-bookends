@@ -1,14 +1,16 @@
 import { m } from '@css-bookends/css-calipers';
 import { describe, expect, it } from 'vitest';
 
-import { colorFormats, bookPressColours } from '../../src';
+import { bookPressColours, colorFormats } from '../../src';
 
 const colours = bookPressColours();
 
 describe('colours book — factory + bare call', () => {
   it('a bare call resolves the configured base colour', () => {
     expect(bookPressColours()().css()).toBe('rgb(0 0 0)'); // default base 'black'
-    expect(bookPressColours({ base: 'red' })().css()).toBe('rgb(255 0 0)');
+    expect(bookPressColours({ base: 'red' })().css()).toBe(
+      'rgb(255 0 0)',
+    );
   });
 
   it('delegates parsing to the existing color() helper', () => {
@@ -22,9 +24,13 @@ describe('colours book — output is always .css(), format is a typed object', (
 
   it('.css() renders the factory-configured format', () => {
     expect(c.css()).toBe('rgb(51 102 204)'); // default colorFormats.css
-    expect(bookPressColours({ output: colorFormats.hex })('#3366cc').css()).toBe('#3366cc');
     expect(
-      bookPressColours({ output: colorFormats.oklch })('#3366cc').css().startsWith('oklch('),
+      bookPressColours({ output: colorFormats.hex })('#3366cc').css(),
+    ).toBe('#3366cc');
+    expect(
+      bookPressColours({ output: colorFormats.oklch })('#3366cc')
+        .css()
+        .startsWith('oklch('),
     ).toBe(true);
   });
 
@@ -32,12 +38,16 @@ describe('colours book — output is always .css(), format is a typed object', (
     expect(c.css(colorFormats.hex)).toBe('#3366cc');
     expect(c.css(colorFormats.hsl)).toBe('hsl(220deg 60% 50%)');
     expect(c.css(colorFormats.oklch).startsWith('oklch(')).toBe(true);
-    expect(c.css(colorFormats.modern).startsWith('oklch(')).toBe(true);
+    expect(c.css(colorFormats.modern).startsWith('oklch(')).toBe(
+      true,
+    );
     expect(c.css(colorFormats.rgb)).toBe('rgb(51 102 204)');
   });
 
   it('option variants are named presets: rgbLegacy and hexAlpha', () => {
-    expect(c.css(colorFormats.rgbLegacy)).toBe('rgba(51, 102, 204, 1)');
+    expect(c.css(colorFormats.rgbLegacy)).toBe(
+      'rgba(51, 102, 204, 1)',
+    );
     expect(c.alpha(0.5).css(colorFormats.hexAlpha)).toBe('#3366cc80');
   });
 
@@ -51,12 +61,16 @@ describe('colours book — output is always .css(), format is a typed object', (
   });
 
   it('selectors carry their typed options too', () => {
-    expect(c.rgb({ legacy: true }).css()).toBe('rgba(51, 102, 204, 1)');
+    expect(c.rgb({ legacy: true }).css()).toBe(
+      'rgba(51, 102, 204, 1)',
+    );
     expect(c.alpha(0.5).hex({ alpha: true }).css()).toBe('#3366cc80');
   });
 
   it('a selected format persists through later modifications', () => {
-    expect(c.hex().darken(0.2).css()).toBe(c.darken(0.2).css(colorFormats.hex));
+    expect(c.hex().darken(0.2).css()).toBe(
+      c.darken(0.2).css(colorFormats.hex),
+    );
   });
 });
 
@@ -80,6 +94,8 @@ describe('colours book — modifications return new resolved colours', () => {
   });
 
   it('wrapper() exposes the underlying immutable wrapper', () => {
-    expect(colours('#3366cc').wrapper().css()).toBe('rgb(51 102 204)');
+    expect(colours('#3366cc').wrapper().css()).toBe(
+      'rgb(51 102 204)',
+    );
   });
 });

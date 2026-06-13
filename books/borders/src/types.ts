@@ -1,5 +1,5 @@
-import type { IMeasurement } from '@css-bookends/css-calipers';
 import type { ColorWrapper } from '@css-bookends/colours';
+import type { IMeasurement } from '@css-bookends/css-calipers';
 import type { Property } from 'csstype';
 
 /* ---------- value primitives ---------- */
@@ -22,7 +22,12 @@ export type Corner = 'nw' | 'ne' | 'se' | 'sw';
 /** n = top corners, s = bottom, e = right, w = left. */
 export type Pair = 'n' | 's' | 'e' | 'w';
 /** One corner radius: a single measurement, or an elliptical [x, y] pair. */
-export type CornerRadius = IMeasurement | readonly [IMeasurement, IMeasurement];
+export type CornerRadius =
+  | IMeasurement
+  | readonly [
+      IMeasurement,
+      IMeasurement,
+    ];
 
 /* ---------- one edge's border ---------- */
 
@@ -42,7 +47,8 @@ export type BordersInput = 'none' | 'unset' | BordersSpec;
  * that edge). Corners: n/s/e/w pairs and nw/ne/se/sw corners (a CornerRadius).
  */
 export interface BordersSpec
-  extends Partial<Record<Side | Axis, Border | 'none'>>,
+  extends
+    Partial<Record<Side | Axis, Border | 'none'>>,
     Partial<Record<Pair | Corner, CornerRadius>> {
   width?: BorderWidth;
   style?: BorderStyle;
@@ -112,7 +118,8 @@ export interface BorderShort {
  * decides which keys are present; the type is the all-optional superset so a
  * consumer can read or spread any key without narrowing.
  */
-export interface BorderOutput extends BorderLong, BorderLine, BorderShort {}
+export interface BorderOutput
+  extends BorderLong, BorderLine, BorderShort {}
 
 /* ---------- the resolved, navigable result ---------- */
 
@@ -133,8 +140,7 @@ export interface ResolvedCorner {
 
 /** The result of calling a borders book: render whole, or drill into a coordinate. */
 export interface ResolvedBorders
-  extends Record<Side, ResolvedEdge>,
-    Record<Corner, ResolvedCorner> {
+  extends Record<Side, ResolvedEdge>, Record<Corner, ResolvedCorner> {
   /** the whole border as a style object, in the configured output format. */
   css(): BorderOutput;
 }

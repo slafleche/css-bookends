@@ -1,14 +1,14 @@
 import { bookPress, type Press } from '@css-bookends/bookpress';
 import { color, type ColorWrapper } from '@css-bookends/colours';
-import { m, type IMeasurement } from '@css-bookends/css-calipers';
+import { type IMeasurement, m } from '@css-bookends/css-calipers';
 
 import type {
   Border,
+  BorderOutput,
   Borders,
   BordersConfig,
   BordersInput,
   BordersSpec,
-  BorderOutput,
   BorderStyle,
   BorderWidth,
   Corner,
@@ -42,8 +42,18 @@ interface Store {
   corners: Record<Corner, CornerRadius | undefined>;
 }
 
-const SIDES: Side[] = ['top', 'right', 'bottom', 'left'];
-const CORNERS: Corner[] = ['nw', 'ne', 'se', 'sw'];
+const SIDES: Side[] = [
+  'top',
+  'right',
+  'bottom',
+  'left',
+];
+const CORNERS: Corner[] = [
+  'nw',
+  'ne',
+  'se',
+  'sw',
+];
 
 const CORNER_PROP: Record<Corner, string> = {
   nw: 'borderTopLeftRadius',
@@ -52,15 +62,25 @@ const CORNER_PROP: Record<Corner, string> = {
   sw: 'borderBottomLeftRadius',
 };
 
-const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
-const toWidth = (w: BorderWidth): IMeasurement => (w == null || w === 0 ? m(0) : w);
-const toCorner = (r: CornerRadius | 0 | null | undefined): CornerRadius | undefined =>
+const cap = (s: string): string =>
+  s.charAt(0).toUpperCase() + s.slice(1);
+const toWidth = (w: BorderWidth): IMeasurement =>
+  w == null || w === 0 ? m(0) : w;
+const toCorner = (
+  r: CornerRadius | 0 | null | undefined,
+): CornerRadius | undefined =>
   r == null ? undefined : r === 0 ? m(0) : r;
 
 const renderCorner = (value: CornerRadius | undefined): string => {
   if (value === undefined) return '0';
   if (Array.isArray(value)) {
-    const [x, y] = value as readonly [IMeasurement, IMeasurement];
+    const [
+      x,
+      y,
+    ] = value as readonly [
+      IMeasurement,
+      IMeasurement,
+    ];
     return `${x.css()} ${y.css()}`;
   }
   return (value as IMeasurement).css();
@@ -68,7 +88,11 @@ const renderCorner = (value: CornerRadius | undefined): string => {
 
 /* ---------- input (page 1): raw -> store ---------- */
 
-function applyEdge(edges: Record<Side, EdgeData>, sides: Side[], val: Border | 'none' | undefined): void {
+function applyEdge(
+  edges: Record<Side, EdgeData>,
+  sides: Side[],
+  val: Border | 'none' | undefined,
+): void {
   if (val === undefined) return;
   if (val === 'none') {
     sides.forEach((s) => {
@@ -95,7 +119,10 @@ function applyCorner(
   });
 }
 
-function parse(raw: BordersInput | undefined, cfg: BordersConfig): Store {
+function parse(
+  raw: BordersInput | undefined,
+  cfg: BordersConfig,
+): Store {
   const baseEdge = (): EdgeData => ({
     width: toWidth(cfg.width),
     style: cfg.style,
@@ -131,22 +158,84 @@ function parse(raw: BordersInput | undefined, cfg: BordersConfig): Store {
   const spec: BordersSpec = raw;
 
   // shorthand (all edges / all corners)
-  if (spec.width !== undefined) SIDES.forEach((s) => (edges[s].width = toWidth(spec.width!)));
-  if (spec.style !== undefined) SIDES.forEach((s) => (edges[s].style = spec.style!));
-  if (spec.color !== undefined) SIDES.forEach((s) => (edges[s].color = spec.color!));
-  if (spec.radius !== undefined) CORNERS.forEach((c) => (corners[c] = toCorner(spec.radius)));
+  if (spec.width !== undefined)
+    SIDES.forEach((s) => (edges[s].width = toWidth(spec.width!)));
+  if (spec.style !== undefined)
+    SIDES.forEach((s) => (edges[s].style = spec.style!));
+  if (spec.color !== undefined)
+    SIDES.forEach((s) => (edges[s].color = spec.color!));
+  if (spec.radius !== undefined)
+    CORNERS.forEach((c) => (corners[c] = toCorner(spec.radius)));
 
   // edge overrides: axis (x = left+right, y = top+bottom), then concrete sides
-  applyEdge(edges, ['left', 'right'], spec.x);
-  applyEdge(edges, ['top', 'bottom'], spec.y);
-  SIDES.forEach((s) => applyEdge(edges, [s], spec[s]));
+  applyEdge(
+    edges,
+    [
+      'left',
+      'right',
+    ],
+    spec.x,
+  );
+  applyEdge(
+    edges,
+    [
+      'top',
+      'bottom',
+    ],
+    spec.y,
+  );
+  SIDES.forEach((s) =>
+    applyEdge(
+      edges,
+      [
+        s,
+      ],
+      spec[s],
+    ),
+  );
 
   // corner overrides: pairs, then concrete corners (precedence all < pair < corner)
-  applyCorner(corners, ['nw', 'ne'], spec.n);
-  applyCorner(corners, ['se', 'sw'], spec.s);
-  applyCorner(corners, ['ne', 'se'], spec.e);
-  applyCorner(corners, ['nw', 'sw'], spec.w);
-  CORNERS.forEach((c) => applyCorner(corners, [c], spec[c]));
+  applyCorner(
+    corners,
+    [
+      'nw',
+      'ne',
+    ],
+    spec.n,
+  );
+  applyCorner(
+    corners,
+    [
+      'se',
+      'sw',
+    ],
+    spec.s,
+  );
+  applyCorner(
+    corners,
+    [
+      'ne',
+      'se',
+    ],
+    spec.e,
+  );
+  applyCorner(
+    corners,
+    [
+      'nw',
+      'sw',
+    ],
+    spec.w,
+  );
+  CORNERS.forEach((c) =>
+    applyCorner(
+      corners,
+      [
+        c,
+      ],
+      spec[c],
+    ),
+  );
 
   return { edges, corners };
 }
@@ -160,9 +249,9 @@ function build(store: Store): ResolvedBorders {
     const C = cap(side);
     return {
       [`border${C}Width`]: e.width.css(),
-      [`border${C}Style`]: e.style as string,
+      [`border${C}Style`]: e.style,
       [`border${C}Color`]: e.color.css(),
-    } as BorderOutput;
+    };
   };
 
   const fullCss = (): BorderOutput => {
@@ -172,14 +261,21 @@ function build(store: Store): ResolvedBorders {
       const v = store.corners[c];
       if (v !== undefined) out[CORNER_PROP[c]] = renderCorner(v);
     });
-    return out as BorderOutput;
+    return out;
   };
 
   const edgeNode = (side: Side): ResolvedEdge => {
     const e = store.edges[side];
-    return { width: e.width, style: e.style, color: e.color, css: () => edgeCss(side) };
+    return {
+      width: e.width,
+      style: e.style,
+      color: e.color,
+      css: () => edgeCss(side),
+    };
   };
-  const cornerNode = (c: Corner): ResolvedCorner => ({ css: () => renderCorner(store.corners[c]) });
+  const cornerNode = (c: Corner): ResolvedCorner => ({
+    css: () => renderCorner(store.corners[c]),
+  });
 
   return {
     top: edgeNode('top'),
@@ -196,7 +292,12 @@ function build(store: Store): ResolvedBorders {
 
 /* ---------- the press + the factory ---------- */
 
-const bordersPress: Press<BordersInput, Store, ResolvedBorders, BordersConfig> = {
+const bordersPress: Press<
+  BordersInput,
+  Store,
+  ResolvedBorders,
+  BordersConfig
+> = {
   defaults: defaultConfig,
   input: (raw, cfg) => parse(raw, cfg),
   storage: (store) => store,
@@ -208,6 +309,8 @@ const bordersPress: Press<BordersInput, Store, ResolvedBorders, BordersConfig> =
  * makeBorders: the borders factory. Give it defaults + output format, get a
  * borders book. A bare call renders the global defaults.
  */
-export function makeBorders(config: Partial<BordersConfig> = {}): Borders {
+export function makeBorders(
+  config: Partial<BordersConfig> = {},
+): Borders {
   return bookPress(bordersPress)({ config }) as Borders;
 }

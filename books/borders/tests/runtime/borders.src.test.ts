@@ -9,7 +9,14 @@ const red = color('red');
 
 describe('borders — happy paths', () => {
   it('uniform border on all edges, with radius', () => {
-    expect(borders({ width: m(1), style: 'solid', color: red, radius: m(8) }).css()).toEqual({
+    expect(
+      borders({
+        width: m(1),
+        style: 'solid',
+        color: red,
+        radius: m(8),
+      }).css(),
+    ).toEqual({
       borderTopWidth: '1px',
       borderRightWidth: '1px',
       borderBottomWidth: '1px',
@@ -30,7 +37,9 @@ describe('borders — happy paths', () => {
   });
 
   it('no radius intent emits no radius keys', () => {
-    expect(borders({ width: m(2), style: 'dashed', color: red }).css()).toEqual({
+    expect(
+      borders({ width: m(2), style: 'dashed', color: red }).css(),
+    ).toEqual({
       borderTopWidth: '2px',
       borderRightWidth: '2px',
       borderBottomWidth: '2px',
@@ -47,7 +56,11 @@ describe('borders — happy paths', () => {
   });
 
   it('a bare call renders the global defaults', () => {
-    const themed = makeBorders({ width: m(1), style: 'solid', color: color('black') });
+    const themed = makeBorders({
+      width: m(1),
+      style: 'solid',
+      color: color('black'),
+    });
     expect(themed().css()).toMatchObject({
       borderTopWidth: '1px',
       borderTopStyle: 'solid',
@@ -58,7 +71,11 @@ describe('borders — happy paths', () => {
 
 describe('borders — edge overrides', () => {
   it('a partial edge override merges over the shorthand', () => {
-    const b = borders({ width: m(1), color: red, bottom: { width: m(2) } }).css();
+    const b = borders({
+      width: m(1),
+      color: red,
+      bottom: { width: m(2) },
+    }).css();
     expect(b.borderTopWidth).toBe('1px');
     expect(b.borderBottomWidth).toBe('2px');
     expect(b.borderBottomColor).toBe(red.css()); // keeps the shorthand colour
@@ -98,7 +115,12 @@ describe('borders — corners', () => {
   });
 
   it('an elliptical corner renders two values', () => {
-    const b = borders({ nw: [m(12), m(24)] }).css();
+    const b = borders({
+      nw: [
+        m(12),
+        m(24),
+      ],
+    }).css();
     expect(b.borderTopLeftRadius).toBe('12px 24px');
   });
 });

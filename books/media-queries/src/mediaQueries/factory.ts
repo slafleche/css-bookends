@@ -1,8 +1,12 @@
-import type { ComplexStyleRule, StyleRule } from './types';
 import type { MediaQueryBuilderConfig } from './helpers';
 import { createMediaQueryBuilder } from './helpers';
 import type { IMediaQueryProps } from './mediaQueries';
 import { emitCoreFeatures } from './mediaQueries';
+import type {
+  MediaQueryModuleId,
+  MediaQueryModulePropsMap,
+  MediaQueryModulesList,
+} from './moduleRegistry';
 import {
   emitCustomFeatures,
   emitDimensionsFeatures,
@@ -12,11 +16,7 @@ import {
   emitPreferencesFeatures,
   emitResolutionFeatures,
 } from './modules';
-import type {
-  MediaQueryModuleId,
-  MediaQueryModulePropsMap,
-  MediaQueryModulesList,
-} from './moduleRegistry';
+import type { ComplexStyleRule, StyleRule } from './types';
 
 type UnionToIntersection<T> = (
   T extends unknown ? (value: T) => void : never
@@ -27,10 +27,11 @@ type UnionToIntersection<T> = (
 type ModulesToProps<TModules extends MediaQueryModulesList> =
   UnionToIntersection<MediaQueryModulePropsMap[TModules[number]]>;
 
-type FactoryQueryProps<TModules extends MediaQueryModulesList | undefined> =
-  TModules extends MediaQueryModulesList
-    ? ModulesToProps<TModules>
-    : IMediaQueryProps;
+type FactoryQueryProps<
+  TModules extends MediaQueryModulesList | undefined,
+> = TModules extends MediaQueryModulesList
+  ? ModulesToProps<TModules>
+  : IMediaQueryProps;
 
 type MediaQueryStyleMap<TQueries> = Partial<
   Record<keyof TQueries, StyleRule>
@@ -64,7 +65,11 @@ const ALL_MEDIA_QUERY_MODULES: MediaQueryModuleId[] = [
 ];
 
 const MODULE_KEYS: Record<MediaQueryModuleId, readonly string[]> = {
-  core: ['type', 'minWidth', 'maxWidth'],
+  core: [
+    'type',
+    'minWidth',
+    'maxWidth',
+  ],
   dimensions: [
     'width',
     'height',
@@ -75,8 +80,18 @@ const MODULE_KEYS: Record<MediaQueryModuleId, readonly string[]> = {
     'maxAspectRatio',
     'orientation',
   ],
-  resolution: ['resolutionValue', 'minResolution', 'maxResolution'],
-  interaction: ['hover', 'anyHover', 'pointer', 'anyPointer', 'update'],
+  resolution: [
+    'resolutionValue',
+    'minResolution',
+    'maxResolution',
+  ],
+  interaction: [
+    'hover',
+    'anyHover',
+    'pointer',
+    'anyPointer',
+    'update',
+  ],
   preferences: [
     'colorScheme',
     'reducedMotion',
@@ -84,9 +99,19 @@ const MODULE_KEYS: Record<MediaQueryModuleId, readonly string[]> = {
     'contrast',
     'forcedColors',
   ],
-  display: ['colorGamut', 'dynamicRange', 'invertedColors'],
-  environment: ['scripting', 'overflowBlock', 'overflowInline'],
-  custom: ['customFeatures'],
+  display: [
+    'colorGamut',
+    'dynamicRange',
+    'invertedColors',
+  ],
+  environment: [
+    'scripting',
+    'overflowBlock',
+    'overflowInline',
+  ],
+  custom: [
+    'customFeatures',
+  ],
 };
 
 const MODULE_EMITTERS = {
@@ -105,12 +130,19 @@ export type MediaQueryModuleEmitters = typeof MODULE_EMITTERS;
 const ALL_MODULE_KEYS: Record<MediaQueryModuleId, readonly string[]> =
   MODULE_KEYS;
 
-const KEY_TO_MODULE: Record<string, MediaQueryModuleId> = Object.fromEntries(
-  (Object.keys(ALL_MODULE_KEYS) as MediaQueryModuleId[]).flatMap(
-    (moduleId) =>
-      ALL_MODULE_KEYS[moduleId].map((key) => [key, moduleId] as const),
-  ),
-);
+const KEY_TO_MODULE: Record<string, MediaQueryModuleId> =
+  Object.fromEntries(
+    (Object.keys(ALL_MODULE_KEYS) as MediaQueryModuleId[]).flatMap(
+      (moduleId) =>
+        ALL_MODULE_KEYS[moduleId].map(
+          (key) =>
+            [
+              key,
+              moduleId,
+            ] as const,
+        ),
+    ),
+  );
 
 const guardUnsupportedProps = (
   props: Record<string, unknown>,
@@ -149,7 +181,7 @@ const guardUnsupportedProps = (
 
 export type MediaQueryFactoryConfig<
   TModules extends MediaQueryModulesList | undefined = undefined,
-  TOutput = ComplexStyleRule
+  TOutput = ComplexStyleRule,
 > = MediaQueryBuilderConfig & {
   label: string;
   modules?: TModules;
@@ -164,12 +196,17 @@ const normalizeCustomResult = (
   if (result === undefined || result === null) return { valid: true };
   if (typeof result === 'boolean') return { valid: result };
   if (typeof result === 'string') {
-    return result ? { valid: false, message: result } : { valid: true };
+    return result
+      ? { valid: false, message: result }
+      : { valid: true };
   }
   return result;
 };
 
-const runCustomValidator = <TModules extends MediaQueryModulesList | undefined, TOutput>(
+const runCustomValidator = <
+  TModules extends MediaQueryModulesList | undefined,
+  TOutput,
+>(
   props: IMediaQueryProps,
   config: MediaQueryFactoryConfig<TModules, TOutput>,
 ): void => {
@@ -192,7 +229,10 @@ const runCustomValidator = <TModules extends MediaQueryModulesList | undefined, 
   throw new Error(message);
 };
 
-const runCustomLinter = <TModules extends MediaQueryModulesList | undefined, TOutput>(
+const runCustomLinter = <
+  TModules extends MediaQueryModulesList | undefined,
+  TOutput,
+>(
   props: IMediaQueryProps,
   config: MediaQueryFactoryConfig<TModules, TOutput>,
 ): void => {
@@ -215,87 +255,89 @@ const runCustomLinter = <TModules extends MediaQueryModulesList | undefined, TOu
   throw new Error(message);
 };
 
-export const createMediaQueryFactory = (
-  emitters: MediaQueryModuleEmitters,
-) => <
-  TModules extends MediaQueryModulesList | undefined,
-  TQueries extends Record<string, FactoryQueryProps<TModules>>,
-  TOutput = ComplexStyleRule
->(options: {
-  queries: TQueries;
-  config: MediaQueryFactoryConfig<TModules, TOutput>;
-}) => {
-  const modules = options.config.modules ?? ALL_MEDIA_QUERY_MODULES;
-  const buildMediaQuery = createMediaQueryBuilder({
-    emitBase: (props, helpers) => {
-      guardUnsupportedProps(
-        props as Record<string, unknown>,
-        modules,
-        options.config,
-        options.config.label,
-      );
-      runCustomValidator(props as IMediaQueryProps, options.config);
-      runCustomLinter(props as IMediaQueryProps, options.config);
-      modules.forEach((moduleId) => {
-        emitters[moduleId](
-          props as MediaQueryModulePropsMap[MediaQueryModuleId],
-          helpers,
+export const createMediaQueryFactory =
+  (emitters: MediaQueryModuleEmitters) =>
+  <
+    TModules extends MediaQueryModulesList | undefined,
+    TQueries extends Record<string, FactoryQueryProps<TModules>>,
+    TOutput = ComplexStyleRule,
+  >(options: {
+    queries: TQueries;
+    config: MediaQueryFactoryConfig<TModules, TOutput>;
+  }) => {
+    const modules = options.config.modules ?? ALL_MEDIA_QUERY_MODULES;
+    const buildMediaQuery = createMediaQueryBuilder({
+      emitBase: (props, helpers) => {
+        guardUnsupportedProps(
+          props as Record<string, unknown>,
+          modules,
+          options.config,
+          options.config.label,
         );
-      });
-    },
-    resolveType: (props: IMediaQueryProps) => props.type,
-    config: options.config,
-  });
-
-  const handleUnknownQueryKey = (
-    key: string,
-    config: MediaQueryFactoryConfig<TModules, TOutput>,
-  ): void => {
-    const mode = config.errorHandling?.invalidValueMode ?? 'throw';
-    const message = `Media query factory "${config.label}" received unknown query key "${key}".`;
-
-    if (mode === 'log') {
-      console.warn(message);
-      return;
-    }
-    if (mode === 'allow') return;
-
-    throw new Error(message);
-  };
-
-  return (stylesByQuery: MediaQueryStyleMap<TQueries>): TOutput => {
-    const result: Record<string, StyleRule> = {};
-
-    (Object.keys(stylesByQuery) as (keyof TQueries)[]).forEach(
-      (key) => {
-        const styles = stylesByQuery[key];
-        if (!styles) return;
-        if (Object.prototype.hasOwnProperty.call(options.queries, key)) {
-          return;
-        }
-        handleUnknownQueryKey(String(key), options.config);
+        runCustomValidator(props, options.config);
+        runCustomLinter(props, options.config);
+        modules.forEach((moduleId) => {
+          emitters[moduleId](props, helpers);
+        });
       },
-    );
-
-    (Object.keys(stylesByQuery) as (keyof TQueries)[]).forEach((key) => {
-      const styles = stylesByQuery[key];
-      const props = options.queries[key];
-      if (!styles || !props) return;
-      result[buildMediaQuery(props as IMediaQueryProps)] = styles;
+      resolveType: (props: IMediaQueryProps) => props.type,
+      config: options.config,
     });
 
-    const mediaQuery: StyleRule = {
-      '@media': result,
+    const handleUnknownQueryKey = (
+      key: string,
+      config: MediaQueryFactoryConfig<TModules, TOutput>,
+    ): void => {
+      const mode = config.errorHandling?.invalidValueMode ?? 'throw';
+      const message = `Media query factory "${config.label}" received unknown query key "${key}".`;
+
+      if (mode === 'log') {
+        console.warn(message);
+        return;
+      }
+      if (mode === 'allow') return;
+
+      throw new Error(message);
     };
 
-    const processed = options.config.preProcessor
-      ? options.config.preProcessor(mediaQuery)
-      : mediaQuery;
+    return (stylesByQuery: MediaQueryStyleMap<TQueries>): TOutput => {
+      const result: Record<string, StyleRule> = {};
 
-    return options.config.output
-      ? options.config.output(processed)
-      : (processed as TOutput);
+      (Object.keys(stylesByQuery) as (keyof TQueries)[]).forEach(
+        (key) => {
+          const styles = stylesByQuery[key];
+          if (!styles) return;
+          if (
+            Object.prototype.hasOwnProperty.call(options.queries, key)
+          ) {
+            return;
+          }
+          handleUnknownQueryKey(String(key), options.config);
+        },
+      );
+
+      (Object.keys(stylesByQuery) as (keyof TQueries)[]).forEach(
+        (key) => {
+          const styles = stylesByQuery[key];
+          const props = options.queries[key];
+          if (!styles || !props) return;
+          result[buildMediaQuery(props)] = styles;
+        },
+      );
+
+      const mediaQuery: StyleRule = {
+        '@media': result,
+      };
+
+      const processed = options.config.preProcessor
+        ? options.config.preProcessor(mediaQuery)
+        : mediaQuery;
+
+      return options.config.output
+        ? options.config.output(processed)
+        : (processed as TOutput);
+    };
   };
-};
 
-export const mediaQueryFactory = createMediaQueryFactory(MODULE_EMITTERS);
+export const mediaQueryFactory =
+  createMediaQueryFactory(MODULE_EMITTERS);

@@ -20,6 +20,8 @@ describe('css-bookends bookshelf', () => {
     expect(typeof shelf.bookPressColours).toBe('function'); // the factory itself
     expect('color' in shelf).toBe(false); // raw helper is NOT surfaced
     expect(shelf.colours('#3366cc').css()).toBe('rgb(51 102 204)');
-    expect(shelf.colours('#3366cc').css(shelf.colorFormats.hex)).toBe('#3366cc');
+    expect(shelf.colours('#3366cc').css(shelf.colorFormats.hex)).toBe(
+      '#3366cc',
+    );
   });
 });

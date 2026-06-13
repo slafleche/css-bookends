@@ -12,16 +12,29 @@
  */
 
 /** Step 1: parse a permissive raw input into the canonical store. */
-export type Input<Raw, Store, Cfg> = (raw: Raw | undefined, cfg: Cfg) => Store;
+export type Input<Raw, Store, Cfg> = (
+  raw: Raw | undefined,
+  cfg: Cfg,
+) => Store;
 
 /** Step 2: normalize the canonical store into its final, trusted form. */
 export type Storage<Store, Cfg> = (store: Store, cfg: Cfg) => Store;
 
 /** Step 3: build the book's result from the store. The result must expose `.css()`. */
-export type Output<Store, Out, Cfg, Opts = void> = (store: Store, cfg: Cfg, opts?: Opts) => Out;
+export type Output<Store, Out, Cfg, Opts = void> = (
+  store: Store,
+  cfg: Cfg,
+  opts?: Opts,
+) => Out;
 
 /** A book's definition: the three steps plus config defaults. */
-export interface Manuscript<Raw, Store, Out extends { css(): unknown }, Cfg, Opts = void> {
+export interface Manuscript<
+  Raw,
+  Store,
+  Out extends { css(): unknown },
+  Cfg,
+  Opts = void,
+> {
   /** config defaults; merged with per-publish `config` overrides. */
   defaults: Cfg;
   input: Input<Raw, Store, Cfg>;
@@ -35,10 +48,18 @@ export interface Manuscript<Raw, Store, Out extends { css(): unknown }, Cfg, Opt
  * around the original. Wraps compose as an onion across re-publishes: each
  * re-publish layers a new ring outside the previous (newest outermost).
  */
-export interface ManuscriptWrap<Raw, Store, Out extends { css(): unknown }, Cfg, Opts = void> {
+export interface ManuscriptWrap<
+  Raw,
+  Store,
+  Out extends { css(): unknown },
+  Cfg,
+  Opts = void,
+> {
   input?: (base: Input<Raw, Store, Cfg>) => Input<Raw, Store, Cfg>;
   storage?: (base: Storage<Store, Cfg>) => Storage<Store, Cfg>;
-  output?: (base: Output<Store, Out, Cfg, Opts>) => Output<Store, Out, Cfg, Opts>;
+  output?: (
+    base: Output<Store, Out, Cfg, Opts>,
+  ) => Output<Store, Out, Cfg, Opts>;
 }
 
 /**
@@ -46,15 +67,25 @@ export interface ManuscriptWrap<Raw, Store, Out extends { css(): unknown }, Cfg,
  *  - REPLACE any step (or the whole manuscript) and/or config, or
  *  - `wrap` a step to decorate it (onion) instead of replacing it.
  */
-export type ManuscriptOverrides<Raw, Store, Out extends { css(): unknown }, Cfg, Opts = void> = Partial<
-  Manuscript<Raw, Store, Out, Cfg, Opts>
-> & {
+export type ManuscriptOverrides<
+  Raw,
+  Store,
+  Out extends { css(): unknown },
+  Cfg,
+  Opts = void,
+> = Partial<Manuscript<Raw, Store, Out, Cfg, Opts>> & {
   config?: Partial<Cfg>;
   wrap?: ManuscriptWrap<Raw, Store, Out, Cfg, Opts>;
 };
 
 /** A published book: callable (builds the result), with its store + manuscript exposed. */
-export interface Book<Raw, Store, Out extends { css(): unknown }, Cfg, Opts = void> {
+export interface Book<
+  Raw,
+  Store,
+  Out extends { css(): unknown },
+  Cfg,
+  Opts = void,
+> {
   /** run input -> storage -> output. A bare call uses the global defaults. */
   (raw?: Raw, opts?: Opts): Out;
   /** run input + storage: raw -> canonical store (for composing across books). */

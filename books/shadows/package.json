@@ -41,10 +41,8 @@
   "devDependencies": {
     "@css-bookends/colours": "workspace:*",
     "@css-bookends/css-calipers": "workspace:*",
-    "@eslint/js": "^9.39.2",
+    "@css-bookends/eslint-config": "workspace:*",
     "@types/node": "^24.10.1",
-    "@typescript-eslint/eslint-plugin": "^8.60.0",
-    "@typescript-eslint/parser": "^8.60.0",
     "eslint": "^9.39.2",
     "typescript": "^5.6.3",
     "vitest": "^4.1.7"

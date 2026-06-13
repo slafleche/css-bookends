@@ -1,7 +1,14 @@
 {
   "singleQuote": true,
   "semi": true,
-  "printWidth": 100,
+  "printWidth": 70,
   "tabWidth": 2,
-  "trailingComma": "all"
+  "trailingComma": "all",
+  "jsdocSingleLineComment": false,
+  "multilineArraysWrapThreshold": 0,
+  "multilineArraysLinePattern": "1",
+  "plugins": [
+    "prettier-plugin-jsdoc",
+    "prettier-plugin-multiline-arrays"
+  ]
 }

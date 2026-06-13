@@ -18,7 +18,9 @@ export const emitDisplayFeatures = (
   helpers: MediaQueryBuilderHelpers,
   validate?: MediaQueryDisplayValidator,
 ): void => {
-  if (!applyMediaQueryValidation(props, helpers, validate, 'display')) {
+  if (
+    !applyMediaQueryValidation(props, helpers, validate, 'display')
+  ) {
     return;
   }
 

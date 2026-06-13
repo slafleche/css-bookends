@@ -16,12 +16,12 @@ import { bookPress, type Press } from '@css-bookends/bookpress';
 import type { DegMeasurement } from '@css-bookends/css-calipers';
 
 import {
+  type Color,
   color,
   colorModern,
+  type ColorWrapper,
   fmtOKLCH,
   toModernOKLCH,
-  type Color,
-  type ColorWrapper,
 } from './colorWrap';
 
 /* ---------- value types ---------- */
@@ -114,8 +114,16 @@ export interface ResolvedColour {
   saturate(value?: number): ResolvedColour;
   desaturate(value?: number): ResolvedColour;
   hueShift(value: DegMeasurement): ResolvedColour;
-  mix(target: ColourInput, ratio?: number, mode?: MixMode): ResolvedColour;
-  mixSolid(target: ColourInput, ratio?: number, mode?: MixMode): ResolvedColour;
+  mix(
+    target: ColourInput,
+    ratio?: number,
+    mode?: MixMode,
+  ): ResolvedColour;
+  mixSolid(
+    target: ColourInput,
+    ratio?: number,
+    mode?: MixMode,
+  ): ResolvedColour;
   solid(): ResolvedColour;
   blend: {
     multiply(options?: BlendOptions): ResolvedColour;
@@ -128,7 +136,10 @@ export interface ResolvedColour {
 
 /* ---------- output (page 3): render one format ---------- */
 
-const renderFormat = (store: ColorWrapper, fmt: CssFormat): string => {
+const renderFormat = (
+  store: ColorWrapper,
+  fmt: CssFormat,
+): string => {
   switch (fmt.format) {
     case 'hex':
       return store.unsafeColor.hex(fmt.alpha ? 'rgba' : 'rgb');
@@ -150,7 +161,10 @@ const renderFormat = (store: ColorWrapper, fmt: CssFormat): string => {
 
 /* ---------- the navigable result, delegating to the wrapper ---------- */
 
-function resolve(store: ColorWrapper, cfg: ColoursConfig): ResolvedColour {
+function resolve(
+  store: ColorWrapper,
+  cfg: ColoursConfig,
+): ResolvedColour {
   const next = (w: ColorWrapper): ResolvedColour => resolve(w, cfg);
   // select a format: same colour, new configured output. Persists through
   // later modifications because each resolved colour captures its own cfg.
@@ -158,13 +172,18 @@ function resolve(store: ColorWrapper, cfg: ColoursConfig): ResolvedColour {
     resolve(store, { ...cfg, output });
 
   const alpha = ((value?: number) =>
-    value === undefined ? store.alpha() : next(store.alpha(value))) as ResolvedColour['alpha'];
+    value === undefined
+      ? store.alpha()
+      : next(store.alpha(value))) as ResolvedColour['alpha'];
 
   return {
-    css: (format?: CssFormat) => renderFormat(store, format ?? cfg.output),
+    css: (format?: CssFormat) =>
+      renderFormat(store, format ?? cfg.output),
 
-    hex: (options?: { alpha?: boolean }) => withFormat({ format: 'hex', ...options }),
-    rgb: (options?: { legacy?: boolean }) => withFormat({ format: 'rgb', ...options }),
+    hex: (options?: { alpha?: boolean }) =>
+      withFormat({ format: 'hex', ...options }),
+    rgb: (options?: { legacy?: boolean }) =>
+      withFormat({ format: 'rgb', ...options }),
     hsl: () => withFormat({ format: 'hsl' }),
     oklch: () => withFormat({ format: 'oklch' }),
     modern: () => withFormat({ format: 'modern' }),
@@ -182,8 +201,10 @@ function resolve(store: ColorWrapper, cfg: ColoursConfig): ResolvedColour {
       next(store.mixSolid(target, ratio, mode)),
     solid: () => next(store.solid()),
     blend: {
-      multiply: (options?: BlendOptions) => next(store.blend.multiply(options)),
-      screen: (options?: BlendOptions) => next(store.blend.screen(options)),
+      multiply: (options?: BlendOptions) =>
+        next(store.blend.multiply(options)),
+      screen: (options?: BlendOptions) =>
+        next(store.blend.screen(options)),
     },
 
     wrapper: () => store,
@@ -192,7 +213,12 @@ function resolve(store: ColorWrapper, cfg: ColoursConfig): ResolvedColour {
 
 /* ---------- the press + the factory ---------- */
 
-const coloursPress: Press<ColourInput, ColorWrapper, ResolvedColour, ColoursConfig> = {
+const coloursPress: Press<
+  ColourInput,
+  ColorWrapper,
+  ResolvedColour,
+  ColoursConfig
+> = {
   defaults: defaultColoursConfig,
   // page 1 — parse any colour expression into the canonical store (an immutable wrapper).
   input: (raw, cfg) => color(raw ?? cfg.base),
@@ -210,6 +236,8 @@ export type Colours = (input?: ColourInput) => ResolvedColour;
  * bookPressColours: the colours factory. Give it defaults + default output format, get
  * a colours book. A bare call resolves the configured base colour.
  */
-export function bookPressColours(config: Partial<ColoursConfig> = {}): Colours {
+export function bookPressColours(
+  config: Partial<ColoursConfig> = {},
+): Colours {
   return bookPress(coloursPress)({ config }) as Colours;
 }

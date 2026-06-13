@@ -1,4 +1,10 @@
+import type {
+  IMeasurement,
+  IRatio,
+} from '@css-bookends/css-calipers';
+import type { r as ratioFactory } from '@css-bookends/css-calipers';
 import { describe, expect, it, vi } from 'vitest';
+
 import type {
   buildMediaQueryFromFeatures,
   buildMediaQueryString,
@@ -8,19 +14,10 @@ import type {
   emitResolutionFeatures,
   mediaQueryFactory,
 } from '../../../src/mediaQueries';
-import type {
-  MediaQueryBuilderHelpers,
-  MediaQueryValidationResult,
-} from '../../../src/mediaQueries/helpers';
-import type { IMeasurement, IRatio } from '@css-bookends/css-calipers';
-import type { r as ratioFactory } from '@css-bookends/css-calipers';
-import type { StyleRule } from '../../../src/mediaQueries/types';
+import type { MediaQueryBuilderHelpers } from '../../../src/mediaQueries/helpers';
 import type { IMediaQueryProps } from '../../../src/mediaQueries/mediaQueries';
-import type {
-  IMediaQueryCustomFeatures,
-  IMediaQueryDimensions,
-  IMediaQueryResolutionRange,
-} from '../../../src/mediaQueries/modules';
+import type { IMediaQueryCustomFeatures } from '../../../src/mediaQueries/modules';
+import type { StyleRule } from '../../../src/mediaQueries/types';
 
 type MeasurementLike = IMeasurement;
 
@@ -44,12 +41,16 @@ export const runMediaQueryTests = (
 ): void => {
   describe(`mediaQueries (${label})`, () => {
     it('builds a min-width query with the default media type', () => {
-      const result = api.buildMediaQueryString({ minWidth: api.mPx(480) });
+      const result = api.buildMediaQueryString({
+        minWidth: api.mPx(480),
+      });
       expect(result).toBe('screen and (min-width: 480px)');
     });
 
     it('builds a max-width query', () => {
-      const result = api.buildMediaQueryString({ maxWidth: api.mPx(1024) });
+      const result = api.buildMediaQueryString({
+        maxWidth: api.mPx(1024),
+      });
       expect(result).toBe('screen and (max-width: 1024px)');
     });
 
@@ -133,10 +134,14 @@ export const runMediaQueryTests = (
       expect(() =>
         api.buildMediaQueryString({
           customFeatures: {
-            'custom-feature': ({ bad: true } as unknown as IMeasurement),
+            'custom-feature': {
+              bad: true,
+            } as unknown as IMeasurement,
           },
         }),
-      ).toThrow('Custom feature "custom-feature" must be a primitive or a measurement.');
+      ).toThrow(
+        'Custom feature "custom-feature" must be a primitive or a measurement.',
+      );
     });
 
     it('rejects aspect ratio values that are not created with r()', () => {
@@ -162,7 +167,9 @@ export const runMediaQueryTests = (
         minWidth: api.mPx(640),
         hover: 'hover',
       });
-      expect(result).toBe('screen and (min-width: 640px) and (hover: hover)');
+      expect(result).toBe(
+        'screen and (min-width: 640px) and (hover: hover)',
+      );
     });
 
     it('mixes multiple core feature groups', () => {
@@ -222,9 +229,15 @@ export const runMediaQueryTests = (
         config: { errorHandling: { invalidValueMode: 'throw' } },
       });
 
-      expect(() => allowBuilder({ aspectRatio: api.r(0, 1) })).not.toThrow();
-      expect(() => logBuilder({ aspectRatio: api.r(0, 1) })).not.toThrow();
-      expect(() => throwBuilder({ aspectRatio: api.r(0, 1) })).toThrow(
+      expect(() =>
+        allowBuilder({ aspectRatio: api.r(0, 1) }),
+      ).not.toThrow();
+      expect(() =>
+        logBuilder({ aspectRatio: api.r(0, 1) }),
+      ).not.toThrow();
+      expect(() =>
+        throwBuilder({ aspectRatio: api.r(0, 1) }),
+      ).toThrow(
         /aspectRatio must be a valid ratio greater than 0.*code=CALIPERS_E_ASSERT_CONDITION/,
       );
     });
@@ -243,7 +256,10 @@ export const runMediaQueryTests = (
         config: { errorHandling: { lintingMode: 'throw' } },
       });
 
-      const redundant = { width: api.mPx(640), minWidth: api.mPx(320) };
+      const redundant = {
+        width: api.mPx(640),
+        minWidth: api.mPx(320),
+      };
       expect(() => allowBuilder(redundant)).not.toThrow();
       expect(() => logBuilder(redundant)).not.toThrow();
       expect(() => throwBuilder(redundant)).toThrow(
@@ -295,13 +311,19 @@ export const runMediaQueryTests = (
     });
 
     it('covers mixed validation and linting modes', () => {
-      const modes = ['allow', 'log', 'throw'] as const;
+      const modes = [
+        'allow',
+        'log',
+        'throw',
+      ] as const;
 
       modes.forEach((invalidValueMode) => {
         modes.forEach((lintingMode) => {
           const builder = api.createMediaQueryBuilder({
             emitBase: api.emitDimensionsFeatures,
-            config: { errorHandling: { invalidValueMode, lintingMode } },
+            config: {
+              errorHandling: { invalidValueMode, lintingMode },
+            },
           });
 
           const props = {
@@ -335,12 +357,22 @@ export const runMediaQueryTests = (
         config: { errorHandling: { invalidValueMode: 'log' } },
       });
 
-      expect(() => logBuilder({ aspectRatio: api.r(0, 1) })).not.toThrow();
+      expect(() =>
+        logBuilder({ aspectRatio: api.r(0, 1) }),
+      ).not.toThrow();
     });
 
     it('handles multiple factory instances with independent configs', () => {
-      const invalidModes = ['allow', 'log', 'throw'] as const;
-      const lintModes = ['allow', 'log', 'throw'] as const;
+      const invalidModes = [
+        'allow',
+        'log',
+        'throw',
+      ] as const;
+      const lintModes = [
+        'allow',
+        'log',
+        'throw',
+      ] as const;
 
       const props = {
         aspectRatio: api.r(0, 1),
@@ -352,7 +384,9 @@ export const runMediaQueryTests = (
         lintModes.forEach((lintingMode) => {
           const builder = api.createMediaQueryBuilder({
             emitBase: api.emitDimensionsFeatures,
-            config: { errorHandling: { invalidValueMode, lintingMode } },
+            config: {
+              errorHandling: { invalidValueMode, lintingMode },
+            },
           });
 
           if (lintingMode === 'throw') {
@@ -501,7 +535,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'default-modules',
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
         },
       });
 
@@ -529,8 +566,13 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'core-only',
-          modules: ['core'],
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          modules: [
+            'core',
+          ],
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
         },
       });
 
@@ -550,7 +592,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'custom-validator',
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
           custom: {
             key: 'guard',
             validator: () => 'nope',
@@ -574,7 +619,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'custom-linter',
-          errorHandling: { invalidValueMode: 'allow', lintingMode: 'throw' },
+          errorHandling: {
+            invalidValueMode: 'allow',
+            lintingMode: 'throw',
+          },
           custom: {
             key: 'guard',
             linter: () => 'flagged',
@@ -599,8 +647,13 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'no-custom-module',
-          modules: ['core'],
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          modules: [
+            'core',
+          ],
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
         },
       });
 
@@ -618,7 +671,9 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'guard-default',
-          modules: ['core'],
+          modules: [
+            'core',
+          ],
         },
       });
 
@@ -686,8 +741,13 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'no-interaction',
-          modules: ['core'],
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          modules: [
+            'core',
+          ],
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
         },
       });
 
@@ -705,8 +765,13 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'no-preferences',
-          modules: ['core'],
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          modules: [
+            'core',
+          ],
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
         },
       });
 
@@ -724,8 +789,13 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'no-display',
-          modules: ['core'],
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          modules: [
+            'core',
+          ],
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
         },
       });
 
@@ -743,8 +813,13 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'no-environment',
-          modules: ['core'],
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          modules: [
+            'core',
+          ],
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
         },
       });
 
@@ -770,7 +845,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'default-modules-parity',
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
         },
       });
 
@@ -788,7 +866,10 @@ export const runMediaQueryTests = (
             'environment',
             'custom',
           ],
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'log' },
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'log',
+          },
         },
       });
 
@@ -808,12 +889,19 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'guard-log',
-          modules: ['core'],
-          errorHandling: { invalidValueMode: 'log', lintingMode: 'log' },
+          modules: [
+            'core',
+          ],
+          errorHandling: {
+            invalidValueMode: 'log',
+            lintingMode: 'log',
+          },
         },
       });
 
-      expect(() => factory({ onlyCore: { padding: '8px' } })).not.toThrow();
+      expect(() =>
+        factory({ onlyCore: { padding: '8px' } }),
+      ).not.toThrow();
     });
 
     it('uses invalidValueMode allow for module guard failures', () => {
@@ -825,12 +913,19 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'guard-allow',
-          modules: ['core'],
-          errorHandling: { invalidValueMode: 'allow', lintingMode: 'log' },
+          modules: [
+            'core',
+          ],
+          errorHandling: {
+            invalidValueMode: 'allow',
+            lintingMode: 'log',
+          },
         },
       });
 
-      expect(() => factory({ onlyCore: { padding: '8px' } })).not.toThrow();
+      expect(() =>
+        factory({ onlyCore: { padding: '8px' } }),
+      ).not.toThrow();
     });
 
     it('defaults lintingMode to throw for custom linter failures', () => {
@@ -864,7 +959,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'no-op',
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'throw' },
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'throw',
+          },
           custom: {
             key: 'guard',
             validator: () => 'nope',
@@ -886,12 +984,19 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'guard-log-warning',
-          modules: ['core'],
-          errorHandling: { invalidValueMode: 'log', lintingMode: 'log' },
+          modules: [
+            'core',
+          ],
+          errorHandling: {
+            invalidValueMode: 'log',
+            lintingMode: 'log',
+          },
         },
       });
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
       factory({ onlyCore: { padding: '8px' } });
       expect(warnSpy).toHaveBeenCalledWith(
         'Media query factory "guard-log-warning" received unsupported feature "hover". Add "interaction" to modules.',
@@ -908,7 +1013,9 @@ export const runMediaQueryTests = (
         config: { errorHandling: { lintingMode: 'log' } },
       });
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
       builder({});
       expect(warnSpy).toHaveBeenCalledWith(
         'Media query feature "min-width" was emitted more than once; using the latest value.',
@@ -925,7 +1032,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'validator-log',
-          errorHandling: { invalidValueMode: 'log', lintingMode: 'log' },
+          errorHandling: {
+            invalidValueMode: 'log',
+            lintingMode: 'log',
+          },
           custom: {
             key: 'guard',
             validator: () => 'nope',
@@ -933,8 +1043,12 @@ export const runMediaQueryTests = (
         },
       });
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      expect(() => factory({ base: { padding: '8px' } })).not.toThrow();
+      const warnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
+      expect(() =>
+        factory({ base: { padding: '8px' } }),
+      ).not.toThrow();
       expect(warnSpy).toHaveBeenCalledWith(
         'Media query factory "validator-log" custom validator "guard" failed: nope',
       );
@@ -950,7 +1064,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'validator-allow',
-          errorHandling: { invalidValueMode: 'allow', lintingMode: 'log' },
+          errorHandling: {
+            invalidValueMode: 'allow',
+            lintingMode: 'log',
+          },
           custom: {
             key: 'guard',
             validator: () => 'nope',
@@ -958,7 +1075,9 @@ export const runMediaQueryTests = (
         },
       });
 
-      expect(() => factory({ base: { padding: '8px' } })).not.toThrow();
+      expect(() =>
+        factory({ base: { padding: '8px' } }),
+      ).not.toThrow();
     });
 
     it('uses lintingMode log for custom linter failures', () => {
@@ -970,7 +1089,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'linter-log',
-          errorHandling: { invalidValueMode: 'allow', lintingMode: 'log' },
+          errorHandling: {
+            invalidValueMode: 'allow',
+            lintingMode: 'log',
+          },
           custom: {
             key: 'guard',
             linter: () => 'flagged',
@@ -978,8 +1100,12 @@ export const runMediaQueryTests = (
         },
       });
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      expect(() => factory({ base: { padding: '8px' } })).not.toThrow();
+      const warnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
+      expect(() =>
+        factory({ base: { padding: '8px' } }),
+      ).not.toThrow();
       expect(warnSpy).toHaveBeenCalledWith(
         'Media query factory "linter-log" custom linter "guard" flagged: flagged',
       );
@@ -995,7 +1121,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'linter-allow',
-          errorHandling: { invalidValueMode: 'allow', lintingMode: 'allow' },
+          errorHandling: {
+            invalidValueMode: 'allow',
+            lintingMode: 'allow',
+          },
           custom: {
             key: 'guard',
             linter: () => 'flagged',
@@ -1003,7 +1132,9 @@ export const runMediaQueryTests = (
         },
       });
 
-      expect(() => factory({ base: { padding: '8px' } })).not.toThrow();
+      expect(() =>
+        factory({ base: { padding: '8px' } }),
+      ).not.toThrow();
     });
 
     it('ignores styles for keys not present in queries when invalidValueMode is allow', () => {
@@ -1015,7 +1146,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'unknown-keys',
-          errorHandling: { invalidValueMode: 'allow', lintingMode: 'throw' },
+          errorHandling: {
+            invalidValueMode: 'allow',
+            lintingMode: 'throw',
+          },
         },
       });
 
@@ -1042,7 +1176,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'unknown-key-throw',
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'throw' },
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'throw',
+          },
         },
       });
 
@@ -1065,7 +1202,10 @@ export const runMediaQueryTests = (
         queries,
         config: {
           label: 'unknown-key-log',
-          errorHandling: { invalidValueMode: 'log', lintingMode: 'throw' },
+          errorHandling: {
+            invalidValueMode: 'log',
+            lintingMode: 'throw',
+          },
         },
       });
 
@@ -1074,7 +1214,9 @@ export const runMediaQueryTests = (
         extra: { color: 'red' },
       } as Record<string, StyleRule>;
 
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => {});
       factory(styles);
       expect(warnSpy).toHaveBeenCalledWith(
         'Media query factory "unknown-key-log" received unknown query key "extra".',
@@ -1092,7 +1234,10 @@ export const runMediaQueryTests = (
         config: {
           label: 'empty-modules',
           modules: [],
-          errorHandling: { invalidValueMode: 'throw', lintingMode: 'throw' },
+          errorHandling: {
+            invalidValueMode: 'throw',
+            lintingMode: 'throw',
+          },
         },
       });
 

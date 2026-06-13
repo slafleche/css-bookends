@@ -8,8 +8,16 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "types": ["vitest"]
+    "types": [
+      "vitest"
+    ]
   },
-  "include": ["src", "tests", "examples"],
-  "exclude": ["tests/types"]
+  "include": [
+    "src",
+    "tests",
+    "examples"
+  ],
+  "exclude": [
+    "tests/types"
+  ]
 }

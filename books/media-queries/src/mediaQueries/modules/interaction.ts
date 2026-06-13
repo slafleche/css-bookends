@@ -21,7 +21,12 @@ export const emitInteractionFeatures = (
   validate?: MediaQueryInteractionValidator,
 ): void => {
   if (
-    !applyMediaQueryValidation(props, helpers, validate, 'interaction')
+    !applyMediaQueryValidation(
+      props,
+      helpers,
+      validate,
+      'interaction',
+    )
   ) {
     return;
   }

@@ -42,7 +42,12 @@ export type MediaQueryModuleKeysMap = {
     | 'maxAspectRatio'
     | 'orientation';
   resolution: 'resolutionValue' | 'minResolution' | 'maxResolution';
-  interaction: 'hover' | 'anyHover' | 'pointer' | 'anyPointer' | 'update';
+  interaction:
+    | 'hover'
+    | 'anyHover'
+    | 'pointer'
+    | 'anyPointer'
+    | 'update';
   preferences:
     | 'colorScheme'
     | 'reducedMotion'
@@ -59,6 +64,8 @@ export type MediaQueryModuleKeys<M extends MediaQueryModuleId> =
 
 export type MediaQueryModulesList = readonly MediaQueryModuleId[];
 
-export const defineMediaQueryModules = <T extends MediaQueryModulesList>(
+export const defineMediaQueryModules = <
+  T extends MediaQueryModulesList,
+>(
   ...modules: T
 ): T => modules;

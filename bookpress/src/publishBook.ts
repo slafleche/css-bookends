@@ -12,9 +12,13 @@ import type { Book, Manuscript, ManuscriptOverrides } from './types';
  * newest ring outermost). Each book builds its own public factory from this engine
  * with its manuscript baked in, named `publishBook<Name>`.
  */
-export function publishBook<Raw, Store, Out extends { css(): unknown }, Cfg, Opts = void>(
-  base: Manuscript<Raw, Store, Out, Cfg, Opts>,
-) {
+export function publishBook<
+  Raw,
+  Store,
+  Out extends { css(): unknown },
+  Cfg,
+  Opts = void,
+>(base: Manuscript<Raw, Store, Out, Cfg, Opts>) {
   return (
     over: ManuscriptOverrides<Raw, Store, Out, Cfg, Opts> = {},
   ): Book<Raw, Store, Out, Cfg, Opts> => {
@@ -22,13 +26,19 @@ export function publishBook<Raw, Store, Out extends { css(): unknown }, Cfg, Opt
 
     // each step: replace first, then wrap the result (decorator / onion).
     const replacedInput = over.input ?? base.input;
-    const input = wrap?.input ? wrap.input(replacedInput) : replacedInput;
+    const input = wrap?.input
+      ? wrap.input(replacedInput)
+      : replacedInput;
 
     const replacedStorage = over.storage ?? base.storage;
-    const storage = wrap?.storage ? wrap.storage(replacedStorage) : replacedStorage;
+    const storage = wrap?.storage
+      ? wrap.storage(replacedStorage)
+      : replacedStorage;
 
     const replacedOutput = over.output ?? base.output;
-    const output = wrap?.output ? wrap.output(replacedOutput) : replacedOutput;
+    const output = wrap?.output
+      ? wrap.output(replacedOutput)
+      : replacedOutput;
 
     const manuscript: Manuscript<Raw, Store, Out, Cfg, Opts> = {
       defaults: base.defaults,
@@ -42,7 +52,13 @@ export function publishBook<Raw, Store, Out extends { css(): unknown }, Cfg, Opt
       manuscript.storage(manuscript.input(raw, cfg), cfg);
 
     const book = ((raw?: Raw, opts?: Opts): Out =>
-      manuscript.output(toStore(raw), cfg, opts)) as Book<Raw, Store, Out, Cfg, Opts>;
+      manuscript.output(toStore(raw), cfg, opts)) as Book<
+      Raw,
+      Store,
+      Out,
+      Cfg,
+      Opts
+    >;
     book.store = toStore;
     book.manuscript = manuscript;
     return book;

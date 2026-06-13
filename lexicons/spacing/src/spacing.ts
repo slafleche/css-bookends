@@ -132,7 +132,11 @@ const spacingSides = (
     props.all !== undefined
   ) {
     spacing.top = resolve(
-      [props.top, props.vertical, props.all],
+      [
+        props.top,
+        props.vertical,
+        props.all,
+      ],
       defaultSpacing().top,
     );
   }
@@ -143,7 +147,11 @@ const spacingSides = (
     props.all !== undefined
   ) {
     spacing.right = resolve(
-      [props.right, props.horizontal, props.all],
+      [
+        props.right,
+        props.horizontal,
+        props.all,
+      ],
       defaultSpacing().right,
     );
   }
@@ -154,7 +162,11 @@ const spacingSides = (
     props.all !== undefined
   ) {
     spacing.bottom = resolve(
-      [props.bottom, props.vertical, props.all],
+      [
+        props.bottom,
+        props.vertical,
+        props.all,
+      ],
       defaultSpacing().bottom,
     );
   }
@@ -165,7 +177,11 @@ const spacingSides = (
     props.all !== undefined
   ) {
     spacing.left = resolve(
-      [props.left, props.horizontal, props.all],
+      [
+        props.left,
+        props.horizontal,
+        props.all,
+      ],
       defaultSpacing().left,
     );
   }
@@ -188,8 +204,7 @@ export const paddings = (
     styles.paddingRight = spacing.right;
   if (spacing.bottom !== undefined)
     styles.paddingBottom = spacing.bottom;
-  if (spacing.left !== undefined)
-    styles.paddingLeft = spacing.left;
+  if (spacing.left !== undefined) styles.paddingLeft = spacing.left;
   return styles;
 };
 
@@ -204,11 +219,9 @@ export const margins = (
     marginLeft: string;
   }> = {};
   if (spacing.top !== undefined) styles.marginTop = spacing.top;
-  if (spacing.right !== undefined)
-    styles.marginRight = spacing.right;
+  if (spacing.right !== undefined) styles.marginRight = spacing.right;
   if (spacing.bottom !== undefined)
     styles.marginBottom = spacing.bottom;
-  if (spacing.left !== undefined)
-    styles.marginLeft = spacing.left;
+  if (spacing.left !== undefined) styles.marginLeft = spacing.left;
   return styles;
 };

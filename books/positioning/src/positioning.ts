@@ -1,8 +1,6 @@
-import { type IMeasurement,m } from '@css-bookends/css-calipers';
-
-import type * as CSS_TYPES from 'csstype';
-
+import { type IMeasurement, m } from '@css-bookends/css-calipers';
 import { margins } from '@css-bookends/spacing';
+import type * as CSS_TYPES from 'csstype';
 export const absolutePosition = {
   topRight: (
     top: IMeasurement = m(0),

@@ -21,7 +21,10 @@ peer (`lexicons/spacing` for a lexicon, `books/transforms` for a book) and renam
 - `package.json` : name `@css-bookends/<name>`; `publishConfig.access: public`;
   dual `main`/`module`/`types` + `exports`; the standard `build` / `test` scripts.
 - `tsconfig.json`, `tsconfig.build.cjs.json`, `tsconfig.build.esm.json`
-- `eslint.config.js`
+- `eslint.config.js` : one line re-exporting the shared flat config,
+  `module.exports = require('@css-bookends/eslint-config')();` (pass
+  `{ ignores: [...] }` only to override the default ignore globs). Do NOT
+  copy a full config or re-list the eslint plugins.
 - `scripts/emit-esm-package.mjs` (writes `dist/esm/package.json` = `{"type":"module"}`)
 - `src/index.ts` re-exporting the package surface
 - `tests/runtime/<name>.src.test.ts`
@@ -33,6 +36,12 @@ peer (`lexicons/spacing` for a lexicon, `books/transforms` for a book) and renam
   lexicon: `peerDependencies` use `workspace:^`, plus the same packages as
   `devDependencies` with `workspace:*` (so the workspace resolves a single shared
   copy, preserving calipers' branded-type identity).
+- Lint deps are just `eslint` + `@css-bookends/eslint-config` (`workspace:*`) as
+  `devDependencies`. The shared config owns `typescript-eslint` and the import /
+  promise / unused-imports plugins, so don't add those per package.
+- No per-package Prettier config. The repo root owns `.prettierrc.json` /
+  `.prettierignore` (markdown is intentionally ignored); run `pnpm format` from
+  the root.
 - No `@/` (app) imports. No CSS compiler in a core package (see the
   compiler-agnostic rule in `authoring-a-book`).
 

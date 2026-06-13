@@ -1,7 +1,7 @@
-import { m, type IMeasurement } from '@css-bookends/css-calipers';
+import { type IMeasurement, m } from '@css-bookends/css-calipers';
 import { describe, expect, it } from 'vitest';
 
-import { publishBook, type Manuscript } from '../../src';
+import { type Manuscript, publishBook } from '../../src';
 
 /*
  * A throwaway demo book to exercise the engine (not a real helper). Its value is a
@@ -56,17 +56,26 @@ describe('publishBook', () => {
   });
 
   it('overrides config at publish time', () => {
-    expect(makeDemo({ config: { unit: 'rem' } })(4).css()).toBe('4rem');
+    expect(makeDemo({ config: { unit: 'rem' } })(4).css()).toBe(
+      '4rem',
+    );
   });
 
   it('replaces a single step (storage) while keeping the rest', () => {
-    expect(makeDemo({ storage: (s) => ({ size: s.size.add(1) }) })(4).css()).toBe('5px');
+    expect(
+      makeDemo({ storage: (s) => ({ size: s.size.add(1) }) })(
+        4,
+      ).css(),
+    ).toBe('5px');
   });
 
   it('re-publishes from a book, replacing the output', () => {
     const demo = makeDemo();
     const reissued = publishBook(demo.manuscript)({
-      output: (s) => ({ css: () => s.size.double().css(), double: () => s.size.double().css() }),
+      output: (s) => ({
+        css: () => s.size.double().css(),
+        double: () => s.size.double().css(),
+      }),
     });
     expect(reissued(4).css()).toBe('8px');
   });
@@ -75,14 +84,20 @@ describe('publishBook', () => {
 describe('publishBook — wrap (onion)', () => {
   it('wrap.storage decorates the base step (wrap-only wraps base)', () => {
     const bumped = makeDemo({
-      wrap: { storage: (base) => (s, cfg) => ({ size: base(s, cfg).size.add(100) }) },
+      wrap: {
+        storage: (base) => (s, cfg) => ({
+          size: base(s, cfg).size.add(100),
+        }),
+      },
     });
     expect(bumped(4).css()).toBe('104px');
   });
 
   it('wrap.input composes around base (runs before base parses)', () => {
     const offset = makeDemo({
-      wrap: { input: (base) => (raw, cfg) => base((raw ?? 0) + 10, cfg) },
+      wrap: {
+        input: (base) => (raw, cfg) => base((raw ?? 0) + 10, cfg),
+      },
     });
     expect(offset(4).css()).toBe('14px');
   });
@@ -102,7 +117,11 @@ describe('publishBook — wrap (onion)', () => {
   it('replace + wrap compose: the wrap receives the replaced step', () => {
     const r = makeDemo({
       storage: () => ({ size: m(1) }), // replace: 1px
-      wrap: { storage: (base) => (s, cfg) => ({ size: base(s, cfg).size.add(10) }) },
+      wrap: {
+        storage: (base) => (s, cfg) => ({
+          size: base(s, cfg).size.add(10),
+        }),
+      },
     });
     expect(r(4).css()).toBe('11px'); // 1 (replaced) + 10 (wrap)
   });
@@ -118,9 +137,14 @@ describe('publishBook — wrap (onion)', () => {
       };
 
     const inner = makeDemo({ wrap: { storage: ring('inner') } });
-    const outer = publishBook(inner.manuscript)({ wrap: { storage: ring('outer') } });
+    const outer = publishBook(inner.manuscript)({
+      wrap: { storage: ring('outer') },
+    });
 
     outer(4);
-    expect(order).toEqual(['outer', 'inner']); // newest ring runs first / outermost
+    expect(order).toEqual([
+      'outer',
+      'inner',
+    ]); // newest ring runs first / outermost
   });
 });

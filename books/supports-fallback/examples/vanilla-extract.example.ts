@@ -8,7 +8,10 @@ import { createSupportsFallback } from '../src/supportsFallback';
 const applyGrid = createSupportsFallback('display: grid');
 
 applyGrid({
-  selector: ['.layout', '.layout--wide'],
+  selector: [
+    '.layout',
+    '.layout--wide',
+  ],
   supported: { display: 'grid' },
   fallback: { display: 'block' },
 }).forEach(({ selector, style }) => globalStyle(selector, style));

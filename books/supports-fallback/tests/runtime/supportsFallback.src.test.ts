@@ -6,7 +6,10 @@ describe('supports-fallback', () => {
   it('returns supported/fallback @supports data for each selector', () => {
     const applySupports = createSupportsFallback('display: grid');
     const rules = applySupports({
-      selector: ['.foo', '#bar'],
+      selector: [
+        '.foo',
+        '#bar',
+      ],
       supported: { display: 'grid' },
       fallback: { display: 'block' },
     });
@@ -39,6 +42,8 @@ describe('supports-fallback', () => {
   });
 
   it('rejects blank queries', () => {
-    expect(() => createSupportsFallback('  ')).toThrow(/non-empty query/);
+    expect(() => createSupportsFallback('  ')).toThrow(
+      /non-empty query/,
+    );
   });
 });
