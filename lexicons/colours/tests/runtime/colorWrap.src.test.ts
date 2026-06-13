@@ -9,7 +9,7 @@ import {
   mixWithAlpha,
   oklchToRgbString,
   toModernOKLCH,
-} from '../../src/colorWrap';
+} from '../../src/deprecated/colorWrap';
 
 describe('colorWrap.helper', () => {
   it('wraps colors immutably and exposes css/alpha helpers', () => {

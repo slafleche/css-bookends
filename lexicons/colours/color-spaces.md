@@ -8,6 +8,9 @@ irrelevant and gets rewritten to satisfy this; this is a contract.
 
 ## Two kinds of value (the key split)
 
+**Rule: if it is a valid CSS color value, we accept it on input.** Every accepted
+value is one of two kinds:
+
 - **Translatable** — resolves to a concrete point in a color space. Manipulable
   (darken/mix/hueShift) and convertible to any output format.
 - **Symbolic** — a runtime/contextual keyword with no fixed value. You CAN make one
@@ -43,22 +46,25 @@ Plus `modern` (oklch with rgb fallback) and **re-wrap** of an existing color.
 | `transparent` | translatable | parse to `rgb(0 0 0 / 0)`; fully manipulable + convertible; may re-emit `transparent` when alpha 0 |
 | named colors (~148) | translatable | parse to sRGB; manipulable + convertible |
 | `currentColor` | symbolic | make + emit the keyword; modifying or converting **throws** (dev) / warns (prod) |
-| system colors | symbolic | make + emit the keyword; light/dark aware at runtime; modifying or converting **throws** (dev) / warns (prod) |
-| CSS-wide keywords | not a color | `inherit`/`initial`/`unset`/`revert`/`revert-layer` resolve via the cascade — **proposed out of scope** (property-level, not colors) |
+| system colors (current + deprecated) | symbolic | valid color values, so accepted; emit the keyword; light/dark aware at runtime; modifying or converting **throws** (dev) / warns (prod) |
+| CSS-wide keywords | symbolic | `inherit`/`initial`/`unset`/`revert`/`revert-layer` are valid color values, so accepted; passthrough (emit keyword; modify/convert **throws**) |
 
-**System colors (CSS Color 4 — symbolic, covered):** `Canvas`, `CanvasText`,
-`LinkText`, `VisitedText`, `ActiveText`, `ButtonFace`, `ButtonText`, `ButtonBorder`,
-`Field`, `FieldText`, `Highlight`, `HighlightText`, `SelectedItem`,
-`SelectedItemText`, `Mark`, `MarkText`, `GrayText`, `AccentColor`, `AccentColorText`.
+**System colors — current (CSS Color 4):** `Canvas`, `CanvasText`, `LinkText`,
+`VisitedText`, `ActiveText`, `ButtonFace`, `ButtonText`, `ButtonBorder`, `Field`,
+`FieldText`, `Highlight`, `HighlightText`, `SelectedItem`, `SelectedItemText`,
+`Mark`, `MarkText`, `GrayText`, `AccentColor`, `AccentColorText`.
 
-## Out of scope (niche / deprecated)
+**System colors — deprecated (Appendix A), still accepted as symbolic:**
+`ActiveBorder`, `ActiveCaption`, `AppWorkspace`, `Background`, `ButtonHighlight`,
+`ButtonShadow`, `CaptionText`, `InactiveBorder`, `InactiveCaption`,
+`InactiveCaptionText`, `InfoBackground`, `InfoText`, `Menu`, `MenuText`,
+`Scrollbar`, `ThreeD*`, `Window`, `WindowFrame`, `WindowText`. (Deprecated in CSS,
+but valid color values, so passed through.)
 
-- **Deprecated system colors (Appendix A):** `ActiveBorder`, `ActiveCaption`,
-  `AppWorkspace`, `Background`, `ButtonHighlight`, `ButtonShadow`, `CaptionText`,
-  `InactiveBorder`, `InactiveCaption`, `InactiveCaptionText`, `InfoBackground`,
-  `InfoText`, `Menu`, `MenuText`, `Scrollbar`, `ThreeD*`, `Window`, `WindowFrame`,
-  `WindowText`.
-- **Wide-gamut spaces:** `color(rec2020 …)`, `color(prophoto-rgb …)`, `color(xyz …)`.
+## Out of scope (niche)
+
+- **Wide-gamut spaces:** `color(rec2020 …)`, `color(prophoto-rgb …)`, `color(xyz …)`
+  - color FUNCTIONS, not keywords; conversion-heavy and rarely needed.
 - **hwb / display-p3 as INPUT** (output only for now).
 
 ## make x emit matrix (test grid)
@@ -106,10 +112,10 @@ Plus `modern` (oklch with rgb fallback) and **re-wrap** of an existing color.
 
 ## Files (deprecation)
 
-- **DEPRECATED — reference only, do not extend:**
-  - `src/colorWrap.ts` — old wrapper + `color` helper (library-coupled guts).
-  - `src/colours.ts` — old book (British spelling, old engine, currently broken).
-  - `src/default.ts` — old default instance.
+- **DEPRECATED — reference only, do not extend** (moved into `src/deprecated/`):
+  - `src/deprecated/colorWrap.ts` — old wrapper + `color` helper (library-coupled guts).
+  - `src/deprecated/colours.ts` — old book (British spelling, old engine, currently broken).
+  - `src/deprecated/default.ts` — old default instance.
 - **NEW — the rewrite target:**
   - `src/color.ts` — the new color book: the `ColorInput` union, the manuscript, the
     `ResolvedColor` result, the full `colorFormats`, symbolic handling, and
