@@ -7,6 +7,16 @@ description: The order to build a new CSS-Bookends book - settle the INPUT first
 
 How to build a new book, in order. Each part is built and proven before the next.
 
+**The bookends mentality - design the contract, not the guts.** A book is a
+contract: which values can be *made* (input), the behavior, and which forms can be
+*emitted* (output). The internals - the backing library, the algorithm - are a
+black box that can and *will* be rewritten; that swappability is the entire point of
+bookends. So design and test the contract first, then write (and rewrite) the guts
+to satisfy it. Never let the current implementation limit what the book promises,
+and never name or depend on a backing library in the contract or its tests. If a
+needed output is not achievable with today's guts, that is a guts problem to solve,
+not a contract to shrink.
+
 **Three rules up front:**
 
 - **Unit tests are required, not optional.** Every book ships tests under
