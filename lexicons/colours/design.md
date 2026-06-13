@@ -12,7 +12,7 @@ that same file, so the doc and the tests stay in lockstep.
 
 Canonical runtime lives in `src/colorWrap.ts` (kept as-is). The book wiring
 (`src/colours.ts`, `bookPressColours`) is built (pass 1) and delegates entirely to that
-wrapper; a later pass rewrites the internals (chroma-js -> culori, see `notes.md`).
+wrapper; a later pass rewrites the internals (a backing-library swap, see `notes.md`).
 
 | Page | Status |
 | --- | --- |
@@ -65,17 +65,17 @@ cost beyond a small adapter allocation.
 
 | Input | Form | Notes |
 | --- | --- | --- |
-| CSS string | `color('rebeccapurple')`, `color('#ff0000')`, `color('rgb(255,0,0)')` | anything chroma-js parses (named, hex, rgb/rgba, hsl, and oklch strings) |
+| CSS string | `color('rebeccapurple')`, `color('#ff0000')`, `color('rgb(255,0,0)')` | any CSS color string the parser accepts (named, hex, rgb/rgba, hsl, oklch, lab, lch) |
 | Hex | `color.create.hex('ff0000')` | bare or `#`-prefixed |
 | RGB(A) | `color.create.rgba(r, g, b, a?)` | channels accept 0-255 or 0-1; alpha optional |
 | HSL(A) | `color.create.hsl(h, s, l, a?)` | s/l accept percent or 0-1; hue normalized |
-| OKLCH | `color.create.oklch('70% 0.1 200')` or `color.create.oklch(l, c, h, a?)` | string or numbers (via culori) |
-| OKLCH object | `color.oklch({ mode:'oklch', l, c, h })`, `color.fromOKLCH(...)` | culori object form |
-| LCH | `color.lch(l, c, h)` | via chroma |
-| Existing colour | `color(wrapper)`, `color(chromaColor)` | idempotent re-wrap |
+| OKLCH | `color.create.oklch('70% 0.1 200')` or `color.create.oklch(l, c, h, a?)` | string or numbers |
+| OKLCH object | `color.oklch({ mode:'oklch', l, c, h })`, `color.fromOKLCH(...)` | object form |
+| LCH | `color.lch(l, c, h)` | from l/c/h numbers |
+| Existing colour | `color(wrapper)`, `color(rawColor)` | idempotent re-wrap |
 | Symbolic | `color('currentColor')`, `color('highlight')` | passed through untouched; not manipulable |
 | Escape hatches | `color.from`, `color.wrap`, `color.fromCss`, `color.unsafeChroma`, `color.unsafeToColor` | |
-| Scale | `color.scale([stops])` | returns a chroma scale, not a wrapper |
+| Scale | `color.scale([stops])` | returns a scale, not a wrapper |
 
 ### Gaps (missing / proposed)
 
@@ -83,8 +83,8 @@ cost beyond a small adapter allocation.
   wrapper only; an `{ l, c, h }` object must go through `color.oklch`.
 - **"transparent" as a symbolic input keyword.** It is currently parsed to
   `rgb(0 0 0 / 0)`; the keyword can only be re-emitted on output.
-- **lab() / lch() / display-p3 / hwb string inputs** as first-class, documented
-  forms (some may already pass through chroma but are unspecified).
+- **hwb() and display-p3 `color()` string inputs** (today they throw; lab/lch
+  already parse and are supported).
 
 ---
 
@@ -111,7 +111,7 @@ receiver. Most operate in OKLCH space.
 | blend.screen | `c.blend.screen(opts?)` | alpha-keying blend (defaults to black strip) |
 | solid | `c.solid()` | force alpha to 1 |
 | clone | `c.clone()` | isolated copy |
-| value | `c.value()` | underlying chroma Color (escape hatch) |
+| value | `c.value()` | underlying raw color (escape hatch) |
 | mixWithAlpha | `mixWithAlpha(base, target, ratio, alpha?)` | free helper: mixSolid then set alpha |
 
 ### Gaps (missing / proposed)
@@ -139,7 +139,7 @@ the book exposes them as named formats.
 | css transparent keyword | `c.css({ preferKeywordTransparent: true })` | `transparent` when alpha is 0 |
 | hex | `c.unsafeColor.hex()` | `#3366cc` (reaches through `unsafeColor` today) |
 | hsl | `c.unsafeColor.css('hsl')` | `hsl(220deg 60% 50%)` (reaches through `unsafeColor` today) |
-| oklch object | `color.toOKLCH(c)` (l 0-1), `toModernOKLCH(c)` (l 0-100) | culori / plain object |
+| oklch object | `color.toOKLCH(c)` (l 0-1), `toModernOKLCH(c)` (l 0-100) | plain object |
 | oklch string | `fmtOKLCH({ l, c, h })` | `oklch(50.000% 0.1000 200)` |
 | oklch -> rgb string | `oklchToRgbString({ l, c, h })` | `rgb(0 116 122)` |
 | modern | `colorModern(c)` | `oklch(...)` with rgb fallback when not convertible |

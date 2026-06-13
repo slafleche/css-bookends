@@ -200,7 +200,7 @@ describe('colorWrap.helper', () => {
  * Mirrors the "Inputs" table in design.md. Verified outputs.
  * ------------------------------------------------------------------ */
 describe('colours — inputs (supported)', () => {
-  it('css string: named / hex / rgb / hsl / oklch via chroma', () => {
+  it('css string: named / hex / rgb / hsl / oklch', () => {
     expect(color('rebeccapurple').css()).toBe('rgb(102 51 153)');
     expect(color('#ff0000').css()).toBe('rgb(255 0 0)');
     expect(color('rgb(255, 0, 0)').css()).toBe('rgb(255 0 0)');
@@ -253,10 +253,15 @@ describe('colours — inputs (supported)', () => {
     expect(color('transparent').css()).toBe('rgb(0 0 0 / 0)');
   });
 
-  it('re-wraps an existing wrapper or chroma Color (idempotent)', () => {
+  it('re-wraps an existing wrapper or its underlying color (idempotent)', () => {
     const base = color('#3366cc');
     expect(color(base).css()).toBe(base.css());
     expect(color(base.unsafeColor).css()).toBe(base.css());
+  });
+
+  it('lab() and lch() strings already parse', () => {
+    expect(color('lab(50% 40 60)').css()).toBe('rgb(191 87 0)');
+    expect(color('lch(50% 40 200)').css()).toBe('rgb(0 136 141)');
   });
 });
 
@@ -352,27 +357,43 @@ describe('colours — outputs (supported)', () => {
 });
 
 /* ------------------------------------------------------------------ *
- * GAPS — documented-but-unbuilt surface. These are todos so the spec
- * in design.md and the test file stay in lockstep. Implement in a
- * later pass, then turn each into a real assertion.
+ * GAPS — documented-but-unbuilt surface, pinned by REAL tests asserting
+ * TODAY's behavior (no `it.todo`). Each passes now and will FAIL the day
+ * the feature lands, forcing the gap to be confronted. Mirrors the
+ * "Gaps" sections in design.md.
  * ------------------------------------------------------------------ */
-describe('colours — gaps (not yet supported)', () => {
+describe('colours — gaps (today’s behavior; breaks when built)', () => {
   // Inputs
-  it.todo(
-    'color() accepts a bare OKLCH object ({ l, c, h }) directly',
-  );
-  it.todo('"transparent" can be kept as a symbolic input keyword');
-  it.todo(
-    'lab() / lch() / display-p3 / hwb string inputs as first-class',
-  );
+  it('a bare OKLCH object is not accepted (throws when rendered)', () => {
+    expect(() =>
+      color({ l: 0.7, c: 0.1, h: 200 } as never).css(),
+    ).toThrow();
+  });
 
-  // Modifications
-  it.todo('absolute setters: setLightness / setChroma / setHue');
-  it.todo('contrast / ensureContrast (WCAG-aware adjustment)');
-  it.todo('conveniences: complement (hue + 180), invert, grayscale');
-  it.todo('additional blend modes beyond multiply / screen');
+  it('hwb() and display-p3 color() inputs are unsupported (throw)', () => {
+    expect(() => color('hwb(200 10% 20%)')).toThrow();
+    expect(() => color('color(display-p3 1 0 0)')).toThrow();
+  });
 
-  // Outputs (the book exposes format selection via .css(format); alpha-aware hex
-  // is done as colorFormats.hexAlpha. These remain.)
-  it.todo('lab() / lch() / display-p3 / color() function outputs');
+  // Modifications: not methods on the wrapper yet.
+  it('absolute setters / contrast / complement / invert / grayscale are absent', () => {
+    const c = color('#3366cc');
+    expect('setLightness' in c).toBe(false);
+    expect('setChroma' in c).toBe(false);
+    expect('setHue' in c).toBe(false);
+    expect('contrast' in c).toBe(false);
+    expect('complement' in c).toBe(false);
+    expect('invert' in c).toBe(false);
+    expect('grayscale' in c).toBe(false);
+  });
+
+  it('blend exposes only multiply and screen', () => {
+    expect(Object.keys(color('#3366cc').blend).sort()).toEqual([
+      'multiply',
+      'screen',
+    ]);
+  });
+
+  // NOTE: lab/lch/display-p3 OUTPUT formats are a book-level concern (they would be
+  // added to colorFormats); asserted in the book test, not in this wrapper contract.
 });
