@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/@css-bookends/css-calipers.svg)](https://www.npmjs.com/package/@css-bookends/css-calipers)
 [![types](https://img.shields.io/npm/types/@css-bookends/css-calipers.svg)](https://www.npmjs.com/package/@css-bookends/css-calipers)
-[![license](https://img.shields.io/npm/l/css-calipers.svg)](./LICENSE.txt)
+[![license](https://img.shields.io/npm/l/@css-bookends/css-calipers.svg)](./LICENSE.txt)
 
 **CSS is code. Treat it that way.**  
 Compile-time unit safety for numeric, unit-bearing CSS values, with no surprises at runtime.
