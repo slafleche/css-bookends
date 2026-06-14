@@ -65,7 +65,22 @@ but valid color values, so passed through.)
 
 - **Wide-gamut spaces:** `color(rec2020 …)`, `color(prophoto-rgb …)`, `color(xyz …)`
   - color FUNCTIONS, not keywords; conversion-heavy and rarely needed.
-- **hwb / display-p3 as INPUT** (output only for now).
+- Not *prioritized*, but input is **lenient**: "if it is a valid CSS color value, we
+  accept it." Anything culori can parse (incl. `hwb()` / `color(display-p3 …)` / the
+  wide-gamut spaces above) is accepted on input and normalized to OKLCH in storage.
+  These are simply not first-class structured inputs.
+
+## Output formats + alpha/gamut policy
+
+- Formats: `rgba` (default), `rgb`, `hex`, `hexAlpha`, `hsl`, `hwb`, `lab`, `lch`,
+  `oklab`, `oklch`, `displayP3`. Output is always the `.css()` terminal; selectors set
+  the format. (No `modern`/fallback here — fallbacks are a separate property helper.)
+- Every alpha-capable format ALWAYS renders its alpha slot (`rgba(…,1)`,
+  `oklch(… / 1)`); only `rgb` / `hex` (hex6) carry no alpha.
+- One strictness knob (factory config; default throw-in-dev / warn-in-prod) governs
+  every "can't faithfully represent this" case: dropping a non-opaque alpha
+  (`rgb`/`hex`), out of the target format's gamut (clamped via `clampChroma`), and
+  modifying/converting a symbolic color.
 
 ## make x emit matrix (test grid)
 

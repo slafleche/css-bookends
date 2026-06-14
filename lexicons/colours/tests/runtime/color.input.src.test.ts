@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseColor, type Store } from '../../src/color';
+import {
+  parseColor,
+  publishBookColor,
+  type Store,
+} from '../../src/color';
 
 /*
  * INPUT step (Part 1 of the color book): every `make` form must parse into the
@@ -201,6 +205,17 @@ describe('color input — re-wrap of an existing color', () => {
     expect(again.mode).toBe('rgb');
     expect(again.r).toBeCloseTo(0.2, 2);
     expect(again.b).toBeCloseTo(0.8, 2);
+  });
+
+  it('re-wrapping a ResolvedColor round-trips', () => {
+    const color = publishBookColor();
+    const c = color('#3366cc');
+    expect(color(c).css()).toBe(c.css());
+  });
+
+  it('re-wrapping a symbolic ResolvedColor keeps the keyword', () => {
+    const color = publishBookColor();
+    expect(color(color('currentColor')).css()).toBe('currentColor');
   });
 });
 

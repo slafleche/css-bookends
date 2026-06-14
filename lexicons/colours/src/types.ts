@@ -1,3 +1,5 @@
+import type { DegMeasurement } from '@css-bookends/css-calipers';
+import type { Property } from 'csstype';
 import type { Color } from 'culori';
 
 /**
@@ -120,8 +122,104 @@ export type Store =
 /* ---------- author-facing input ---------- */
 
 /**
- * What a color may be created from. Re-wrapping an existing result is added in the
- * output step (once the library-agnostic result type exists); until then re-wrap is
- * an internal `parseColor` concern, kept off this public contract.
+ * What a color may be created from: a CSS string, a structured `ColorObject`, or an
+ * existing `ResolvedColor` (re-wrap). All library-agnostic - culori is never named.
  */
-export type ColorInput = string | ColorObject;
+export type ColorInput = string | ColorObject | ResolvedColor;
+
+/* ============================================================================
+ * OUTPUT (Part 3 of the book): formats, config, and the resolved result.
+ * ==========================================================================*/
+
+/** A CSS color value string. The `.css()` terminal returns this (csstype-typed). */
+export type CssColor = Property.Color;
+
+/**
+ * The output formats. Every alpha-capable format always renders its alpha slot;
+ * `rgb` / `hex` (hex6) carry no alpha and warn if they would drop a non-opaque one.
+ */
+export type CssFormat =
+  | { format: 'rgba' }
+  | { format: 'rgb' }
+  | { format: 'hex' }
+  | { format: 'hexAlpha' }
+  | { format: 'hsl' }
+  | { format: 'hwb' }
+  | { format: 'lab' }
+  | { format: 'lch' }
+  | { format: 'oklab' }
+  | { format: 'oklch' }
+  | { format: 'displayP3' };
+
+/** The format discriminants (`'rgba' | 'hex' | ...`). */
+export type FormatName = CssFormat['format'];
+
+/**
+ * How a "can't faithfully represent this" violation is surfaced: dropping a real
+ * alpha, out-of-gamut, or modifying a symbolic color. `auto` = throw in dev / warn
+ * in prod.
+ */
+export type Strictness = 'auto' | 'throw' | 'warn' | 'silent';
+
+/** The color book's config (factory-settable via `publishBookColor`). */
+export interface ColorConfig {
+  /** the format `.css()` renders when given no argument. */
+  output: CssFormat;
+  /** the color a bare call (no input) resolves to. */
+  base: ColorInput;
+  /** how violations are surfaced. */
+  strictness: Strictness;
+}
+
+/**
+ * The resolved color: render via `.css()`, or pick a format. The selectors set the
+ * format and return a new result; you still finish with `.css()`. Rendering only
+ * ever happens through `.css()`.
+ */
+export interface ResolvedColor {
+  /** the single render terminal: a CSS color string in the configured format, or in
+   * `format` for a one-off. */
+  css(format?: CssFormat): CssColor;
+  rgba(): ResolvedColor;
+  rgb(): ResolvedColor;
+  hex(): ResolvedColor;
+  hexAlpha(): ResolvedColor;
+  hsl(): ResolvedColor;
+  hwb(): ResolvedColor;
+  lab(): ResolvedColor;
+  lch(): ResolvedColor;
+  oklab(): ResolvedColor;
+  oklch(): ResolvedColor;
+  displayP3(): ResolvedColor;
+
+  /* modifications: immutable - each returns a NEW resolved color. Amounts are
+   * 0..1 fractions, relative (toward the extreme); they operate in OKLCH. */
+  alpha: {
+    (): number;
+    (value: number): ResolvedColor;
+  };
+  darken(amount?: number): ResolvedColor;
+  lighten(amount?: number): ResolvedColor;
+  brighten(amount?: number): ResolvedColor;
+  saturate(amount?: number): ResolvedColor;
+  desaturate(amount?: number): ResolvedColor;
+  hueShift(value: DegMeasurement): ResolvedColor;
+  mix(
+    target: ColorInput,
+    ratio?: number,
+    mode?: ColorSpace,
+  ): ResolvedColor;
+  mixSolid(
+    target: ColorInput,
+    ratio?: number,
+    mode?: ColorSpace,
+  ): ResolvedColor;
+  mixWithAlpha(
+    target: ColorInput,
+    ratio?: number,
+    alpha?: number,
+    mode?: ColorSpace,
+  ): ResolvedColor;
+  solid(): ResolvedColor;
+  clone(): ResolvedColor;
+}

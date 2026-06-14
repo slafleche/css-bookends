@@ -1,3 +1,6 @@
+import type { Manuscript } from '@css-bookends/bookpress';
+import { publishBook } from '@css-bookends/bookpress';
+import type { DegMeasurement } from '@css-bookends/css-calipers';
 import type {
   Color,
   Hsl,
@@ -8,16 +11,35 @@ import type {
   Oklch,
   Rgb,
 } from 'culori';
-import { converter, parse } from 'culori';
+import {
+  clampChroma,
+  converter,
+  formatHex,
+  formatHex8,
+  inGamut,
+  interpolate,
+  parse,
+} from 'culori';
 
 import type {
+  ColorConfig,
   ColorInput,
   ColorObject,
+  ColorSpace,
+  CssColor,
+  CssFormat,
+  FormatName,
+  ResolvedColor,
   Store,
+  Strictness,
   SymbolicColor,
 } from './types';
 
 export * from './types';
+
+/* A resolved color privately carries its store here so it can be re-wrapped by
+ * `parseColor` (lib-agnostic: this holds our `Store`, never a culori name). */
+const STORED = Symbol('color.store');
 
 /* ============================================================================
  * INPUT (Part 1 of the book): parse a `ColorInput` into the canonical store.
@@ -93,12 +115,17 @@ const SYMBOLIC_BY_LOWER = new Map<string, SymbolicColor>(
 );
 
 const isColorObject = (
-  input: ColorObject | Color,
+  input: ColorInput | Color,
 ): input is ColorObject =>
   typeof input === 'object' && input !== null && 'space' in input;
 
-const isCuloriColor = (input: ColorObject | Color): input is Color =>
+const isCuloriColor = (input: ColorInput | Color): input is Color =>
   typeof input === 'object' && input !== null && 'mode' in input;
+
+const cloneStore = (store: Store): Store =>
+  store.kind === 'symbolic'
+    ? { kind: 'symbolic', keyword: store.keyword }
+    : { kind: 'color', color: { ...store.color } };
 
 /**
  * Adapt a structured `ColorObject` to a culori color object. We accept
@@ -201,6 +228,15 @@ export const parseColor = (input: ColorInput | Color): Store => {
     return { kind: 'color', color };
   }
 
+  // re-wrap: an existing ResolvedColor carries its store privately.
+  if (
+    typeof input === 'object' &&
+    input !== null &&
+    STORED in input
+  ) {
+    return cloneStore((input as { [STORED]: Store })[STORED]);
+  }
+
   if (isColorObject(input)) {
     return { kind: 'color', color: colorObjectToCulori(input) };
   }
@@ -234,3 +270,332 @@ export const storeColor = (store: Store): Store => {
   }
   return { kind: 'color', color: toOklch(store.color) };
 };
+
+/* ============================================================================
+ * OUTPUT (Part 3 of the book): render the store in any format; build the result.
+ *
+ * The store is OKLCH; output converts OUT of it with culori and serializes. Every
+ * alpha-capable format always renders its alpha slot; `rgb`/`hex` carry no alpha.
+ * "Can't faithfully represent this" cases (dropped alpha, out-of-gamut) are
+ * surfaced via the strictness knob (throw in dev / warn in prod by default), with a
+ * best-effort value (clamped chroma) still produced in the warn case.
+ * ==========================================================================*/
+
+const notRelease = (): boolean =>
+  (globalThis as { process?: { env?: { NODE_ENV?: string } } })
+    .process?.env?.NODE_ENV !== 'production';
+
+/** Named format presets - prefer these over raw `{ format }` objects. */
+export const colorFormats = {
+  rgba: { format: 'rgba' },
+  rgb: { format: 'rgb' },
+  hex: { format: 'hex' },
+  hexAlpha: { format: 'hexAlpha' },
+  hsl: { format: 'hsl' },
+  hwb: { format: 'hwb' },
+  lab: { format: 'lab' },
+  lch: { format: 'lch' },
+  oklab: { format: 'oklab' },
+  oklch: { format: 'oklch' },
+  displayP3: { format: 'displayP3' },
+} as const satisfies Record<FormatName, CssFormat>;
+
+const violate = (message: string, strictness: Strictness): void => {
+  const mode =
+    strictness === 'auto'
+      ? notRelease()
+        ? 'throw'
+        : 'warn'
+      : strictness;
+  if (mode === 'throw') throw new Error(message);
+  if (mode === 'warn') console.warn(message);
+};
+
+const round = (value: number, precision = 3): number => {
+  const factor = 10 ** precision;
+  return Math.round(value * factor) / factor;
+};
+const clamp01 = (value: number): number =>
+  Math.min(1, Math.max(0, value));
+const channel255 = (value: number): number =>
+  Math.round(clamp01(value) * 255);
+const hueOf = (h: number | undefined): number =>
+  round((((h ?? 0) % 360) + 360) % 360, 2);
+const pct = (value: number): number => round(value * 100, 2);
+const alphaOf = (color: Color): number => round(color.alpha ?? 1, 3);
+
+const toRgb = converter('rgb');
+const toHsl = converter('hsl');
+const toHwb = converter('hwb');
+const toLab = converter('lab');
+const toLch = converter('lch');
+const toOklab = converter('oklab');
+const toOklchOut = converter('oklch');
+const toP3 = converter('p3');
+const inSrgb = inGamut('rgb');
+const inP3 = inGamut('p3');
+
+/** Bring a color into a target gamut, surfacing a violation if it wasn't inside. */
+const fitGamut = (
+  color: Color,
+  within: (c: Color) => boolean,
+  gamut: 'rgb' | 'p3',
+  strictness: Strictness,
+): Color => {
+  if (within(color)) {
+    return color;
+  }
+  violate(
+    `color: out of ${gamut === 'rgb' ? 'sRGB' : 'display-p3'} gamut; chroma clamped to fit`,
+    strictness,
+  );
+  return clampChroma(color, 'oklch', gamut);
+};
+
+const hasRealAlpha = (color: Color): boolean =>
+  color.alpha !== undefined && color.alpha !== 1;
+
+const renderColor = (
+  color: Color,
+  format: CssFormat,
+  strictness: Strictness,
+): string => {
+  const alpha = alphaOf(color);
+  switch (format.format) {
+    case 'rgba':
+    case 'rgb': {
+      if (format.format === 'rgb' && hasRealAlpha(color)) {
+        violate(
+          `color: alpha ${alpha} dropped by 'rgb' (no alpha channel); use rgba or solid()`,
+          strictness,
+        );
+      }
+      const c = toRgb(fitGamut(color, inSrgb, 'rgb', strictness));
+      const body = `${channel255(c.r)}, ${channel255(c.g)}, ${channel255(c.b)}`;
+      return format.format === 'rgba'
+        ? `rgba(${body}, ${alpha})`
+        : `rgb(${body})`;
+    }
+    case 'hex':
+    case 'hexAlpha': {
+      if (format.format === 'hex' && hasRealAlpha(color)) {
+        violate(
+          `color: alpha ${alpha} dropped by 'hex' (no alpha channel); use hexAlpha or solid()`,
+          strictness,
+        );
+      }
+      const c = toRgb(fitGamut(color, inSrgb, 'rgb', strictness));
+      return format.format === 'hexAlpha'
+        ? formatHex8(c)
+        : formatHex(c);
+    }
+    case 'hsl': {
+      const c = toHsl(fitGamut(color, inSrgb, 'rgb', strictness));
+      return `hsl(${hueOf(c.h)} ${pct(c.s)}% ${pct(c.l)}% / ${alpha})`;
+    }
+    case 'hwb': {
+      const c = toHwb(fitGamut(color, inSrgb, 'rgb', strictness));
+      return `hwb(${hueOf(c.h)} ${pct(c.w)}% ${pct(c.b)}% / ${alpha})`;
+    }
+    case 'lab': {
+      const c = toLab(color);
+      return `lab(${round(c.l, 3)} ${round(c.a, 3)} ${round(c.b, 3)} / ${alpha})`;
+    }
+    case 'lch': {
+      const c = toLch(color);
+      return `lch(${round(c.l, 3)} ${round(c.c, 3)} ${hueOf(c.h)} / ${alpha})`;
+    }
+    case 'oklab': {
+      const c = toOklab(color);
+      return `oklab(${round(c.l, 4)} ${round(c.a, 4)} ${round(c.b, 4)} / ${alpha})`;
+    }
+    case 'oklch': {
+      const c = toOklchOut(color);
+      return `oklch(${round(c.l, 4)} ${round(c.c, 4)} ${hueOf(c.h)} / ${alpha})`;
+    }
+    case 'displayP3': {
+      const c = toP3(fitGamut(color, inP3, 'p3', strictness));
+      return `color(display-p3 ${round(c.r, 5)} ${round(c.g, 5)} ${round(c.b, 5)} / ${alpha})`;
+    }
+  }
+};
+
+const render = (
+  store: Store,
+  format: CssFormat,
+  cfg: ColorConfig,
+): CssColor => {
+  // symbolic colors pass through: their keyword emits for any requested format.
+  if (store.kind === 'symbolic') {
+    return store.keyword;
+  }
+  return renderColor(store.color, format, cfg.strictness);
+};
+
+const wrapHue = (h: number): number => ((h % 360) + 360) % 360;
+
+const resolve = (store: Store, cfg: ColorConfig): ResolvedColor => {
+  // a format selector: same color, new configured output, still finished via .css().
+  const withFormat = (output: CssFormat): ResolvedColor =>
+    resolve(store, { ...cfg, output });
+  // a modification: a NEW color (re-normalized to OKLCH), same config.
+  const withColor = (raw: Color): ResolvedColor =>
+    resolve(storeColor({ kind: 'color', color: raw }), cfg);
+  const self = (): ResolvedColor => resolve(store, cfg);
+
+  // modifications are only valid on a translatable color; on a symbolic keyword
+  // they are a violation (throw in dev / warn in prod) and leave the color as-is.
+  const modifiable = (op: string): Oklch | undefined => {
+    if (store.kind === 'symbolic') {
+      violate(
+        `color: cannot ${op} a symbolic color '${store.keyword}'`,
+        cfg.strictness,
+      );
+      return undefined;
+    }
+    return store.color as Oklch;
+  };
+
+  const targetColor = (target: ColorInput): Color | undefined => {
+    const resolved = storeColor(parseColor(target));
+    if (resolved.kind !== 'color') {
+      violate(
+        'color: cannot mix with a symbolic color',
+        cfg.strictness,
+      );
+      return undefined;
+    }
+    return resolved.color;
+  };
+
+  const blend = (
+    op: string,
+    target: ColorInput,
+    ratio: number,
+    mode: ColorSpace,
+    makeBaseSolid: boolean,
+  ): Color | undefined => {
+    const c = modifiable(op);
+    if (c === undefined) return undefined;
+    const t = targetColor(target);
+    if (t === undefined) return undefined;
+    const base = makeBaseSolid ? { ...c, alpha: 1 } : c;
+    return interpolate(
+      [
+        base,
+        t,
+      ],
+      mode,
+    )(clamp01(ratio));
+  };
+
+  const result: ResolvedColor = {
+    css: (format?: CssFormat) =>
+      render(store, format ?? cfg.output, cfg),
+    rgba: () => withFormat(colorFormats.rgba),
+    rgb: () => withFormat(colorFormats.rgb),
+    hex: () => withFormat(colorFormats.hex),
+    hexAlpha: () => withFormat(colorFormats.hexAlpha),
+    hsl: () => withFormat(colorFormats.hsl),
+    hwb: () => withFormat(colorFormats.hwb),
+    lab: () => withFormat(colorFormats.lab),
+    lch: () => withFormat(colorFormats.lch),
+    oklab: () => withFormat(colorFormats.oklab),
+    oklch: () => withFormat(colorFormats.oklch),
+    displayP3: () => withFormat(colorFormats.displayP3),
+
+    alpha: ((value?: number) => {
+      if (value === undefined) {
+        return store.kind === 'color' ? (store.color.alpha ?? 1) : 1;
+      }
+      const c = modifiable('set the alpha of');
+      return c === undefined
+        ? self()
+        : withColor({ ...c, alpha: value });
+    }) as ResolvedColor['alpha'],
+
+    darken: (amount = 0.1) => {
+      const c = modifiable('darken');
+      return c === undefined
+        ? self()
+        : withColor({ ...c, l: c.l * (1 - clamp01(amount)) });
+    },
+    lighten: (amount = 0.1) => {
+      const c = modifiable('lighten');
+      return c === undefined
+        ? self()
+        : withColor({ ...c, l: c.l + (1 - c.l) * clamp01(amount) });
+    },
+    brighten: (amount = 0.1) => result.lighten(amount),
+    saturate: (amount = 0.1) => {
+      const c = modifiable('saturate');
+      return c === undefined
+        ? self()
+        : withColor({ ...c, c: c.c * (1 + Math.max(0, amount)) });
+    },
+    desaturate: (amount = 0.1) => {
+      const c = modifiable('desaturate');
+      return c === undefined
+        ? self()
+        : withColor({ ...c, c: c.c * (1 - clamp01(amount)) });
+    },
+    hueShift: (value: DegMeasurement) => {
+      const c = modifiable('hue-shift');
+      return c === undefined
+        ? self()
+        : withColor({
+            ...c,
+            h: wrapHue((c.h ?? 0) + value.getValue()),
+          });
+    },
+
+    mix: (target, ratio = 0.5, mode = 'oklch') => {
+      const mixed = blend('mix', target, ratio, mode, false);
+      return mixed === undefined ? self() : withColor(mixed);
+    },
+    mixSolid: (target, ratio = 0.5, mode = 'oklch') => {
+      const mixed = blend('mix', target, ratio, mode, true);
+      return mixed === undefined ? self() : withColor(mixed);
+    },
+    mixWithAlpha: (target, ratio = 0.5, alpha, mode = 'oklch') => {
+      const c = modifiable('mix');
+      if (c === undefined) return self();
+      const mixed = blend('mix', target, ratio, mode, true);
+      if (mixed === undefined) return self();
+      return withColor({ ...mixed, alpha: alpha ?? c.alpha ?? 1 });
+    },
+
+    solid: () => {
+      const c = modifiable('solidify');
+      return c === undefined ? self() : withColor({ ...c, alpha: 1 });
+    },
+    clone: () => self(),
+  };
+
+  // carry the store privately so this result can be re-wrapped via `color(result)`.
+  Object.defineProperty(result, STORED, { value: store });
+  return result;
+};
+
+/** The book's defaults; the default output is `rgba` (alpha slot always shown). */
+export const defaultColorConfig: ColorConfig = {
+  output: colorFormats.rgba,
+  base: 'black',
+  strictness: 'auto',
+};
+
+/** The color book's manuscript: input -> storage -> output. */
+export const colorManuscript: Manuscript<
+  ColorInput,
+  Store,
+  ResolvedColor,
+  ColorConfig
+> = {
+  defaults: defaultColorConfig,
+  input: (raw, cfg) => parseColor(raw ?? cfg.base),
+  storage: (store) => storeColor(store),
+  output: (store, cfg) => resolve(store, cfg),
+};
+
+/** The color factory: `publishBookColor({ config })` binds a color book. */
+export const publishBookColor = publishBook(colorManuscript);

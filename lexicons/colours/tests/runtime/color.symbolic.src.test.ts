@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
+import { colorFormats, publishBookColor } from '../../src/color';
+
 /*
  * The SPECIAL (symbolic) color words: keywords with no fixed value. Separate suite
- * from the make x emit matrix because they behave differently - they pass through.
+ * from the make x emit matrix because they pass through - a symbolic color emits its
+ * own keyword no matter which output format is requested.
  *
- * Real failing placeholders (red on purpose), never `it.todo`. Implement, then
- * replace `pending()` with the real assertion.
+ * Passthrough is implemented. Modification of a symbolic color is the NEXT step, so
+ * those stay real failing placeholders (never `it.todo`).
  */
-const pending = (): void => {
-  expect(false).toBe(true); // pending: implement this case
-};
+const color = publishBookColor();
 
 const SYMBOLIC = [
   'currentColor',
@@ -69,16 +70,22 @@ const SYMBOLIC = [
 // format is requested. e.g. `Highlight` -> 'Highlight' for css/hex/oklch/anything.
 describe('color — symbolic keywords pass through for any format', () => {
   for (const keyword of SYMBOLIC) {
-    it(`${keyword} emits "${keyword}" regardless of format`, pending);
+    it(`${keyword} emits "${keyword}" regardless of format`, () => {
+      expect(color(keyword).css()).toBe(keyword);
+      expect(color(keyword).css(colorFormats.hex)).toBe(keyword);
+      expect(color(keyword).hexAlpha().css()).toBe(keyword);
+      expect(color(keyword).oklch().css()).toBe(keyword);
+      expect(color(keyword).displayP3().css()).toBe(keyword);
+    });
   }
 });
 
-// TODO: evaluate which (if any) modifications are valid on symbolic colors. They
-// have no fixed value, so today every modifier throws - but some keywords might
-// reasonably support specific ops later. Revisit per keyword; until then these
-// assert the current "rejected" behavior.
-describe('color — symbolic keywords reject modification (TODO: evaluate per keyword)', () => {
+// A symbolic color has no fixed value, so modifying it is a violation (throws in dev
+// under the default 'auto' strictness).
+describe('color — symbolic keywords reject modification', () => {
   for (const keyword of SYMBOLIC) {
-    it(`${keyword} modification is rejected`, pending);
+    it(`${keyword} modification throws`, () => {
+      expect(() => color(keyword).darken()).toThrow();
+    });
   }
 });
