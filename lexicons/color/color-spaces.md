@@ -1,10 +1,9 @@
 # color coverage — spaces, notations, and keywords
 
-The source of truth for the whole color surface the book must cover, on the **make**
-(input) and **emit** (output) sides. The TS input types and the make x emit test
-matrix are built from this. Goal: **comprehensive, not exhaustive** — cover the
-mainstream CSS Color 4 surface, skip the niche/deprecated. The backing library is
-irrelevant and gets rewritten to satisfy this; this is a contract.
+The source of truth for the color surface the book covers, on the **make** (input) and
+**emit** (output) sides. Goal: **comprehensive, not exhaustive** — cover the mainstream
+CSS Color 4 surface, skip the niche. The backing library (culori) is an internal,
+swappable detail; this document is the contract.
 
 ## Two kinds of value (the key split)
 
@@ -13,41 +12,43 @@ value is one of two kinds:
 
 - **Translatable** — resolves to a concrete point in a color space. Manipulable
   (darken/mix/hueShift) and convertible to any output format.
-- **Symbolic** — a runtime/contextual keyword with no fixed value. You CAN make one
-  and emit it (it renders its own keyword), but **modifying it throws** and it cannot
-  be converted to another format. (The current helper already does exactly this for
-  `currentColor` / `Highlight`: every modifier throws in dev, warns in prod.)
+- **Symbolic** — a runtime/contextual keyword with no fixed value. You make one and
+  **emit it** — it renders its own keyword for ANY requested format (there is nothing
+  to convert) — but **modifying it is a violation** (throws in dev / warns in prod, per
+  the strictness config).
 
 ## Color spaces — translatable (make + emit)
 
-Alpha field is `alpha?` everywhere (one name, not `a` in some and `alpha` in others).
+Alpha is `alpha?` everywhere (one name). Storage normalizes every translatable color to
+**OKLCH**; output converts back out of OKLCH into the requested format.
 
 | Space | Make: CSS string | Make: structured | Emit format |
 | --- | --- | --- | --- |
-| named (sRGB) | `'rebeccapurple'` (~148 keywords) | — | via rgb/hex/etc. |
-| hex (sRGB) | `'#3366cc'`, `'#3366cc80'` (3/4/6/8) | — | `hex`, `hexAlpha` |
-| rgb (sRGB) | `'rgb(51 102 204)'` | `{ space:'rgb', r,g,b, alpha? }` | `rgb` (css), `rgbLegacy` |
-| hsl (sRGB) | `'hsl(220 60% 50%)'` | `{ space:'hsl', h,s,l, alpha? }` | `hsl` |
-| hwb (sRGB) | `'hwb(220 20% 20%)'` | `{ space:'hwb', h,w,b, alpha? }` | `hwb` |
+| named (sRGB) | `'rebeccapurple'` (~148 keywords) | — | via any format |
+| hex (sRGB) | `'#3366cc'` / `'#3366cc80'` (3/4/6/8 digit) | — | `hex`, `hexAlpha` |
+| rgb (sRGB) | `'rgb(51 102 204)'` | `{ space:'rgb', r,g,b, alpha? }` (r/g/b 0–255) | `rgba`, `rgb` |
+| hsl (sRGB) | `'hsl(220 60% 50%)'` | `{ space:'hsl', h,s,l, alpha? }` (s/l 0–100) | `hsl` |
+| hwb (sRGB) | `'hwb(220 20% 20%)'` | `{ space:'hwb', h,w,b, alpha? }` (w/b 0–100) | `hwb` |
 | lab (CIELAB) | `'lab(50% 40 60)'` | `{ space:'lab', l,a,b, alpha? }` | `lab` |
 | lch (CIELAB) | `'lch(50% 40 200)'` | `{ space:'lch', l,c,h, alpha? }` | `lch` |
 | oklab (Oklab) | `'oklab(0.5 0.1 0.1)'` | `{ space:'oklab', l,a,b, alpha? }` | `oklab` |
 | oklch (Oklab) | `'oklch(70% 0.1 200)'` | `{ space:'oklch', l,c,h, alpha? }` | `oklch` |
-| display-p3 | (not input) | — | `displayP3` (`color(display-p3 …)`) |
+| display-p3 | (lenient input only) | — | `displayP3` (`color(display-p3 …)`) |
 
-Plus `modern` (oklch with rgb fallback) and **re-wrap** of an existing color.
-`transparent` is translatable (`rgb(0 0 0 / 0)`): manipulable, and re-emittable as the
-`transparent` keyword when alpha is 0.
+Plus **re-wrap** of an existing `ResolvedColor`. `transparent` is translatable
+(`rgb(0 0 0 / 0)`): fully manipulable; how a fully-transparent color emits is set by
+the `transparent` config option (`keyword` / `white` / `black`). There is no
+`modern`/fallback format — fallback declarations are a separate property helper's job.
 
 ## Special keywords — full surface + handling
 
 | Keyword / category | Kind | Handling |
 | --- | --- | --- |
-| `transparent` | translatable | parse to `rgb(0 0 0 / 0)`; fully manipulable + convertible; may re-emit `transparent` when alpha 0 |
+| `transparent` | translatable | parse to `rgb(0 0 0 / 0)`; manipulable; emits per the `transparent` config option |
 | named colors (~148) | translatable | parse to sRGB; manipulable + convertible |
-| `currentColor` | symbolic | make + emit the keyword; modifying or converting **throws** (dev) / warns (prod) |
-| system colors (current + deprecated) | symbolic | valid color values, so accepted; emit the keyword; light/dark aware at runtime; modifying or converting **throws** (dev) / warns (prod) |
-| CSS-wide keywords | symbolic | `inherit`/`initial`/`unset`/`revert`/`revert-layer` are valid color values, so accepted; passthrough (emit keyword; modify/convert **throws**) |
+| `currentColor` | symbolic | emit the keyword for any requested format; modifying is a violation |
+| system colors (current + deprecated) | symbolic | accepted; emit the keyword (light/dark aware at runtime); modifying is a violation |
+| CSS-wide keywords | symbolic | `inherit`/`initial`/`unset`/`revert`/`revert-layer` accepted; emit the keyword; modifying is a violation |
 
 **System colors — current (CSS Color 4):** `Canvas`, `CanvasText`, `LinkText`,
 `VisitedText`, `ActiveText`, `ButtonFace`, `ButtonText`, `ButtonBorder`, `Field`,
@@ -58,85 +59,44 @@ Plus `modern` (oklch with rgb fallback) and **re-wrap** of an existing color.
 `ActiveBorder`, `ActiveCaption`, `AppWorkspace`, `Background`, `ButtonHighlight`,
 `ButtonShadow`, `CaptionText`, `InactiveBorder`, `InactiveCaption`,
 `InactiveCaptionText`, `InfoBackground`, `InfoText`, `Menu`, `MenuText`,
-`Scrollbar`, `ThreeD*`, `Window`, `WindowFrame`, `WindowText`. (Deprecated in CSS,
-but valid color values, so passed through.)
+`Scrollbar`, `ThreeD*`, `Window`, `WindowFrame`, `WindowText`.
 
-## Out of scope (niche)
+## Out of scope (niche) / lenient input
 
-- **Wide-gamut spaces:** `color(rec2020 …)`, `color(prophoto-rgb …)`, `color(xyz …)`
-  - color FUNCTIONS, not keywords; conversion-heavy and rarely needed.
-- Not *prioritized*, but input is **lenient**: "if it is a valid CSS color value, we
-  accept it." Anything culori can parse (incl. `hwb()` / `color(display-p3 …)` / the
-  wide-gamut spaces above) is accepted on input and normalized to OKLCH in storage.
-  These are simply not first-class structured inputs.
+- **Wide-gamut spaces** `color(rec2020 …)`, `color(prophoto-rgb …)`, `color(xyz …)` are
+  not first-class **structured** inputs.
+- But input is **lenient**: "if it is a valid CSS color value, we accept it." Anything
+  culori can parse (incl. `hwb()`, `color(display-p3 …)`, and the wide-gamut `color()`
+  spaces above) is accepted on input and normalized to OKLCH in storage.
 
 ## Output formats + alpha/gamut policy
 
 - Formats: `rgba` (default), `rgb`, `hex`, `hexAlpha`, `hsl`, `hwb`, `lab`, `lch`,
   `oklab`, `oklch`, `displayP3`. Output is always the `.css()` terminal; selectors set
-  the format. (No `modern`/fallback here — fallbacks are a separate property helper.)
+  the format.
 - Every alpha-capable format ALWAYS renders its alpha slot (`rgba(…,1)`,
-  `oklch(… / 1)`); only `rgb` / `hex` (hex6) carry no alpha.
-- One strictness knob (factory config; default throw-in-dev / warn-in-prod) governs
-  every "can't faithfully represent this" case: dropping a non-opaque alpha
-  (`rgb`/`hex`), out of the target format's gamut (clamped via `clampChroma`), and
-  modifying/converting a symbolic color.
+  `oklch(… / 1)`); only `rgb` / `hex` (hex6) carry no alpha. The `omitOpaqueAlpha`
+  config drops the slot for the optional-alpha formats when the color is opaque.
+- One `strictness` knob (factory config; `'auto'` = throw in dev / warn in prod, or
+  explicit `'throw'`/`'warn'`/`'silent'`) governs every "can't faithfully represent
+  this" case: dropping a non-opaque alpha (`rgb`/`hex`), out of the target format's
+  gamut (clamped via `clampChroma`), and modifying a symbolic color.
 
 ## make x emit matrix (test grid)
 
-- **Translatable inputs x output formats:** full cross-product over a known
-  representative color (plus an alpha case).
-- **Symbolic inputs:** assert the keyword round-trips on emit, and that modifying /
-  reformatting throws.
-- **Unsupported notations** (hwb/p3 input, deprecated keywords): asserted by their
-  current behavior, never skipped.
+- **Translatable inputs × output formats:** full cross-product over a representative
+  color, plus a translucent (alpha) case across the alpha-capable formats.
+- **Symbolic inputs:** the keyword passes through on emit for any format; modifying it
+  throws.
+- **Lenient / wide-gamut input** (`hwb` / `display-p3` / `rec2020`): accepted and
+  normalized to OKLCH.
 
-## Comparison with the current helper (`colorWrap.ts` + `colours.ts`)
+## Deferred (not yet built)
 
-### Good (reuse the pattern/logic)
-- Immutable wrapper, clone-on-modify.
-- The modification algebra: `alpha` (dual get/set), `darken`, `lighten`
-  (`brighten` is an alias), `saturate`, `desaturate`, `hueShift(DegMeasurement)`,
-  `mix`, `mixSolid`, `solid`, `blend.{multiply,screen}`, `clone`.
-- Symbolic colors via a wrapper whose modifiers throw — already the rule we want;
-  generalize it from `currentColor`/`Highlight` to the whole system-color set.
-- OKLCH conversion + the `CssFormat` discriminated union, `colorFormats`, format
-  selectors, and `.css(format)` (in `colours.ts`).
-
-### Needs rework
-- **Input:** today `string | Color | wrapper` plus scattered `color.create.{hex,
-  rgba,hsl,oklch}` + `color.oklch(obj)` / `color.lch` / `color.fromOKLCH`.
-  Consolidate into one discriminated-union-by-`space` (above) + string + re-wrap.
-- **Alpha naming:** unify (`OKLCH` uses `a`, culori uses `alpha`, `rgba()` uses an
-  alpha arg) -> `alpha?` everywhere.
-- **Library leaks in the public surface:** `unsafeChroma`, `unsafeToColor`,
-  `value(): Color`, the `Color` re-export -> replace with a lib-agnostic escape
-  hatch (or drop). Contract must never name the backing library.
-- **Output:** extend `colorFormats` with `hwb`, `lab`, `lch`, `oklab`, `displayP3`.
-- **Engine + naming:** `colours.ts` is on the old engine and British spelling ->
-  new `manuscript`/`output`/`publishBookColor`, US `Color` spelling.
-- **css options bag** (`forceAlpha`/`preferKeywordTransparent`) -> already folded
-  into `colorFormats` (`rgbLegacy`/`hexAlpha`); finish the transparent-keyword path.
-
-### Missing (not in the current helper)
-- **Structured inputs** for `hwb`, `lab`, `oklab` (only rgba/hsl/oklch + oklch/lch
-  objects exist today).
-- **String inputs** for `oklab` (and `hwb`/`p3` if ever promoted) - today they throw.
-- **System colors beyond `currentColor`/`Highlight`** (the other 17) as symbolic.
-- **Output formats** `hwb` / `lab` / `lch` / `oklab` / `displayP3`.
-
-## Files (deprecation)
-
-- **DEPRECATED — reference only, do not extend** (moved into `src/deprecated/`):
-  - `src/deprecated/colorWrap.ts` — old wrapper + `color` helper (library-coupled guts).
-  - `src/deprecated/colours.ts` — old book (British spelling, old engine, currently broken).
-  - `src/deprecated/default.ts` — old default instance.
-- **NEW — the rewrite target:**
-  - `src/color.ts` — the new color book: the `ColorInput` union, the manuscript, the
-    `ResolvedColor` result, the full `colorFormats`, symbolic handling, and
-    `publishBookColor`. US spelling. Guts (conversion impl) are internal and
-    lib-agnostic.
-  - `index.ts` points at the new file once it supersedes the old.
+Modification gaps, kept as real failing markers in the matrix until implemented:
+`blend.multiply`/`blend.screen` (+ overlay — the old impl was a non-standard alpha
+hack, needs a real design), `setLightness`/`setChroma`/`setHue`,
+`contrast`/`ensureContrast`, `complement`, `invert`, `grayscale`.
 
 ## Sources
 

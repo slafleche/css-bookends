@@ -161,14 +161,25 @@ export type FormatName = CssFormat['format'];
  */
 export type Strictness = 'auto' | 'throw' | 'warn' | 'silent';
 
+/** How a fully-transparent color (alpha 0) is rendered. */
+export type TransparentRendering = 'keyword' | 'white' | 'black';
+
 /** The color book's config (factory-settable via `publishBookColor`). */
 export interface ColorConfig {
   /** the format `.css()` renders when given no argument. */
   output: CssFormat;
-  /** the color a bare call (no input) resolves to. */
-  base: ColorInput;
-  /** how violations are surfaced. */
+  /** how violations are surfaced (strict by default; relaxed only in production). */
   strictness: Strictness;
+  /**
+   * How a fully-transparent color (alpha 0) renders: the `transparent` keyword,
+   * white at 0, or black at 0.
+   */
+  transparent: TransparentRendering;
+  /**
+   * Drop the alpha slot when the color is fully opaque (alpha 1) for formats whose
+   * alpha is optional (e.g. `rgba(...,1)` -> `rgb(...)`). Lossless. Off by default.
+   */
+  omitOpaqueAlpha: boolean;
 }
 
 /**

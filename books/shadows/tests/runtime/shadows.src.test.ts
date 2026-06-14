@@ -30,8 +30,8 @@ describe('shadow.helper', () => {
       { x: m(1), y: m(2), inset: true },
     ]);
     expect(multiStyle.boxShadow).toContain(' inset');
-    // two shadows -> two color tokens (the default color is rgba(...), whose own
-    // commas make a naive `, ` split unreliable).
+    // two shadows -> two color tokens (count `rgba(` rather than splitting on
+    // ', ', which also appears inside each rgba() color).
     expect(multiStyle.boxShadow.match(/rgba\(/g)).toHaveLength(2);
 
     const singleValue = boxShadow.value({

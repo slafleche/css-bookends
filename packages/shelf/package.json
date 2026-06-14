@@ -43,6 +43,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
+    "@css-bookends/bookpress": "workspace:*",
     "@css-bookends/color": "workspace:*",
     "@css-bookends/css-calipers": "workspace:*",
     "@css-bookends/media-queries": "workspace:*"

@@ -16,7 +16,6 @@ import {
   converter,
   formatHex,
   formatHex8,
-  inGamut,
   interpolate,
   parse,
 } from 'culori';
@@ -332,8 +331,21 @@ const toLch = converter('lch');
 const toOklab = converter('oklab');
 const toOklchOut = converter('oklch');
 const toP3 = converter('p3');
-const inSrgb = inGamut('rgb');
-const inP3 = inGamut('p3');
+
+// Tolerant gamut check: a color round-tripped through OKLCH can drift a hair past a
+// channel bound (e.g. sRGB `red` -> 1.0000001), so allow a tiny epsilon before
+// calling it out-of-gamut. Genuinely out-of-gamut colors miss by far more.
+const GAMUT_EPSILON = 1e-4;
+const within01 = (n: number): boolean =>
+  n >= -GAMUT_EPSILON && n <= 1 + GAMUT_EPSILON;
+const inSrgb = (color: Color): boolean => {
+  const c = toRgb(color);
+  return within01(c.r) && within01(c.g) && within01(c.b);
+};
+const inP3 = (color: Color): boolean => {
+  const c = toP3(color);
+  return within01(c.r) && within01(c.g) && within01(c.b);
+};
 
 /** Bring a color into a target gamut, surfacing a violation if it wasn't inside. */
 const fitGamut = (
@@ -355,12 +367,17 @@ const fitGamut = (
 const hasRealAlpha = (color: Color): boolean =>
   color.alpha !== undefined && color.alpha !== 1;
 
-const renderColor = (
+// Serialize a (non-fully-transparent) color in the requested format. The modern
+// slot formats omit `/ alpha` when opaque + `omitOpaqueAlpha`; rgba collapses to rgb.
+const serialize = (
   color: Color,
   format: CssFormat,
-  strictness: Strictness,
+  cfg: ColorConfig,
 ): string => {
+  const { strictness } = cfg;
   const alpha = alphaOf(color);
+  const dropOpaque = cfg.omitOpaqueAlpha && alpha === 1;
+  const slot = dropOpaque ? '' : ` / ${alpha}`;
   switch (format.format) {
     case 'rgba':
     case 'rgb': {
@@ -372,9 +389,10 @@ const renderColor = (
       }
       const c = toRgb(fitGamut(color, inSrgb, 'rgb', strictness));
       const body = `${channel255(c.r)}, ${channel255(c.g)}, ${channel255(c.b)}`;
-      return format.format === 'rgba'
-        ? `rgba(${body}, ${alpha})`
-        : `rgb(${body})`;
+      // rgb never shows alpha; rgba collapses to rgb when opaque + omitOpaqueAlpha.
+      return format.format === 'rgb' || dropOpaque
+        ? `rgb(${body})`
+        : `rgba(${body}, ${alpha})`;
     }
     case 'hex':
     case 'hexAlpha': {
@@ -391,33 +409,50 @@ const renderColor = (
     }
     case 'hsl': {
       const c = toHsl(fitGamut(color, inSrgb, 'rgb', strictness));
-      return `hsl(${hueOf(c.h)} ${pct(c.s)}% ${pct(c.l)}% / ${alpha})`;
+      return `hsl(${hueOf(c.h)} ${pct(c.s)}% ${pct(c.l)}%${slot})`;
     }
     case 'hwb': {
       const c = toHwb(fitGamut(color, inSrgb, 'rgb', strictness));
-      return `hwb(${hueOf(c.h)} ${pct(c.w)}% ${pct(c.b)}% / ${alpha})`;
+      return `hwb(${hueOf(c.h)} ${pct(c.w)}% ${pct(c.b)}%${slot})`;
     }
     case 'lab': {
       const c = toLab(color);
-      return `lab(${round(c.l, 3)} ${round(c.a, 3)} ${round(c.b, 3)} / ${alpha})`;
+      return `lab(${round(c.l, 3)} ${round(c.a, 3)} ${round(c.b, 3)}${slot})`;
     }
     case 'lch': {
       const c = toLch(color);
-      return `lch(${round(c.l, 3)} ${round(c.c, 3)} ${hueOf(c.h)} / ${alpha})`;
+      return `lch(${round(c.l, 3)} ${round(c.c, 3)} ${hueOf(c.h)}${slot})`;
     }
     case 'oklab': {
       const c = toOklab(color);
-      return `oklab(${round(c.l, 4)} ${round(c.a, 4)} ${round(c.b, 4)} / ${alpha})`;
+      return `oklab(${round(c.l, 4)} ${round(c.a, 4)} ${round(c.b, 4)}${slot})`;
     }
     case 'oklch': {
       const c = toOklchOut(color);
-      return `oklch(${round(c.l, 4)} ${round(c.c, 4)} ${hueOf(c.h)} / ${alpha})`;
+      return `oklch(${round(c.l, 4)} ${round(c.c, 4)} ${hueOf(c.h)}${slot})`;
     }
     case 'displayP3': {
       const c = toP3(fitGamut(color, inP3, 'p3', strictness));
-      return `color(display-p3 ${round(c.r, 5)} ${round(c.g, 5)} ${round(c.b, 5)} / ${alpha})`;
+      return `color(display-p3 ${round(c.r, 5)} ${round(c.g, 5)} ${round(c.b, 5)}${slot})`;
     }
   }
+};
+
+const renderColor = (
+  color: Color,
+  format: CssFormat,
+  cfg: ColorConfig,
+): string => {
+  // fully-transparent rendering policy (alpha 0): a keyword, or white/black at 0.
+  if (alphaOf(color) === 0) {
+    if (cfg.transparent === 'keyword') return 'transparent';
+    const substitute: Color =
+      cfg.transparent === 'white'
+        ? { mode: 'rgb', r: 1, g: 1, b: 1, alpha: 0 }
+        : { mode: 'rgb', r: 0, g: 0, b: 0, alpha: 0 };
+    return serialize(substitute, format, cfg);
+  }
+  return serialize(color, format, cfg);
 };
 
 const render = (
@@ -429,7 +464,7 @@ const render = (
   if (store.kind === 'symbolic') {
     return store.keyword;
   }
-  return renderColor(store.color, format, cfg.strictness);
+  return renderColor(store.color, format, cfg);
 };
 
 const wrapHue = (h: number): number => ((h % 360) + 360) % 360;
@@ -577,11 +612,12 @@ const resolve = (store: Store, cfg: ColorConfig): ResolvedColor => {
   return result;
 };
 
-/** The book's defaults; the default output is `rgba` (alpha slot always shown). */
+/** The book's defaults. */
 export const defaultColorConfig: ColorConfig = {
   output: colorFormats.rgba,
-  base: 'black',
   strictness: 'auto',
+  transparent: 'keyword',
+  omitOpaqueAlpha: false,
 };
 
 /** The color book's manuscript: input -> storage -> output. */
@@ -592,7 +628,12 @@ export const colorManuscript: Manuscript<
   ColorConfig
 > = {
   defaults: defaultColorConfig,
-  input: (raw, cfg) => parseColor(raw ?? cfg.base),
+  input: (raw) => {
+    if (raw === undefined) {
+      throw new Error('color: an input color is required');
+    }
+    return parseColor(raw);
+  },
   storage: (store) => storeColor(store),
   output: (store, cfg) => resolve(store, cfg),
 };

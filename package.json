@@ -14,7 +14,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "//temp-exclude": "TEMP: colours & borders are excluded from lint/typecheck below while they are rewritten against the new bookpress publishBook API. Restore by deleting the two `--filter='!...'` flags (and the matching set in lint-staged.config.mts).",
+    "//temp-exclude": "TEMP: color & borders are excluded from lint/typecheck below while they are rewritten against the new bookpress publishBook API. Restore by deleting the two `--filter='!...'` flags (and the matching set in lint-staged.config.mts).",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "lint": "pnpm --filter='!@css-bookends/color' --filter='!@css-bookends/borders' -r lint",

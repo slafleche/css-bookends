@@ -216,6 +216,32 @@ describe('color — make x emit matrix', () => {
   }
 });
 
+/* The spec's "plus an alpha case": a translucent color round-trips its alpha through
+ * every alpha-capable format. (rgb/hex drop alpha; that path is covered by the
+ * violation tests in color.output.src.test.ts.) */
+const ALPHA_EMIT = EMIT.filter(
+  ([
+    emitLabel,
+  ]) => emitLabel !== 'rgb' && emitLabel !== 'hex',
+);
+
+describe('color — alpha round-trips through alpha-capable formats', () => {
+  const translucent = '#3366cc80'; // alpha ~0.502
+  const ref = refRgb(translucent);
+  for (const [
+    emitLabel,
+    format,
+  ] of ALPHA_EMIT) {
+    it(`emit: ${emitLabel} preserves color + alpha`, () => {
+      const got = parseRgb(color(translucent).css(format));
+      expect(got.r).toBeCloseTo(ref.r, 2);
+      expect(got.g).toBeCloseTo(ref.g, 2);
+      expect(got.b).toBeCloseTo(ref.b, 2);
+      expect(got.alpha ?? 1).toBeCloseTo(0.5, 2);
+    });
+  }
+});
+
 /* ---------- axis 3: MODIFY ---------- */
 // The core algebra (alpha/darken/lighten/brighten/saturate/desaturate/hueShift/mix/
 // mixSolid/mixWithAlpha/solid/clone/chaining) is implemented and tested in

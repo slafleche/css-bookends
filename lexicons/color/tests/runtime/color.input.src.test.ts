@@ -56,6 +56,20 @@ describe('color input — translatable strings parse into a color store', () => 
     expect(c.alpha).toBeCloseTo(0.5, 2);
   });
 
+  it('3-digit hex string (expands to #aabbcc)', () => {
+    const c = asColor(parseColor('#abc'));
+    expect(c.mode).toBe('rgb');
+    expect(c.r).toBeCloseTo(0.667, 2);
+    expect(c.g).toBeCloseTo(0.733, 2);
+    expect(c.b).toBeCloseTo(0.8, 2);
+  });
+
+  it('4-digit hex string carries alpha', () => {
+    const c = asColor(parseColor('#abcd'));
+    expect(c.mode).toBe('rgb');
+    expect(c.alpha).toBeCloseTo(0.867, 2);
+  });
+
   it('rgb string', () => {
     const c = asColor(parseColor('rgb(51 102 204)'));
     expect(c.mode).toBe('rgb');
@@ -264,6 +278,15 @@ describe('color input — lenient: any valid CSS color value is accepted', () =>
   it('accepts a display-p3 color() string', () => {
     expect(() => parseColor('color(display-p3 1 0 0)')).not.toThrow();
     expect(parseColor('color(display-p3 1 0 0)').kind).toBe('color');
+  });
+
+  it('accepts a wide-gamut color() string (rec2020)', () => {
+    expect(() =>
+      parseColor('color(rec2020 0.5 0.2 0.7)'),
+    ).not.toThrow();
+    expect(parseColor('color(rec2020 0.5 0.2 0.7)').kind).toBe(
+      'color',
+    );
   });
 });
 

@@ -8,7 +8,7 @@ const ROOT = process.cwd();
 // packages are still Prettier-formatted. Empty this set to restore (and remove
 // the matching `--filter='!...'` flags from the root package.json scripts).
 const TEMP_EXCLUDED = new Set([
-  '@css-bookends/colours',
+  '@css-bookends/color',
   '@css-bookends/borders',
 ]);
 

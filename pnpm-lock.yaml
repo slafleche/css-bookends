@@ -358,6 +358,9 @@ importers:
 
   packages/shelf:
     dependencies:
+      '@css-bookends/bookpress':
+        specifier: workspace:*
+        version: link:../../bookpress
       '@css-bookends/color':
         specifier: workspace:*
         version: link:../../lexicons/color
