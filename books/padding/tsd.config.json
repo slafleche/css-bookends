@@ -1,0 +1,6 @@
+{
+  "entry": "src/index.ts",
+  "testFiles": [
+    "tests/types/**/*.test-d.ts"
+  ]
+}

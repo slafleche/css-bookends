@@ -1,7 +1,14 @@
-import { m } from '@css-bookends/css-calipers';
+import {
+  isMeasurement,
+  m,
+  nonNegative,
+} from '@css-bookends/css-calipers';
 import { describe, expect, it } from 'vitest';
 
-import { resolveSpacing } from '../../src/spacing';
+import {
+  mapSpacingMeasurements,
+  resolveSpacing,
+} from '../../src/spacing';
 import type { SpacingObject } from '../../src/types';
 
 /*
@@ -104,5 +111,36 @@ describe('resolveSpacing — object form (partial, side > axis)', () => {
     expect(store).toEqual({ top, right, bottom, left });
     expect(store.top).toBe(top);
     expect(store.left).toBe(left);
+  });
+});
+
+describe('mapSpacingMeasurements — transform measurements, leave the rest', () => {
+  it('maps a scalar measurement and leaves 0 / keywords untouched', () => {
+    const v = m(4);
+    // nonNegative.ensure returns the same instance, so the scalar passes through.
+    expect(
+      mapSpacingMeasurements(v, (x) => nonNegative.ensure(x)),
+    ).toBe(v);
+    expect(
+      mapSpacingMeasurements(0, (x) => nonNegative.ensure(x)),
+    ).toBe(0);
+    expect(
+      mapSpacingMeasurements('auto', (x) => nonNegative.ensure(x)),
+    ).toBe('auto');
+  });
+
+  it('actually applies the transform to the measurement', () => {
+    const out = mapSpacingMeasurements(m(4), (x) => x.double());
+    expect(isMeasurement(out) && out.css()).toBe('8px');
+  });
+
+  it('maps every measurement in the object, preserving shape + non-measurements', () => {
+    const x = m(4);
+    const top = m(2);
+    const input: SpacingObject = { x, top, y: 'auto' };
+    const out = mapSpacingMeasurements(input, (val) =>
+      nonNegative.ensure(val),
+    );
+    expect(out).toEqual({ x, top, y: 'auto' });
   });
 });

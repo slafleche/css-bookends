@@ -11,6 +11,7 @@ import type {
   Side,
   SpacingInput,
   SpacingKeyword,
+  SpacingObject,
   SpacingPolicy,
   SpacingStore,
   SpacingValue,
@@ -204,4 +205,37 @@ export const resolveSpacing = <
   if (raw.bottom !== undefined) store.bottom = raw.bottom;
   if (raw.left !== undefined) store.left = raw.left;
   return store as SpacingStore<M, K, F>;
+};
+
+/**
+ * Map a transform over every MEASUREMENT in a (validated) `SpacingInput`, preserving the
+ * shape (scalar or object) and leaving `0` / keywords / `anchor-size()` untouched. The
+ * padding book uses this to harden each measurement to `NonNegativeMeasurement` by running
+ * it through the `nonNegative` refinement.
+ */
+export const mapSpacingMeasurements = <
+  M2 extends IMeasurement,
+  K extends SpacingKeyword = SpacingKeyword,
+  F extends AnchorSize = AnchorSize,
+>(
+  input: SpacingInput<IMeasurement, K, F>,
+  fn: (measurement: IMeasurement) => M2,
+): SpacingInput<M2, K, F> => {
+  const mapValue = (value: SpacingValue): SpacingValue =>
+    isMeasurement(value) ? fn(value) : value;
+
+  const raw: SpacingInput = input;
+
+  // scalar shorthand.
+  if (isSpacingValue(raw)) {
+    return mapValue(raw) as SpacingValue<M2, K, F>;
+  }
+
+  // object form (raw is narrowed to SpacingObject here): map each present value.
+  const out: SpacingObject = {};
+  for (const key of OBJECT_KEYS) {
+    const value = raw[key];
+    if (value !== undefined) out[key] = mapValue(value);
+  }
+  return out as SpacingObject<M2, K, F>;
 };
