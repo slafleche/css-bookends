@@ -2,9 +2,14 @@ import { nonNegative } from '@css-bookends/css-calipers';
 import {
   mapSpacingMeasurements,
   parseSpacing,
+  resolveSpacing,
 } from '@css-bookends/spacing';
 
-import type { NonNegativePaddingInput, PaddingInput } from './types';
+import type {
+  NonNegativePaddingInput,
+  PaddingInput,
+  PaddingStore,
+} from './types';
 
 /**
  * INPUT step of the padding BOOK. Padding's domain is the spacing lexicon narrowed to
@@ -22,3 +27,13 @@ export const parsePadding = (
     nonNegative.ensure(measurement),
   );
 };
+
+/**
+ * STORAGE step of the padding BOOK. Spells the hardened input (from `parsePadding`) out into
+ * the canonical four-side `PaddingStore` via the shared lexicon `resolveSpacing` (scalar ->
+ * all sides; `x`/`y` -> their axis; explicit side overrides axis; unset sides omitted). The
+ * store carries `NonNegativeMeasurement`, so the non-negative constraint survives storage.
+ */
+export const storePadding = (
+  input: NonNegativePaddingInput,
+): PaddingStore => resolveSpacing(input);

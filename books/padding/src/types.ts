@@ -6,6 +6,7 @@ import type {
   CssWideKeyword,
   Side,
   SpacingInput,
+  SpacingStore,
 } from '@css-bookends/spacing';
 
 /**
@@ -23,6 +24,17 @@ export type PaddingInput = SpacingInput<
 
 /** The hardened result of `parsePadding`: every measurement is proven non-negative. */
 export type NonNegativePaddingInput = SpacingInput<
+  NonNegativeMeasurement,
+  CssWideKeyword,
+  never
+>;
+
+/**
+ * The padding BOOK's canonical store: the hardened input spelled out per physical side
+ * (partial - only the sides the input specified). Every value is a `NonNegativeMeasurement`,
+ * so the non-negative constraint survives storage. Produced by `storePadding`.
+ */
+export type PaddingStore = SpacingStore<
   NonNegativeMeasurement,
   CssWideKeyword,
   never

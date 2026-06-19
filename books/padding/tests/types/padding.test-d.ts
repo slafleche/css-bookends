@@ -7,11 +7,12 @@ import {
   anchorSize,
   type CssWideKeyword,
   type SpacingInput,
+  type SpacingStore,
 } from '@css-bookends/spacing';
 import { expectAssignable, expectError } from 'tsd';
 
 import type { NonNegativePaddingInput } from '../../dist/esm';
-import { parsePadding } from '../../dist/esm';
+import { parsePadding, storePadding } from '../../dist/esm';
 
 // Padding excludes `auto` and `anchor-size()` at the type level.
 expectError(parsePadding('auto'));
@@ -35,3 +36,20 @@ declare const plain: SpacingInput<
   never
 >;
 expectError(needsHardened(plain));
+
+// The hardened brand survives STORAGE: storePadding's store carries NonNegativeMeasurement.
+const hardenedStore = storePadding(parsePadding({ top: m(4, 'px') }));
+expectAssignable<
+  SpacingStore<NonNegativeMeasurement, CssWideKeyword, never>
+>(hardenedStore);
+
+declare function needsHardenedStore(
+  store: SpacingStore<NonNegativeMeasurement, CssWideKeyword, never>,
+): void;
+needsHardenedStore(hardenedStore);
+declare const plainStore: SpacingStore<
+  IMeasurement,
+  CssWideKeyword,
+  never
+>;
+expectError(needsHardenedStore(plainStore));

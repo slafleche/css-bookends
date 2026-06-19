@@ -51,9 +51,21 @@ describe('parsePadding — accepts the (hardened) padding domain', () => {
 });
 
 describe('parsePadding — rejects out-of-domain values', () => {
-  it('throws on a negative measurement (the nonNegative gate)', () => {
-    expect(() => parsePadding(m(-4))).toThrow();
-    expect(() => parsePadding({ y: m(-1) })).toThrow();
+  it('throws on a negative value, in any position (the nonNegative gate)', () => {
+    // scalar
+    expect(() => parsePadding(m(-4))).toThrow(/>= 0/);
+    // each axis
+    expect(() => parsePadding({ x: m(-1) })).toThrow(/>= 0/);
+    expect(() => parsePadding({ y: m(-1) })).toThrow(/>= 0/);
+    // each side
+    expect(() => parsePadding({ top: m(-1) })).toThrow(/>= 0/);
+    expect(() => parsePadding({ right: m(-1) })).toThrow(/>= 0/);
+    expect(() => parsePadding({ bottom: m(-1) })).toThrow(/>= 0/);
+    expect(() => parsePadding({ left: m(-1) })).toThrow(/>= 0/);
+    // one bad side among valid ones still throws
+    expect(() => parsePadding({ top: m(4), left: m(-2) })).toThrow(
+      />= 0/,
+    );
   });
 
   it('throws on auto', () => {
