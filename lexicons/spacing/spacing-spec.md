@@ -3,7 +3,7 @@
 The contract for the `spacing` LEXICON (the implementation guts shared by the padding and
 margin BOOKS; never used alone). For the **full valid CSS surface** of each property see the
 pure-spec docs [`padding-space.md`](./padding-space.md) and
-[`margin-space.md`](./margin-space.md); this doc is what the lexicon actually models and how
+[`margin-space.md`](../../books/margin/margin-space.md); this doc is what the lexicon actually models and how
 the books compose it.
 
 ## Interface (mirrors borders)
@@ -102,5 +102,5 @@ Policy violations throw (strict); at the type level the disallowed kinds are sim
 ## Sources
 
 - Full value surface: [`padding-space.md`](./padding-space.md),
-  [`margin-space.md`](./margin-space.md) (this repo; cite MDN + W3C css-box-3/4, css-logical-1,
+  [`margin-space.md`](../../books/margin/margin-space.md) (this repo; cite MDN + W3C css-box-3/4, css-logical-1,
   css-anchor-position-1).
