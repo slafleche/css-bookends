@@ -3,9 +3,12 @@ import type {
   AnchorSize,
   Axis,
   Side,
+  SpacingConfig,
   SpacingInput,
   SpacingKeyword,
+  SpacingResult,
   SpacingStore,
+  SpacingStyle,
 } from '@css-bookends/spacing';
 
 /**
@@ -30,5 +33,21 @@ export type MarginStore = SpacingStore<
   AnchorSize
 >;
 
-// Re-export the spacing value types margin consumers annotate with.
-export type { AnchorSize, Axis, Side, SpacingKeyword };
+/** The margin BOOK's output config (the shared `SpacingConfig`: `emit` + `format`). */
+export type MarginConfig = SpacingConfig;
+
+/** The margin BOOK's output object - a `SpacingResult` keyed to the `margin` property. */
+export type MarginResult = SpacingResult<'margin'>;
+
+/** The plain style object margin emits: `marginTop` ... `marginLeft` + the `margin` shorthand. */
+export type MarginStyle = SpacingStyle<'margin'>;
+
+// Re-export the spacing value + output types margin consumers annotate with.
+export type {
+  AnchorSize,
+  Axis,
+  Side,
+  SpacingConfig,
+  SpacingKeyword,
+  SpacingResult,
+};

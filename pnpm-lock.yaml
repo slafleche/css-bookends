@@ -111,7 +111,14 @@ importers:
         version: 4.1.7(@types/node@24.12.4)(@vitest/coverage-v8@4.1.7)(vite@8.0.14(@types/node@24.12.4)(yaml@2.9.0))
 
   books/margin:
+    dependencies:
+      csstype:
+        specifier: ^3.1.3
+        version: 3.2.3
     devDependencies:
+      '@css-bookends/bookpress':
+        specifier: workspace:*
+        version: link:../../bookpress
       '@css-bookends/css-calipers':
         specifier: workspace:*
         version: link:../../lexicons/calipers
@@ -127,6 +134,9 @@ importers:
       eslint:
         specifier: ^9.39.2
         version: 9.39.4
+      tsd:
+        specifier: ^0.33.0
+        version: 0.33.0
       typescript:
         specifier: ^5.6.3
         version: 5.9.3
@@ -163,7 +173,14 @@ importers:
         version: 4.1.7(@types/node@24.12.4)(@vitest/coverage-v8@4.1.7)(vite@8.0.14(@types/node@24.12.4)(yaml@2.9.0))
 
   books/padding:
+    dependencies:
+      csstype:
+        specifier: ^3.1.3
+        version: 3.2.3
     devDependencies:
+      '@css-bookends/bookpress':
+        specifier: workspace:*
+        version: link:../../bookpress
       '@css-bookends/css-calipers':
         specifier: workspace:*
         version: link:../../lexicons/calipers
@@ -357,6 +374,10 @@ importers:
         version: 4.1.7(@types/node@24.12.4)(@vitest/coverage-v8@4.1.7)(vite@8.0.14(@types/node@24.12.4)(yaml@2.9.0))
 
   lexicons/spacing:
+    dependencies:
+      csstype:
+        specifier: ^3.1.3
+        version: 3.2.3
     devDependencies:
       '@css-bookends/css-calipers':
         specifier: workspace:*

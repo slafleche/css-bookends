@@ -31,16 +31,22 @@
     },
     "./package.json": "./package.json"
   },
+  "dependencies": {
+    "csstype": "^3.1.3"
+  },
   "peerDependencies": {
+    "@css-bookends/bookpress": "workspace:^",
     "@css-bookends/css-calipers": "workspace:^",
     "@css-bookends/spacing": "workspace:^"
   },
   "devDependencies": {
+    "@css-bookends/bookpress": "workspace:*",
     "@css-bookends/css-calipers": "workspace:*",
     "@css-bookends/eslint-config": "workspace:*",
     "@css-bookends/spacing": "workspace:*",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.2",
+    "tsd": "^0.33.0",
     "typescript": "^5.6.3",
     "vitest": "^4.1.7"
   },
@@ -48,8 +54,9 @@
     "build": "npm run build:cjs && npm run build:esm",
     "build:cjs": "tsc -p tsconfig.build.cjs.json",
     "build:esm": "tsc -p tsconfig.build.esm.json && node scripts/emit-esm-package.mts",
-    "test": "npm run build && npm run test:src && npm run test:tsc && npm run lint",
+    "test": "npm run build && npm run test:src && npm run test:types && npm run test:tsc && npm run lint",
     "test:src": "vitest run tests/runtime",
+    "test:types": "tsd --files tests/types/**/*.test-d.ts",
     "test:tsc": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint . --max-warnings=0"
   }

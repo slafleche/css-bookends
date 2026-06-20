@@ -9,9 +9,16 @@ import {
   type SpacingInput,
   type SpacingStore,
 } from '@css-bookends/spacing';
-import { expectAssignable, expectError } from 'tsd';
+import {
+  expectAssignable,
+  expectError,
+  expectNotAssignable,
+} from 'tsd';
 
-import type { NonNegativePaddingInput } from '../../dist/esm';
+import type {
+  NonNegativePaddingInput,
+  PaddingStyle,
+} from '../../dist/esm';
 import { parsePadding, storePadding } from '../../dist/esm';
 
 // Padding excludes `auto` and `anchor-size()` at the type level.
@@ -53,3 +60,16 @@ declare const plainStore: SpacingStore<
   never
 >;
 expectError(needsHardenedStore(plainStore));
+
+// The hard auto-split lives in the STORE: padding's symbolic slot keyword is `CssWideKeyword`,
+// so an `auto` symbolic slot is NOT assignable to a padding store. (csstype's `(string & {})`
+// means the output style type cannot reject `auto`; the store tag is what enforces it.)
+expectNotAssignable<
+  SpacingStore<NonNegativeMeasurement, CssWideKeyword, never>
+>({ left: { kind: 'symbolic', keyword: 'auto' } });
+
+// The output style object is keyed to `padding`, with csstype values.
+expectAssignable<PaddingStyle>({
+  paddingTop: '4px',
+  padding: '4px 8px',
+});

@@ -15,41 +15,51 @@ import type { PaddingInput } from '../../src/types';
 const store = (input: PaddingInput) =>
   storePadding(parsePadding(input));
 
+/** Length-slot constructor mirroring resolveSpacing's tagging. */
+const len = (value: unknown) => ({ kind: 'length', value });
+
 describe('storePadding — spell the hardened input out to the four-side store', () => {
-  it('scalar fills all four sides', () => {
+  it('scalar fills all four sides (as length slots)', () => {
     const v = m(8);
     expect(store(v)).toEqual({
-      top: v,
-      right: v,
-      bottom: v,
-      left: v,
+      top: len(v),
+      right: len(v),
+      bottom: len(v),
+      left: len(v),
     });
   });
 
   it('x / y fill their axis only (partial)', () => {
     const v = m(4);
     const fromX = store({ x: v });
-    expect(fromX.left).toBe(v);
-    expect(fromX.right).toBe(v);
+    expect(fromX.left).toEqual(len(v));
+    expect(fromX.right).toEqual(len(v));
     expect(fromX.top).toBeUndefined();
     expect(fromX.bottom).toBeUndefined();
-    expect(store({ y: v })).toEqual({ top: v, bottom: v });
+    expect(store({ y: v })).toEqual({ top: len(v), bottom: len(v) });
   });
 
   it('an explicit side overrides its axis (side > axis)', () => {
     const y = m(8);
     const top = m(2);
-    expect(store({ y, top })).toEqual({ top, bottom: y });
+    expect(store({ y, top })).toEqual({
+      top: len(top),
+      bottom: len(y),
+    });
   });
 
   it('keeps four different units', () => {
-    const input: PaddingInput = {
-      top: m(1, 'px'),
-      right: m(2, 'em'),
-      bottom: m(3, 'rem'),
-      left: m(4, 'vw'),
-    };
-    expect(store(input)).toEqual(input);
+    const top = m(1, 'px');
+    const right = m(2, 'em');
+    const bottom = m(3, 'rem');
+    const left = m(4, 'vw');
+    const input: PaddingInput = { top, right, bottom, left };
+    expect(store(input)).toEqual({
+      top: len(top),
+      right: len(right),
+      bottom: len(bottom),
+      left: len(left),
+    });
   });
 
   it('different shorthands converge to the same store', () => {

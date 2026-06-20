@@ -5,8 +5,11 @@ import type {
 import type {
   CssWideKeyword,
   Side,
+  SpacingConfig,
   SpacingInput,
+  SpacingResult,
   SpacingStore,
+  SpacingStyle,
 } from '@css-bookends/spacing';
 
 /**
@@ -40,5 +43,14 @@ export type PaddingStore = SpacingStore<
   never
 >;
 
-// Re-export the spacing value types padding consumers annotate with.
-export type { CssWideKeyword, Side };
+/** The padding BOOK's output config (the shared `SpacingConfig`: `emit` + `format`). */
+export type PaddingConfig = SpacingConfig;
+
+/** The padding BOOK's output object - a `SpacingResult` keyed to the `padding` property. */
+export type PaddingResult = SpacingResult<'padding'>;
+
+/** The plain style object padding emits: `paddingTop` ... `paddingLeft` + the `padding` shorthand. */
+export type PaddingStyle = SpacingStyle<'padding'>;
+
+// Re-export the spacing value + output types padding consumers annotate with.
+export type { CssWideKeyword, Side, SpacingConfig, SpacingResult };

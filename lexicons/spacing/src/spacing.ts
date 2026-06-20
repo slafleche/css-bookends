@@ -13,6 +13,7 @@ import type {
   SpacingKeyword,
   SpacingObject,
   SpacingPolicy,
+  SpacingSlot,
   SpacingStore,
   SpacingValue,
 } from './types';
@@ -100,6 +101,20 @@ const isSpacingValue = (value: unknown): value is SpacingValue =>
   isMeasurement(value) ||
   isAnchorSize(value);
 
+/**
+ * STORAGE detail: wrap one validated value into its canonical tagged {@link SpacingSlot}
+ * (modeled on the colour book's `Store` discriminant). A measurement or `0` becomes a
+ * `length` slot; a recognized keyword (the special words) becomes a `symbolic` slot, emitted
+ * verbatim downstream; an `anchor-size()` already carries its own `kind` and passes through.
+ */
+const toSlot = (value: SpacingValue): SpacingSlot => {
+  if (value === 0 || isMeasurement(value)) {
+    return { kind: 'length', value };
+  }
+  if (isAnchorSize(value)) return value;
+  return { kind: 'symbolic', keyword: value };
+};
+
 /** Enforce the book's value-domain policy on one value. */
 const checkValue = (
   key: string,
@@ -179,31 +194,34 @@ export const resolveSpacing = <
 ): SpacingStore<M, K, F> => {
   const raw: SpacingInput = input;
 
-  // scalar shorthand: every side takes the value.
+  // scalar shorthand: every side takes the (tagged) value.
   if (isSpacingValue(raw)) {
+    const slot = toSlot(raw);
     return {
-      top: raw,
-      right: raw,
-      bottom: raw,
-      left: raw,
+      top: slot,
+      right: slot,
+      bottom: slot,
+      left: slot,
     } as SpacingStore<M, K, F>;
   }
 
   // object form (raw is narrowed to SpacingObject here): axes first, then explicit sides
-  // override (precedence side > axis).
+  // override (precedence side > axis). Each value is tagged into its slot.
   const store: SpacingStore = {};
   if (raw.x !== undefined) {
-    store.left = raw.x;
-    store.right = raw.x;
+    const slot = toSlot(raw.x);
+    store.left = slot;
+    store.right = slot;
   }
   if (raw.y !== undefined) {
-    store.top = raw.y;
-    store.bottom = raw.y;
+    const slot = toSlot(raw.y);
+    store.top = slot;
+    store.bottom = slot;
   }
-  if (raw.top !== undefined) store.top = raw.top;
-  if (raw.right !== undefined) store.right = raw.right;
-  if (raw.bottom !== undefined) store.bottom = raw.bottom;
-  if (raw.left !== undefined) store.left = raw.left;
+  if (raw.top !== undefined) store.top = toSlot(raw.top);
+  if (raw.right !== undefined) store.right = toSlot(raw.right);
+  if (raw.bottom !== undefined) store.bottom = toSlot(raw.bottom);
+  if (raw.left !== undefined) store.left = toSlot(raw.left);
   return store as SpacingStore<M, K, F>;
 };
 

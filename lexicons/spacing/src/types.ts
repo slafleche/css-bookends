@@ -1,4 +1,5 @@
 import type { IMeasurement } from '@css-bookends/css-calipers';
+import type { Property } from 'csstype';
 
 /**
  * The spacing LEXICON's shared contract. spacing is shared guts (never used alone); the
@@ -90,16 +91,97 @@ export type SpacingInput<
 > = SpacingValue<M, K, F> | SpacingObject<M, K, F>;
 
 /**
- * The canonical store: the input spelled out per physical side. **Partial** - only the
- * sides the input specified are present (a scalar fills all four; `{ x }` fills left +
- * right only), so a book can emit just those sides (longhands) and let a hand-written
- * `calc()`/`var()` side sit next to them. Produced by `resolveSpacing`.
+ * A canonical store SLOT: one side's value, tagged by `kind` (modeled on the colour book's
+ * `Store` discriminated union). The special words (`auto`, the CSS-wide keywords) are tagged
+ * `symbolic` and emitted verbatim, distinct from a real `length`; `anchor-size()` already
+ * carries its own `kind: 'anchorSize'`, so it is a slot as-is. A book narrows the slot at the
+ * type level: padding sets `K = CssWideKeyword` (so a padding slot can NEVER be `symbolic`
+ * `auto`), `F = never` (no anchor-size), `M = NonNegativeMeasurement`.
+ */
+export type SpacingSlot<
+  M extends IMeasurement = IMeasurement,
+  K extends SpacingKeyword = SpacingKeyword,
+  F extends AnchorSize = AnchorSize,
+> =
+  | { readonly kind: 'length'; readonly value: M | 0 }
+  | { readonly kind: 'symbolic'; readonly keyword: K }
+  | F;
+
+/**
+ * The canonical store: the input spelled out per physical side as tagged {@link SpacingSlot}s.
+ * **Partial** - only the sides the input specified are present (a scalar fills all four;
+ * `{ x }` fills left + right only), so a book can emit just those sides (longhands) and let a
+ * hand-written `calc()`/`var()` side sit next to them. Produced by `resolveSpacing`.
  */
 export type SpacingStore<
   M extends IMeasurement = IMeasurement,
   K extends SpacingKeyword = SpacingKeyword,
   F extends AnchorSize = AnchorSize,
-> = Partial<Record<Side, SpacingValue<M, K, F>>>;
+> = Partial<Record<Side, SpacingSlot<M, K, F>>>;
+
+/** The two properties a spacing book can emit. */
+export type SpacingProperty = 'margin' | 'padding';
+
+/**
+ * csstype's value type for the property. Margin includes `auto`; padding does not - though
+ * note csstype's `(string & {})` escape hatch means this type does not, on its own, REJECT
+ * `auto` for padding. The hard auto-split is enforced at the store ({@link SpacingSlot}'s
+ * `K`) and at input (padding throws on `auto`); this type drives the keys + good DX.
+ */
+type SpacingPropertyValue<P extends SpacingProperty> =
+  P extends 'margin' ? Property.Margin : Property.Padding;
+
+/**
+ * The plain CSS style object a spacing book emits: per-side longhand keys
+ * `${P}${Capitalize<Side>}` (e.g. `marginTop`, `paddingLeft`) plus the shorthand key `P`
+ * (`margin` / `padding`). All optional - the chosen `emit` decides which are present, and a
+ * partial store emits only its sides. Every value is the matching csstype `Property` type.
+ */
+export type SpacingStyle<P extends SpacingProperty> = {
+  [S in Side as `${P}${Capitalize<S>}`]?: SpacingPropertyValue<P>;
+} & { [Shorthand in P]?: SpacingPropertyValue<P> };
+
+/**
+ * The output config (factory-settable via `publishBook*`). `emit` picks per-side longhands or
+ * the collapsed 1-4 value shorthand; `format` picks a spreadable style object or a CSS
+ * declaration string.
+ */
+export interface SpacingConfig {
+  emit: 'longhand' | 'shorthand';
+  format: 'object' | 'string';
+}
+
+/**
+ * A side (`top`/.../`left`) or axis (`x`/`y`) accessor on a {@link SpacingResult}. Calling it
+ * (`()`) returns the declaration in the configured `format`; `.css()` returns the bare value
+ * (no property name). Both are `undefined` when the side/axis is absent (and `.css()` on an
+ * axis is `undefined` unless its two sides are present AND equal).
+ */
+export interface SideAccessor<P extends SpacingProperty> {
+  (): SpacingStyle<P> | string | undefined;
+  css(): string | undefined;
+}
+
+/**
+ * The book's output object. `.css()` renders the configured `emit x format`; `.longhand()` /
+ * `.shorthand()` force a form (`.shorthand()` THROWS on a partial store). The `top`/`right`/
+ * `bottom`/`left` and `x`/`y` accessors expose individual sides/axes.
+ *
+ * `.css()` is `SpacingStyle<P> | string` (a union, not format-precise) because `format` is a
+ * runtime config value that the bookpress engine does not thread into this output type;
+ * callers narrow.
+ */
+export interface SpacingResult<P extends SpacingProperty> {
+  css(): SpacingStyle<P> | string;
+  longhand(): SpacingStyle<P> | string;
+  shorthand(): SpacingStyle<P> | string;
+  top: SideAccessor<P>;
+  right: SideAccessor<P>;
+  bottom: SideAccessor<P>;
+  left: SideAccessor<P>;
+  x: SideAccessor<P>;
+  y: SideAccessor<P>;
+}
 
 /**
  * The value-domain policy a consuming book applies (the padding/margin spec split).

@@ -7,5 +7,11 @@
   rule: a runtime restriction must also harden the type).
 - Full CSS value surface: [`padding-space.md`](./padding-space.md). Shared lexicon contract:
   the spacing lexicon's `spacing-spec.md`.
-- **Staged book:** INPUT only so far. STORAGE (resolve to the four-side store via the
-  lexicon's `resolveSpacing`) and OUTPUT (`publishBookPadding`, `.css()`) are later phases.
+- **Complete book:** INPUT (`parsePadding`, hardening) + STORAGE (`storePadding` -> the
+  four-side store of tagged slots, carrying `NonNegativeMeasurement`) + OUTPUT
+  (`makeSpacingResult`) + the `publishBookPadding` factory. The input gate is inherited through
+  the factory: a negative, `auto`, or `anchor-size()` throws on a book call. The hard auto-split
+  lives in the store - a `PaddingStore`'s symbolic slot keyword is `CssWideKeyword`, so it can
+  never hold `auto` (csstype's `(string & {})` means the output type alone cannot reject it).
+- **Deferred:** a compile-checked `examples/` coexistence wrapper; logical (`padding-inline`)
+  emission.
