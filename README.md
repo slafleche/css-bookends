@@ -61,6 +61,12 @@ A lexicon is the vocabulary; a book is written using it. Every package, lexicon
 or book, is independently installable and pulls in only what it actually depends
 on. The umbrella is organizational, never a bundle you are forced to take whole.
 
+A third kind of construct is planned (not built yet): the **typesetter**. It sits
+in front of the books at the input edge and converts a design-token document (the
+W3C Design Tokens / DTCG format) into typed lexicon vars (`m()`, `color()`, ...)
+that you then feed to the books. See `design-tokens.md` for the boundary and the
+format reference.
+
 Every package publishes under the `@css-bookends/*` scope, lexicons and books
 alike (for example `@css-bookends/css-calipers` and `@css-bookends/media-queries`).
 
@@ -101,6 +107,10 @@ for the model and `AGENTS.md` for the rules that enforce these.
   (measurement, colours, spacing). Depends on little or nothing else.
 - **book** : a standalone helper for one CSS concern (borders, shadows, ...),
   built on one or more lexicons. Takes typed tokens, emits plain CSS.
+- **typesetter** (planned) : a construct that converts a DTCG design-token document
+  into typed lexicon vars (`m()`, `color()`, ...) for the books to consume. It is
+  the input-edge boundary for external design tokens; it generates vars, it is not
+  a runtime helper and does not render CSS itself. See `design-tokens.md`.
 - **page** : one of a book's three stages, `input` (accept many shapes) ->
   `storage` (one canonical internal shape) -> `output` (render to CSS).
 - **press** : the definition of a book, its three pages plus config defaults.

@@ -9,6 +9,11 @@ all lexicons/books are being reworked toward.
   vocabulary every other package builds on.
 - **book** : a workable library for one CSS concern (borders, shadows, ...),
   built by combining three pages.
+- **typesetter** (planned, not built yet) : a construct that converts a DTCG
+  design-token document into typed lexicon vars (`m()`, `color()`, ...) for the
+  books to consume. It is neither a lexicon nor a book: it sits at the input edge,
+  it is an on-demand code generator (not a runtime helper), and it does not render
+  CSS. See `design-tokens.md` for the boundary and format reference.
 - **page** : one of a book's three stages, `input` -> `storage` -> `output(s)`.
 - **press** : the definition of a book, its three pages plus config defaults.
 - **bookPress** : the factory engine (in `@css-bookends/bookpress`) that stamps a

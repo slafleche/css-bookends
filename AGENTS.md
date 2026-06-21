@@ -84,6 +84,24 @@ colour('#3366cc').hex().css();             // one-off override (selector) -> '#3
 colour('red').darken(0.2).css();           // navigate/modify, then render via .css()
 ```
 
+### The typesetter is a code generator, not a runtime helper (planned)
+
+A third construct is planned (not built yet): the **typesetter** (see
+`ARCHITECTURE.md`, `README.md`, and `design-tokens.md`). It converts a DTCG
+design-token document into typed lexicon vars at build time. It is not a runtime
+helper, so the two rules above do not apply to it directly:
+
+- It is **not consumed from a factory** and is not pressed by `bookPress`; it is an
+  on-demand script the dev runs when the design updates.
+- It **does not render `.css()`**. Its output is TS source: `export const`
+  declarations whose values are lexicon-factory calls (`m()`, `color()`). The
+  factory + `.css()` rules are upheld downstream, in that generated code, because
+  the generated vars are produced by the lexicon factories and rendered by the
+  consumer through `.css()` like any other value.
+
+When the typesetter is built, keep its conversion engine fixed and its routing /
+naming / output-shape behavior configurable (see `design-tokens.md`).
+
 ### Format, lint, and type-check every file you touch (absolute)
 
 Any code an agent writes or edits MUST be run through the repo's formatter,
