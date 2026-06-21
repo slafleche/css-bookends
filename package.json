@@ -17,6 +17,7 @@
     "//temp-exclude": "TEMP: color is excluded from lint/typecheck below pending its documented culori-rewrite gaps. Restore by deleting the `--filter='!...'` flags (and the matching set in lint-staged.config.mts). borders was restored once migrated onto self-publish.",
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "test:browser": "playwright test",
     "lint": "pnpm --filter='!@css-bookends/color' -r lint",
     "typecheck": "pnpm --filter='!@css-bookends/color' -r run test:tsc",
     "format": "prettier --write .",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
+    "@playwright/test": "^1.61.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.0.7",
     "prettier": "^3.8.4",

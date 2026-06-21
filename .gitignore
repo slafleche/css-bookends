@@ -5,3 +5,8 @@ coverage/
 .DS_Store
 .turbo/
 todo.md
+
+# Playwright (browser-tier tests)
+test-results/
+playwright-report/
+.last-run.json

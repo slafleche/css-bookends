@@ -1,6 +1,13 @@
 import { type IMeasurement, m } from '@css-bookends/css-calipers';
-import { margins } from '@css-bookends/spacing';
+import {
+  type MarginStyle,
+  publishBookMargin,
+} from '@css-bookends/margin';
 import type * as CSS_TYPES from 'csstype';
+
+// Bind the margin book once; positioning composes it for its auto-margin centering.
+const margin = publishBookMargin();
+
 export const absolutePosition = {
   topRight: (
     top: IMeasurement = m(0),
@@ -61,7 +68,7 @@ export const absolutePosition = {
         bottom: 0 as CSS_TYPES.Property.Bottom,
         maxHeight: '100%' as CSS_TYPES.Property.MaxHeight,
         maxWidth: '100%' as CSS_TYPES.Property.MaxWidth,
-        ...margins('auto'),
+        ...(margin('auto').css() as MarginStyle),
       };
     }
   },
@@ -74,7 +81,7 @@ export const absolutePosition = {
       bottom: 0 as CSS_TYPES.Property.Bottom,
       maxHeight: '100%' as CSS_TYPES.Property.MaxHeight,
       maxWidth: '100%' as CSS_TYPES.Property.MaxWidth,
-      ...margins({ vertical: 'auto' }),
+      ...(margin({ y: 'auto' }).css() as MarginStyle),
     };
   },
   middleRight: (right: IMeasurement = m(0)) => {
@@ -86,7 +93,7 @@ export const absolutePosition = {
       bottom: 0 as CSS_TYPES.Property.Bottom,
       maxHeight: '100%' as CSS_TYPES.Property.MaxHeight,
       maxWidth: '100%' as CSS_TYPES.Property.MaxWidth,
-      ...margins({ vertical: 'auto' }),
+      ...(margin({ y: 'auto' }).css() as MarginStyle),
     };
   },
   middleBottom: (bottom: IMeasurement = m(0)) => {
@@ -98,10 +105,7 @@ export const absolutePosition = {
       right: 0 as CSS_TYPES.Property.Right,
       maxHeight: '100%' as CSS_TYPES.Property.MaxHeight,
       maxWidth: '100%' as CSS_TYPES.Property.MaxWidth,
-      ...margins({
-        horizontal: 'auto',
-        vertical: m(0),
-      }),
+      ...(margin({ x: 'auto', y: m(0) }).css() as MarginStyle),
     };
   },
   middleTop: (top: IMeasurement = m(0)) => {
@@ -113,10 +117,7 @@ export const absolutePosition = {
       right: 0 as CSS_TYPES.Property.Right,
       maxHeight: '100%' as CSS_TYPES.Property.MaxHeight,
       maxWidth: '100%' as CSS_TYPES.Property.MaxWidth,
-      ...margins({
-        horizontal: 'auto',
-        vertical: m(0),
-      }),
+      ...(margin({ x: 'auto', y: m(0) }).css() as MarginStyle),
     };
   },
   fullSize: () => {
