@@ -52,6 +52,22 @@ export const publishBookBorders = publishBook(bordersManuscript);
   `src/types.ts` (lock big input designs in a `design.md`, see `books/borders/`).
   Bring a runtime test under `tests/runtime/`. Add a `notes.md` of known debt.
 
+## Quality bars (the how-to skills)
+
+Four skills codify the quality every book must hit; consult the matching one when you
+build that part:
+
+- **`output-shape`** - the `.css()` terminal, typed variant objects, branded +
+  immutable output.
+- **`smart-factory`** - the factory, smart default config, library-agnostic public
+  surface, strictness + fail-fast errors.
+- **`type-hardening`** - a runtime restriction must also brand the TS type, at both the
+  input and output edges.
+- **`spec-faithful`** - cover the full `-space.md` surface, pass special keywords
+  through verbatim, do not gate output.
+
+See also `using-calipers` (measurements) and `space-doc` (the value-surface doc).
+
 ## Where books depend
 
 A book peer-depends on `@css-bookends/self-publish`, `@css-bookends/css-calipers`,
