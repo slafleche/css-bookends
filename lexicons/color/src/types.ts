@@ -201,9 +201,11 @@ export interface ColorConfig {
  * ever happens through `.css()`.
  */
 export interface ResolvedColor<F extends FormatName = FormatName> {
-  /** the single render terminal: a CSS color string hardened to this result's format
-   * (`ColorString<F>`), or in `format` for a one-off. */
-  css(format?: CssFormat): ColorString<F>;
+  /** the single render terminal. With no argument, a `ColorString<F>` in this result's
+   * configured format; with a one-off `format`, a `ColorString` hardened to THAT
+   * format (e.g. `color(x).css(colorFormats.hex)` is `ColorString<'hex'>`). */
+  css(): ColorString<F>;
+  css<G extends FormatName>(format: { format: G }): ColorString<G>;
   rgba(): ResolvedColor<'rgba'>;
   rgb(): ResolvedColor<'rgb'>;
   hex(): ResolvedColor<'hex'>;

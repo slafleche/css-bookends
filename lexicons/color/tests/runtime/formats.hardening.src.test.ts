@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
-import { publishBookColor } from '../../src/color';
+import { colorFormats, publishBookColor } from '../../src/color';
 import type { ColorString } from '../../src/formats';
 
 /**
@@ -22,6 +22,15 @@ describe('selector hardening', () => {
     >();
     expectTypeOf(color('#fff').displayP3().css()).toEqualTypeOf<
       ColorString<'displayP3'>
+    >();
+  });
+
+  it('hardens a one-off .css(format) to that format', () => {
+    expectTypeOf(color('#fff').css(colorFormats.hex)).toEqualTypeOf<
+      ColorString<'hex'>
+    >();
+    expectTypeOf(color('#fff').css(colorFormats.oklch)).toEqualTypeOf<
+      ColorString<'oklch'>
     >();
   });
 
