@@ -5,13 +5,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slafleche/css-bookends.git",
+    "url": "git+https://github.com/css-bookends/css-bookends.git",
     "directory": "packages/shelf"
   },
   "bugs": {
-    "url": "https://github.com/slafleche/css-bookends/issues"
+    "url": "https://github.com/css-bookends/css-bookends/issues"
   },
-  "homepage": "https://github.com/slafleche/css-bookends#readme",
+  "homepage": "https://github.com/css-bookends/css-bookends#readme",
   "author": "slafleche",
   "publishConfig": {
     "access": "public"

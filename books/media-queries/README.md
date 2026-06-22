@@ -2,7 +2,7 @@
 
 Build typed, unit-safe media query strings with a small, configurable builder,
 built on [CSS-Calipers](https://github.com/slafleche/css-calipers) measurements.
-Part of the [CSS-Bookends](https://github.com/slafleche/css-bookends) umbrella.
+Part of the [CSS-Bookends](https://github.com/css-bookends/css-bookends) umbrella.
 This package focuses on feature coverage, not syntax variants: you supply a typed
 config object and get a normalized query string.
 

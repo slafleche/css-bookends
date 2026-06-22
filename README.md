@@ -139,3 +139,5 @@ books/        standalone helper libraries (media-queries, ...)
 
 This is a solo, early-stage project. If the direction resonates, you can
 [buy me a coffee](https://buymeacoffee.com/slafleche) to support continued work.
+
+<a href="https://www.buymeacoffee.com/slafleche" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="48"></a>

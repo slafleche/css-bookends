@@ -1,6 +1,6 @@
 # @css-bookends/shelf
 
-The whole [CSS-Bookends](https://github.com/slafleche/css-bookends) bookshelf in
+The whole [CSS-Bookends](https://github.com/css-bookends/css-bookends) bookshelf in
 one package. It re-exports every lexicon and book so you can pull the entire set
 from a single import.
 

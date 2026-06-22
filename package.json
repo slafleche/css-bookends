@@ -7,7 +7,7 @@
   "author": "slafleche",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/slafleche/css-bookends.git"
+    "url": "git+https://github.com/css-bookends/css-bookends.git"
   },
   "packageManager": "pnpm@11.0.9",
   "engines": {

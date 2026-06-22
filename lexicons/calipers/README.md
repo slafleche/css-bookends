@@ -86,10 +86,12 @@ and `calc(...)` stay as explicit strings in your styling layer (see
 ## Status & support
 
 - Stable `1.0` release of the measurement layer, part of the
-  [CSS-Bookends](https://github.com/slafleche/css-bookends) umbrella.
+  [CSS-Bookends](https://github.com/css-bookends/css-bookends) umbrella.
 - Tested with TypeScript 5.6+ on Node 18+.
 - Solo, early-stage project. If it saves you time, you can
   [buy me a coffee](https://buymeacoffee.com/slafleche).
+
+<a href="https://www.buymeacoffee.com/slafleche" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="48"></a>
 
 ## Media queries
 
