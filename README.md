@@ -123,9 +123,11 @@ inspectable CSS.
 ## Wrapping at the edges, not reinventing
 
 The metaphors (lexicon, book, typesetter, gilding, compendium) name one consistent
-architecture. They are a mental model, not the substance, and they are not cute
-labels stuck on existing tools. Two things here are genuinely different, and neither
-is a rename:
+architecture. The naming is not just for whimsy: it is because the idea is that
+everything underneath is swappable. Each name marks a ROLE and hides the library
+currently filling it (you import `color()`, not `culori`; the finisher is `gilding`,
+not Lightning CSS), so the engine can change without moving your call sites. Two
+things here are genuinely different, and neither is a rename:
 
 1. **The typed authoring contract.** You compose CSS values as typed, branded,
    autocompleting TypeScript that catches mistakes before they ship, and plain CSS
@@ -149,7 +151,7 @@ The architecture terms (lexicon, book, the three steps, manuscript, `publishBook
 
 ## Factories (the override seam)
 
-Every book is consumed through its factory, never imported raw, because the factory is the configurable path and the override seam: it lets you rewrite or wrap any step (input, storage, output) onion-style, or swap the internals, with zero changes at call sites. A per-book package exports its `publishBook<Name>` factory and no pre-made instance, so a consumer binds it once (`const color = publishBookColor()`) and calls it. The compendium is the bundle's factory: `publishCompendium` is exported as the package's default export, a bare `publishCompendium()` binds every active book at its own defaults, and passing a master `CompendiumConfig` (one optional key per book) configures any subset.
+Every book is consumed through its factory, never imported raw, because the factory is the configurable path and the override seam: it lets you rewrite or wrap any step (input, storage, output) onion-style, or swap the internals, with zero changes at call sites. A per-book package exports its `publishBook<Name>` factory and no pre-made instance, so a consumer binds it once (`const color = publishBookColor()`) and calls it. Because you bind once in your own module and import the helper from there, a major rewrite of the library's internal paths changes that one file, not the hundreds or thousands of call sites across your project. Each factory call also returns its own independent instance, so you can run several configurations of the same book at once with no global state to collide: a strict opacity beside a clamping one, or two colour books with different output formats, with no cascade or shared global state to fight (each is a value in scope, not a stylesheet competing in the cascade). The compendium is the bundle's factory: `publishCompendium` is exported as the package's default export, a bare `publishCompendium()` binds every active book at its own defaults, and passing a master `CompendiumConfig` (one optional key per book) configures any subset. So all of that power is opt-in: if you do not want to configure anything, `publishCompendium()` with no arguments is the zero-config path, every book at its defaults, no wiring required.
 
 ## Installation
 
