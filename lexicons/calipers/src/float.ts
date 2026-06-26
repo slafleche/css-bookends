@@ -1,4 +1,5 @@
 import { toPlainDecimal } from './internal/toPlainDecimal';
+import { type Scalar, toNumber } from './scalar';
 
 export type FloatConstraints = {
   min?: number;
@@ -16,17 +17,17 @@ export interface IFloat {
   value: () => number;
   constraints: () => FloatConstraints;
   withValue: (value: number) => IFloat;
-  add: (delta: number | IFloat) => IFloat;
-  subtract: (delta: number | IFloat) => IFloat;
-  multiply: (factor: number) => IFloat;
+  add: (delta: Scalar) => IFloat;
+  subtract: (delta: Scalar) => IFloat;
+  multiply: (factor: Scalar) => IFloat;
+  divide: (divisor: Scalar) => IFloat;
   clamp: (min: number, max: number) => IFloat;
 }
 
 const suffix = (context?: string): string =>
   context ? ` [${context}]` : '';
 
-const coerce = (value: number | IFloat): number =>
-  typeof value === 'number' ? value : value.valueOf();
+const coerce = (value: Scalar): number => toNumber(value);
 
 class FloatImpl implements IFloat {
   #value: number;
@@ -90,16 +91,32 @@ class FloatImpl implements IFloat {
     return new FloatImpl(value, this.#options());
   }
 
-  add(delta: number | IFloat): IFloat {
+  add(delta: Scalar): IFloat {
     return this.withValue(this.#value + coerce(delta));
   }
 
-  subtract(delta: number | IFloat): IFloat {
+  subtract(delta: Scalar): IFloat {
     return this.withValue(this.#value - coerce(delta));
   }
 
-  multiply(factor: number): IFloat {
-    return this.withValue(this.#value * factor);
+  multiply(factor: Scalar): IFloat {
+    return this.withValue(this.#value * coerce(factor));
+  }
+
+  divide(divisor: Scalar): IFloat {
+    const numeric = coerce(divisor);
+    if (numeric === 0) {
+      throw new Error(
+        `f: cannot divide ${this.#value} by zero${suffix(this.#context)}`,
+      );
+    }
+    const result = this.#value / numeric;
+    if (!Number.isFinite(result)) {
+      throw new Error(
+        `f: non-finite result dividing ${this.#value} by ${numeric}${suffix(this.#context)}`,
+      );
+    }
+    return this.withValue(result);
   }
 
   clamp(min: number, max: number): IFloat {

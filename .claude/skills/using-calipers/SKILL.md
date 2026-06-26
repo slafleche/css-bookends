@@ -5,10 +5,12 @@ description: Rules for css-calipers in this repo - every numeric, unit-bearing C
 
 # using-calipers
 
-In CSS-Bookends, **every numeric, unit-bearing CSS value is a css-calipers
-measurement** (`m()` from `@css-bookends/css-calipers`), never a hand-written
-string like `'8px'`. Do the math in measurement space and emit a string once, with
-`.css()`, at the very edge. This is what keeps units type-safe and output valid.
+Calipers is **Layer 1** of the stack: typed input primitives only, no helpers (the
+canonical three-layer model is in `.claude/CLAUDE.md` / `AGENTS.md`). In CSS-Bookends,
+**every numeric, unit-bearing CSS value is a css-calipers measurement** (`m()` from
+`@css-bookends/css-calipers`), never a hand-written string like `'8px'`. Do the math in
+measurement space and emit a string once, with `.css()`, at the very edge. This is what
+keeps units type-safe and output valid.
 
 ## The rule: measurement vs not
 

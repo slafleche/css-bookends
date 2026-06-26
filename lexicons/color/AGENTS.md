@@ -34,13 +34,14 @@ value and let the wrapper handle compat.
 
 ## The surface
 
-- `.css(format?)` - the only renderer (see `/AGENTS.md`). With no argument it renders
-  the configured `output` (a single format, or a priority list that escalates to the
+- `.css()` - the only renderer (see `/AGENTS.md`), argument-free. It renders the
+  configured `output` (a single format, or a priority list that escalates to the
   simplest faithful format; a wide color reaches a modern format only because nothing
-  simpler holds it).
+  simpler holds it). A one-off format is set beforehand via a selector or
+  `.formatAs(...)`, never an argument into `.css()`.
 - format selectors (`.hex()`, `.rgb()`, `.oklch()`, ...) - return the color configured
   to that format, still finished via `.css()`; the chosen format brands the output
-  (`ColorString<F>`).
+  (`ColorString<F>`). `.formatAs(...)` does the same for a custom / list format.
 - the immutable modification algebra (`darken`, `lighten`, `saturate`, `mix`, ...),
   each returning a new resolved color in the same configured format.
 

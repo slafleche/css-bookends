@@ -1,19 +1,21 @@
 import type { Color } from 'culori';
 
-import type { CssFormat } from '../types';
+import type { OutputFormat } from '../types';
 import { colorFormats } from './index';
 import { hasRealAlpha, inP3, inSrgb } from './internals';
+import { asDescriptor } from './resolve';
 import type { ColorSpaceDescriptor } from './types';
 
-const descriptorFor = (format: CssFormat): ColorSpaceDescriptor =>
-  colorFormats[format.format];
+const descriptorFor = (
+  format: OutputFormat,
+): ColorSpaceDescriptor<string> => asDescriptor(format, colorFormats);
 
 /**
  * Whether a format can FAITHFULLY hold the color: its gamut contains the color, and
  * it carries alpha if the color is non-opaque. 8-bit sRGB precision is accepted as
  * faithful, so gamut + alpha are the only fit criteria.
  */
-const fits = (color: Color, format: CssFormat): boolean => {
+const fits = (color: Color, format: OutputFormat): boolean => {
   const d = descriptorFor(format);
   const gamutOk =
     d.gamut === 'unbounded'
@@ -33,15 +35,16 @@ const fits = (color: Color, format: CssFormat): boolean => {
  */
 export const chooseFormat = (
   color: Color,
-  output: CssFormat | CssFormat[],
-): CssFormat => {
+  output: OutputFormat | ReadonlyArray<OutputFormat>,
+): OutputFormat => {
   if (!Array.isArray(output)) {
-    return output;
+    return output as OutputFormat;
   }
-  for (const format of output) {
+  const list = output as ReadonlyArray<OutputFormat>;
+  for (const format of list) {
     if (fits(color, format)) {
       return format;
     }
   }
-  return output[output.length - 1];
+  return list[list.length - 1];
 };

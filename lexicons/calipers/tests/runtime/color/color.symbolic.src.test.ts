@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { color, colorFormats } from '../../../src/color';
+import { color } from '../../../src/color';
 
 /*
  * The SPECIAL (symbolic) color words: keywords with no fixed value. Separate suite
@@ -70,7 +70,7 @@ describe('color — symbolic keywords pass through for any format', () => {
   for (const keyword of SYMBOLIC) {
     it(`${keyword} emits "${keyword}" regardless of format`, () => {
       expect(color(keyword).css()).toBe(keyword);
-      expect(color(keyword).css(colorFormats.hex)).toBe(keyword);
+      expect(color(keyword).hex().css()).toBe(keyword);
       expect(color(keyword).hexAlpha().css()).toBe(keyword);
       expect(color(keyword).oklch().css()).toBe(keyword);
       expect(color(keyword).displayP3().css()).toBe(keyword);

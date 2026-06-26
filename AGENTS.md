@@ -3,6 +3,28 @@
 Guidance for agents working in CSS-Bookends. See `ARCHITECTURE.md` for the full
 factory + book model, and each package's `design.md` / `notes.md` for specifics.
 
+## Architecture: the three layers (canonical, ABSOLUTE)
+
+The same statement lives in `.claude/CLAUDE.md`, the package READMEs, and the skills.
+Keep them in sync. The stack is three strictly-separated layers, each with one job:
+
+1. **css-calipers (Layer 1), typed CSS input PRIMITIVES only.** Fills the gap where
+   `csstype` is lacking: typed, build-time-validated CSS input values (`m`, `r`, `i`,
+   `f`, `color`). Usable STANDALONE, for someone who wants only typed CSS inputs and no
+   helpers at all. NO helpers, NO books, no `publishBook` engine, ever.
+2. **css-bookends (Layer 2), the helpers (books) that consume the primitives.** EVERY
+   helper is a book (per-property: opacity, zIndex, ...; composed: borders, shadows,
+   margin, ...). The shelf is the full bundle of every active book; the typesetter
+   ingests DTCG design tokens; gilding is the output-edge finisher. Books consume
+   calipers; calipers never depends on a book.
+3. **css-squire (Layer 3, TBD), the opinionated framework on top.** Built on the steady
+   calipers + bookends foundation, adaptable per project (you could in theory rebuild
+   Tailwind or Bootstrap on top of it). Not built yet; nothing depends on it.
+
+Known debt: the per-property helpers in `lexicons/calipers/src/css-values/` currently
+live in calipers, violating Layer 1. They must be extracted into the books layer. Do
+NOT add further helpers to calipers.
+
 ## Global rules
 
 ### Consume helpers from a factory, never import directly (absolute)
@@ -56,13 +78,15 @@ single `.css()` terminal. This is universal and not negotiable per helper.
 - **The variant is chosen by factory config.** The output format is set at factory
   time via the manuscript config (`output: colorFormats.hex`). `.css()` with no
   argument renders the configured variant.
-- **Two ways to pick a one-off variant, both ending in `.css()`:**
-  - **As an argument:** `color(x).css(colorFormats.hex)`.
-  - **As a format selector:** a method like `color(x).hex()` that returns the
+- **One way to pick a one-off variant, ending in `.css()`:** a format selector, never
+  an argument into `.css()` (`.css()` itself takes no argument).
+  - **As a named format selector:** a method like `color(x).hex()` that returns the
     navigable result configured to that format (it does NOT render), so you still
     finish with `.css()`: `color(x).hex().css()`. Selectors return the helper's
     resolved type, never a string, and the chosen format persists through later
     modifications. This is the line that keeps selectors compatible with the rule.
+  - **For a custom format or a priority list:** `color(x).formatAs(descriptor).css()`
+    sets the one-off format, then renders through `.css()`.
   The configured default still wins when no override is given.
 - **Intermediate values may still be navigated** (drill into a resolved result,
   chain modifications), but the moment you render to CSS, it goes through `.css()`.
@@ -78,8 +102,8 @@ Examples:
 // (color is a book bound once: `const color = publishBookColor()`)
 borders(spec).css();                       // configured variant per factory config
 color('#3366cc').css();                    // configured format (default colorFormats.rgba)
-color('#3366cc').css(colorFormats.hex);    // one-off override (argument) -> '#3366cc'
 color('#3366cc').hex().css();              // one-off override (selector) -> '#3366cc'
+color('#3366cc').formatAs(colorFormats.hex).css();  // one-off override (custom/list) -> '#3366cc'
 color('red').darken(0.2).css();            // navigate/modify, then render via .css()
 ```
 

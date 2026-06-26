@@ -49,6 +49,7 @@
     "lightningcss": "^1.32.0"
   },
   "devDependencies": {
+    "@css-bookends/css-calipers": "workspace:*",
     "@css-bookends/eslint-config": "workspace:*",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.2",

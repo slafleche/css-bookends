@@ -64,6 +64,36 @@ from these scalars (a ratio of two hardened integers is itself hardened).
 - **Composition:** `r()` accepts `number | IInteger | IFloat` and respects a passed
   primitive's already-validated value.
 
+## The ratio helper family
+
+`r()` builds a ratio (`IRatio`); a small helper family normalizes, reduces, and
+re-parts one. All live in `src/ratio.ts`.
+
+- `withNumerator(numerator)` / `withDenominator(denominator)` are `IRatio` methods that
+  return a NEW ratio with one part replaced (the other carried over). Each accepts a
+  `RatioValue` (`number | IInteger | IFloat`).
+- `normalizeRatio(ratio): IRatio` reduces an integer ratio to lowest terms (by GCD) and
+  moves a negative sign onto the numerator (so the denominator is positive). A ratio
+  with a non-integer part is returned unreduced (only the type is preserved). Throws on
+  non-finite parts or a zero denominator.
+- `reduceRatio(ratio): IRatio` is an alias of `normalizeRatio`.
+- `simplifyRatio(ratio): IRatio` normalizes, then returns a ratio that omits the
+  denominator in `css()` when it is `1` (for example `4/1` renders as `4`). `r(...,
+  { simplify: true })` runs this for you at construction.
+- `parseRatio(value): RatioParts | null` reads a `number | string | IRatio | IInteger |
+  IFloat` into `{ numerator, denominator }`. A string may be `"16/9"` or `"16:9"`
+  (`/` or `:` delimiter), or a bare number (denominator `1`). Returns `null` on an
+  unparseable value, a non-finite part, or a zero denominator.
+
+## Measurement units are lower-cased
+
+`m(value, 'PX')` lower-cases the unit to `px`: the measurement core normalizes the unit
+to lowercase on creation (`unit.toLowerCase()` in `src/internal/createCoreApi.ts`), and
+the return type is `InscribedMeasurement<Lowercase<Unit>>`, so `'PX'` is `'px'` at
+runtime AND in the type. Unit comparisons (`isUnit`, `assertUnit`) lower-case their
+argument too, so `m(16, 'PX').isUnit('Px')` is `true`. `makeUnitHelper` applies the
+same lowering to its bound unit.
+
 ## Out of scope here (deferred, tracked)
 
 - **csstype-typed CSS-value helpers** (`opacity`, `line-height`, `z-index`,

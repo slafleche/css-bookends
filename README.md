@@ -44,6 +44,27 @@ for a curated subset of what CSS can do, so anything outside their vocabulary or
 scale is awkward or impossible to express, even when it would be perfectly valid
 CSS. CSS-Bookends does not gate the output: if CSS allows it, you can emit it.
 
+## Architecture: three layers
+
+The stack is three strictly-separated layers, each with one job (the canonical
+statement lives in `.claude/CLAUDE.md` and `AGENTS.md`):
+
+1. **css-calipers (Layer 1), the typed CSS input PRIMITIVES.** It fills the gap
+   where `csstype` is lacking: typed, build-time-validated CSS input values (`m`,
+   `r`, `i`, `f`, `color`). It is usable **standalone**, for someone who wants only
+   typed CSS inputs and no helpers at all. No helpers, no books, ever.
+2. **css-bookends (Layer 2), the helpers (books) that consume the primitives.**
+   Every helper is a book; the shelf is the full bundle of every active book; the
+   typesetter ingests DTCG design tokens; gilding is the output-edge finisher.
+   Books consume calipers; calipers never depends on a book.
+3. **css-squire (Layer 3, TBD), the opinionated framework on top.** Built on the
+   steady calipers + bookends foundation, adaptable per project (you could in theory
+   rebuild Tailwind or Bootstrap on top of it). Not built yet; nothing depends on it.
+
+Consumption is one-way: calipers -> books -> squire. Known debt: the per-property
+helpers in `lexicons/calipers/src/css-values/` currently live in calipers,
+violating Layer 1, and must move to the books layer.
+
 ## Lexicons and books
 
 CSS-Bookends is split into two kinds of package:
@@ -54,8 +75,8 @@ CSS-Bookends is split into two kinds of package:
   Lexicons can build on one another (a `spacing` lexicon builds on `css-calipers`).
 - **Books** are the standalone helper libraries built on top of one or more
   lexicons. A book takes typed tokens and emits plain CSS for a single concern.
-  `@css-bookends/media-queries` is a book; `borders`, `shadow`, and `margins`
-  will be.
+  `borders`, `shadow`, and `margins` will be. (`media-queries` was an early book;
+  it has been pulled from the active workspace pending rework.)
 
 A lexicon is the vocabulary; a book is written using it. Every package, lexicon
 or book, is independently installable and pulls in only what it actually depends
@@ -68,7 +89,7 @@ that you then feed to the books. See `design-tokens.md` for the boundary and the
 format reference.
 
 Every package publishes under the `@css-bookends/*` scope, lexicons and books
-alike (for example `@css-bookends/css-calipers` and `@css-bookends/media-queries`).
+alike (for example `@css-bookends/css-calipers` and `@css-bookends/shelf`).
 
 ## What is available today
 
@@ -76,8 +97,9 @@ alike (for example `@css-bookends/css-calipers` and `@css-bookends/media-queries
   most other pieces build on. Stable, headed to 1.0.
   [repo](https://github.com/slafleche/css-calipers) ·
   [npm](https://www.npmjs.com/package/@css-bookends/css-calipers)
-- **`@css-bookends/media-queries`** — typed, unit-safe media query strings, built
-  on `@css-bookends/css-calipers`. Experimental 0.x.
+
+> **`@css-bookends/media-queries`** has been removed from the active workspace,
+> pending rework. It remains in git history and in its prior published versions.
 
 More lexicons (`spacing`, `color`) and books (`borders`, `shadows`, `margin`,
 `padding`) are being brought in.
@@ -133,8 +155,8 @@ Install only the pieces you want; nothing pulls in the rest of the umbrella.
 # the measurement lexicon
 npm install @css-bookends/css-calipers
 
-# a book (brings in css-calipers as its dependency)
-npm install @css-bookends/media-queries
+# a book installs the same way and brings in css-calipers as its dependency:
+# npm install @css-bookends/<book>
 ```
 
 Or take the whole bookshelf in one package, which re-exports every lexicon and
@@ -152,7 +174,7 @@ packages are mirrored out to their own standalone repositories (for example
 
 ```
 lexicons/     foundational vocabularies (css-calipers, ...)
-books/        standalone helper libraries (media-queries, ...)
+books/        standalone helper libraries (borders, shadows, ...)
 ```
 
 ## Support

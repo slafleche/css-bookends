@@ -74,7 +74,8 @@ The input is the hardest part to change later, so nail it before anything else.
 - Wire the factory `publishBook<BookName>`. Consume the book only through that
   factory, never a raw helper (see AGENTS.md).
 - **Tests (required):** rendering through `.css()` is correct; then output variants
-  selected by config or `.css(format)` - never a render method per format.
+  selected by config or a format selector / `.formatAs(...)` before an argument-free
+  `.css()` - never a format argument into `.css()`, never a render method per format.
 - **Gate:** all three steps green.
 
 ## Finish

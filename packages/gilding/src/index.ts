@@ -10,6 +10,14 @@
  * pass-through, so the wrapped `core` can be swapped without changing the surface.
  */
 export {
+  composeCore,
+  composeCoreFromFormats,
+  type FallbackBearingFormat,
+  type FormatRegistry,
+  keywordToRgb,
+  type PreStep,
+} from './cores/compose';
+export {
   lightningCore,
   type LightningOptions,
 } from './cores/lightningcss';

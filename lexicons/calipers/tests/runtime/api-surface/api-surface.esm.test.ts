@@ -165,6 +165,7 @@ describe('API surface (ESM)', () => {
       // colour value surface (re-exported from ./color)
       'color',
       'colorFormats',
+      'createColor',
       'defaultColorConfig',
       'defaultFormatPriority',
       'defineColorSpace',

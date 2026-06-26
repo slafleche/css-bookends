@@ -2,13 +2,17 @@
 // `runCoreTests` helper defined in tests/runtime/core/core.shared.ts. If you
 // need to restore the original single-environment layout, use README.md.bak
 // and the git history for reference.
+import { describe, expect, it } from 'vitest';
+
 import {
   assertCondition,
   assertMatchingUnits,
   assertPercentMeasurement,
   assertUnit,
+  f,
   getErrorConfig,
   hasCssMethod,
+  i,
   isMeasurement,
   isPercentMeasurement,
   m,
@@ -75,3 +79,28 @@ const api = {
 } as unknown as CoreApi;
 
 runCoreTests('src', api);
+
+describe('Measurement arithmetic with typed scalar operands (i / f)', () => {
+  it('multiplies by a typed integer or float factor', () => {
+    expect(m(8).multiply(i(2)).css()).toBe('16px');
+    expect(m(8).multiply(f(1.5)).css()).toBe('12px');
+    // plain-number factors still work
+    expect(m(8).multiply(2).css()).toBe('16px');
+  });
+
+  it('divides by a typed integer or float divisor', () => {
+    expect(m(8).divide(i(2)).css()).toBe('4px');
+    expect(m(9).divide(f(1.5)).css()).toBe('6px');
+    // plain-number divisors still work
+    expect(m(8).divide(2).css()).toBe('4px');
+  });
+
+  it('throws CALIPERS_E_DIVIDE_BY_ZERO when the typed divisor is zero', () => {
+    expect(() => m(8).divide(i(0))).toThrow(
+      /CALIPERS_E_DIVIDE_BY_ZERO/,
+    );
+    expect(() => m(8).divide(f(0))).toThrow(
+      /CALIPERS_E_DIVIDE_BY_ZERO/,
+    );
+  });
+});

@@ -136,6 +136,35 @@ describe('Ratio helper (src)', () => {
     );
   });
 
+  it('normalizeRatio re-validates its own input (not only the r() constructor)', () => {
+    // r() rejects bad inputs at construction, so the earlier cases never reach
+    // normalizeRatio's own guards. A hand-rolled IRatio that bypasses r() proves
+    // normalizeRatio independently rejects non-finite numerators and a zero
+    // denominator (its defensive re-validation, lines 185-190 of ratio.ts).
+    const fakeRatio = (
+      numerator: number,
+      denominator: number,
+    ): Parameters<typeof normalizeRatio>[0] => ({
+      css: () => `${numerator}/${denominator}`,
+      toString: () => `${numerator}/${denominator}`,
+      valueOf: () => numerator / denominator,
+      numerator: () => numerator,
+      denominator: () => denominator,
+      withNumerator: () => fakeRatio(numerator, denominator),
+      withDenominator: () => fakeRatio(numerator, denominator),
+    });
+
+    expect(() => normalizeRatio(fakeRatio(Number.NaN, 2))).toThrow(
+      'Ratio values must be finite numbers.',
+    );
+    expect(() =>
+      normalizeRatio(fakeRatio(Number.POSITIVE_INFINITY, 2)),
+    ).toThrow('Ratio values must be finite numbers.');
+    expect(() => normalizeRatio(fakeRatio(1, 0))).toThrow(
+      'Ratio denominator cannot be zero.',
+    );
+  });
+
   it('consumes integer and float primitives', () => {
     expect(r(i(16), i(9)).css()).toBe('16/9');
     expect(r(i(16), i(9)).valueOf()).toBeCloseTo(16 / 9);

@@ -14,10 +14,13 @@ Tracking loose ends from making css-calipers the full typed-CSS-inputs package
   assertions to the actual hex output, set those books'/shelf's colour config to
   `output: colorFormats.rgba` if rgba is the intended product default, or fold it
   into the colour culori-rewrite. See the root `package.json` `//temp-exclude` note.
-- **11 colour modification methods are `it.todo`** in
-  `tests/runtime/color/color.matrix.src.test.ts` (were `expect(false)` markers,
-  converted to `it.todo` so calipers stays green after the move). The gap list is
-  preserved; implement/verify these modifications.
+- **Colour modification gaps: ALL filled (2026-06-25).** In
+  `tests/runtime/color/color.matrix.src.test.ts`. First wave (unambiguous,
+  OKLCH-coordinate / culori-pinned): `setLightness`, `setChroma`, `setHue`,
+  `complement` (hue + 180), `contrast` (culori `wcagContrast` reference). Second wave
+  (the 6 former design-question stubs, decisions recorded below): `invert`,
+  `grayscale`, `blend` (multiply/screen/+9 modes), `ensureContrast`. No `it.todo` /
+  deliberate-fail stubs remain; the colour suite is fully green.
 - **`./color` subpath is emitted but unused by the workspace.** Calipers'
   `package.json` exports `./color` and the build emits `dist/*/color/**`, but the
   colour surface is re-exported from the calipers ROOT because colour's tsconfig
@@ -26,6 +29,32 @@ Tracking loose ends from making css-calipers the full typed-CSS-inputs package
 - **Colour is still excluded from lint/typecheck** (root `//temp-exclude`,
   "pending its documented culori-rewrite gaps"). Restore once the rewrite lands
   (delete the `--filter='!...'` flags + the matching set in `lint-staged.config.mts`).
+
+## Colour modification gaps (design questions) — RESOLVED 2026-06-25
+
+The 6 former-`it.todo` modification cells, now implemented in `src/color/index.ts`
+with the decisions below. Kept here as the rationale record.
+
+- **`blend(other, mode)`** — DECIDED: a single flat method taking a typed `BlendMode`
+  union (the 11 separable CSS modes: multiply, screen, overlay, darken, lighten,
+  color-dodge, color-burn, hard-light, soft-light, difference, exclusion). Computed in
+  **sRGB**, not OKLCH: separable blend modes are sRGB-defined per-channel formulas
+  (multiply = `r1*r2`) with no meaning on OKLCH's signed a/b coordinates. Both operands
+  are gamut-mapped into sRGB first (a no-op for in-gamut colours, so lossless there;
+  wide-gamut operands are mapped down, inherent to blend modes being sRGB-only).
+  Storage stays canonical OKLCH (the sRGB result is re-normalized via `withColor`).
+  Backed by culori `blend([a, b], mode, 'rgb')`.
+- **`invert(amount = 1)`** — DECIDED: **OKLCH lightness inversion** (`L -> 1 - L`,
+  chroma + hue kept), not an sRGB channel matrix. `amount` (0..1) interpolates
+  original <-> inverted; `0.5` lands on mid lightness for any colour.
+- **`grayscale(amount = 1)`** — DECIDED: **OKLCH chroma to zero** (`C -> C*(1-amount)`,
+  lightness + hue kept), the natural reading for the OKLCH store.
+- **`ensureContrast(other, ratio = 4.5)`** — DECIDED: adjust THIS colour's OKLCH
+  lightness toward whichever endpoint (black `L=0` / white `L=1`) increases WCAG
+  contrast against `other`, binary-searching the SMALLEST move that meets `ratio`
+  (default 4.5 = AA; pass 7 for AAA). If unreachable even at the endpoint, return the
+  best-achievable (max-contrast) colour. Reuses the `wcagContrast` reference behind
+  `contrast()`.
 
 ## Phase 2 deferred properties (per-property helpers not in v1)
 

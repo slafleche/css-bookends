@@ -17,8 +17,10 @@ export const darkened = color('#3366cc').darken(0.2).css();
 // finish with .css(). Here the same color is forced to hex.
 export const asHex = color('#3366cc').hex().css();
 
-// Equivalently, pass a one-off format descriptor straight to .css().
-export const asHexInline = color('#3366cc').css(colorFormats.hex);
+// Equivalently, override the output via formatAs(...), then finish with .css().
+export const asHexInline = color('#3366cc')
+  .formatAs(colorFormats.hex)
+  .css();
 
 // Modifications chain immutably: each step returns a new resolved color in the
 // same configured format.

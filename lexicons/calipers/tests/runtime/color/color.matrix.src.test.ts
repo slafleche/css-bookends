@@ -1,4 +1,10 @@
-import { converter, formatCss, parse } from 'culori';
+import {
+  blend as blendRef,
+  converter,
+  formatCss,
+  parse,
+  wcagContrast,
+} from 'culori';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -11,6 +17,7 @@ import {
   parseColor,
   storeColor,
 } from '../../../src/color';
+import { mDeg } from '../../../src/units/angle';
 
 /*
  * The color book's coverage MATRIX (from color-coverage.md + the modification surface).
@@ -204,7 +211,7 @@ describe('color — make x emit matrix', () => {
         format,
       ] of EMIT) {
         it(`emit: ${emitLabel}`, () => {
-          const css = color(input).css(format);
+          const css = color(input).formatAs(format).css();
           const got = parseRgb(css);
           expect(got.r).toBeCloseTo(ref.r, 2);
           expect(got.g).toBeCloseTo(ref.g, 2);
@@ -232,7 +239,7 @@ describe('color — alpha round-trips through alpha-capable formats', () => {
     format,
   ] of ALPHA_EMIT) {
     it(`emit: ${emitLabel} preserves color + alpha`, () => {
-      const got = parseRgb(color(translucent).css(format));
+      const got = parseRgb(color(translucent).formatAs(format).css());
       expect(got.r).toBeCloseTo(ref.r, 2);
       expect(got.g).toBeCloseTo(ref.g, 2);
       expect(got.b).toBeCloseTo(ref.b, 2);
@@ -244,28 +251,221 @@ describe('color — alpha round-trips through alpha-capable formats', () => {
 /* ---------- axis 3: MODIFY ---------- */
 // The core algebra (alpha/darken/lighten/brighten/saturate/desaturate/hueShift/mix/
 // mixSolid/mixWithAlpha/solid/clone/chaining) is implemented and tested in
-// color.modify.src.test.ts. The cells below are the still-deferred gaps: `blend`
-// (its old semantics were a non-standard alpha hack - needs a real design) and the
-// documented gaps from color-coverage.md. Tracked as `it.todo` markers: now that the
-// colour value primitive lives in css-calipers (whose suite is part of the green
-// success gate), these planned-but-unimplemented cells are deferred TODOs rather than
-// hard failures, so the gap list stays visible without breaking the gate.
-const MODIFY_GAPS = [
-  'blend.multiply(opts?)',
-  'blend.screen(opts?)',
-  'additional blend modes (overlay, ...)',
-  'setLightness',
-  'setChroma',
-  'setHue',
-  'contrast',
-  'ensureContrast',
-  'complement (hue + 180)',
-  'invert',
-  'grayscale',
-];
+// color.modify.src.test.ts.
+//
+// The cells below are the (formerly) documented modification gaps from
+// color-coverage.md. ALL are now implemented, with expected values DERIVED from culori
+// reference functions: the OKLCH-coordinate setters (setLightness/setChroma/setHue/
+// complement/contrast) and the four resolved modifiers (invert, grayscale, blend,
+// ensureContrast). The design decisions behind the last four are recorded in
+// `backlog.typedInputs.md` under "Colour modification gaps (design questions)".
 
-describe('color — modification gaps (DEFERRED, not yet implemented)', () => {
-  for (const mod of MODIFY_GAPS) {
-    it.todo(`${mod}`);
+/* The OKLCH store is the working space; setters write a coordinate directly and the
+ * value round-trips losslessly (oklch -> oklch normalize is identity). Expected
+ * values are read straight off culori's oklch converter, not off the implementation. */
+const oklch = converter('oklch');
+const baseOklch = oklch(parse('#3366cc')) as unknown as Record<
+  string,
+  number
+>;
+
+describe('color — modification gaps (filled, culori-derived)', () => {
+  it('setLightness sets the OKLCH L coordinate absolutely', () => {
+    const got = oklch(
+      parse(color('#3366cc').setLightness(0.42).oklch().css()),
+    ) as unknown as Record<string, number>;
+    expect(got.l).toBeCloseTo(0.42, 4);
+  });
+
+  it('setChroma sets the OKLCH C coordinate absolutely', () => {
+    const got = oklch(
+      parse(color('#3366cc').setChroma(0.08).oklch().css()),
+    ) as unknown as Record<string, number>;
+    expect(got.c).toBeCloseTo(0.08, 4);
+  });
+
+  it('setHue sets the OKLCH H coordinate absolutely (wrapped)', () => {
+    const got = oklch(
+      parse(color('#3366cc').setHue(mDeg(120)).oklch().css()),
+    ) as unknown as Record<string, number>;
+    expect(got.h).toBeCloseTo(120, 1);
+  });
+
+  it('complement rotates the OKLCH hue by 180 degrees', () => {
+    const got = oklch(
+      parse(color('#3366cc').complement().oklch().css()),
+    ) as unknown as Record<string, number>;
+    expect(got.h).toBeCloseTo((baseOklch.h + 180) % 360, 1);
+  });
+
+  it('contrast returns the WCAG ratio (culori wcagContrast as the reference)', () => {
+    expect(color('#3366cc').contrast('white')).toBeCloseTo(
+      wcagContrast(parse('#3366cc')!, parse('white')!),
+      4,
+    );
+    expect(color('black').contrast('white')).toBeCloseTo(21, 4);
+  });
+});
+
+// The former-deferred modifiers, now resolved and implemented. Each had a recorded
+// design decision (see backlog.typedInputs.md):
+//   - invert / grayscale: OKLCH coordinate semantics (perceptual), not an sRGB matrix.
+//   - blend: separable blend modes are sRGB-defined channel formulas, so they run in
+//     sRGB (storage stays OKLCH); modes are a typed union.
+//   - ensureContrast: adjust THIS colour's OKLCH lightness toward black/white until the
+//     WCAG ratio is met (default 4.5 = AA), best-achievable if unreachable.
+// Expected values are DERIVED from culori reference functions, never read off the impl.
+
+describe('color — invert (OKLCH lightness)', () => {
+  it('invert() flips OKLCH lightness (L -> 1 - L), keeping chroma + hue', () => {
+    const got = oklch(
+      parse(color('#3366cc').invert().oklch().css()),
+    ) as unknown as Record<string, number>;
+    expect(got.l).toBeCloseTo(1 - baseOklch.l, 4);
+    expect(got.c).toBeCloseTo(baseOklch.c, 4);
+    expect(got.h).toBeCloseTo(baseOklch.h, 1);
+  });
+
+  it('invert(0) is a no-op', () => {
+    const got = oklch(
+      parse(color('#3366cc').invert(0).oklch().css()),
+    ) as unknown as Record<string, number>;
+    expect(got.l).toBeCloseTo(baseOklch.l, 4);
+  });
+
+  it('invert(0.5) interpolates to the lightness midpoint (0.5)', () => {
+    const got = oklch(
+      parse(color('#3366cc').invert(0.5).oklch().css()),
+    ) as unknown as Record<string, number>;
+    // L + ((1 - L) - L) * 0.5 === 0.5 for any L.
+    expect(got.l).toBeCloseTo(0.5, 4);
+  });
+
+  it('invert is immutable (original is untouched)', () => {
+    const base = color('#3366cc');
+    base.invert();
+    const got = oklch(parse(base.oklch().css())) as unknown as Record<
+      string,
+      number
+    >;
+    expect(got.l).toBeCloseTo(baseOklch.l, 4);
+  });
+});
+
+describe('color — grayscale (OKLCH chroma)', () => {
+  it('grayscale() drops OKLCH chroma to zero, keeping L', () => {
+    const got = oklch(
+      parse(color('#3366cc').grayscale().oklch().css()),
+    ) as unknown as Record<string, number>;
+    expect(got.c).toBeCloseTo(0, 4);
+    expect(got.l).toBeCloseTo(baseOklch.l, 4);
+  });
+
+  it('grayscale(0.5) halves the OKLCH chroma', () => {
+    const got = oklch(
+      parse(color('#3366cc').grayscale(0.5).oklch().css()),
+    ) as unknown as Record<string, number>;
+    expect(got.c).toBeCloseTo(baseOklch.c * 0.5, 4);
+    expect(got.l).toBeCloseTo(baseOklch.l, 4);
+  });
+
+  it('grayscale(0) is a no-op', () => {
+    const got = oklch(
+      parse(color('#3366cc').grayscale(0).oklch().css()),
+    ) as unknown as Record<string, number>;
+    expect(got.c).toBeCloseTo(baseOklch.c, 4);
+  });
+});
+
+describe('color — blend (separable modes, sRGB)', () => {
+  // `lime` is the pure (0,255,0) green; CSS `green` is the darker #008000.
+  it('multiply of red and lime is black', () => {
+    const got = parseRgb(
+      color('red').blend('lime', 'multiply').rgb().css(),
+    );
+    expect(got.r).toBeCloseTo(0, 2);
+    expect(got.g).toBeCloseTo(0, 2);
+    expect(got.b).toBeCloseTo(0, 2);
+  });
+
+  it('screen of red and lime is yellow', () => {
+    const got = parseRgb(
+      color('red').blend('lime', 'screen').rgb().css(),
+    );
+    expect(got.r).toBeCloseTo(1, 2);
+    expect(got.g).toBeCloseTo(1, 2);
+    expect(got.b).toBeCloseTo(0, 2);
+  });
+
+  const BLEND_MODES = [
+    'multiply',
+    'screen',
+    'overlay',
+    'darken',
+    'lighten',
+    'color-dodge',
+    'color-burn',
+    'hard-light',
+    'soft-light',
+    'difference',
+    'exclusion',
+  ] as const;
+
+  // The store is OKLCH, so the reference blends the same OKLCH-round-tripped operands
+  // culori sees (eliminates a spurious hex->oklch->rgb delta), in sRGB ('rgb').
+  const baseOk = oklch(parse('#3366cc'))!;
+  const targOk = oklch(parse('#cc6633'))!;
+  for (const mode of BLEND_MODES) {
+    it(`${mode} matches the culori sRGB blend reference`, () => {
+      const ref = toRgb(
+        blendRef(
+          [
+            baseOk,
+            targOk,
+          ],
+          mode,
+          'rgb',
+        ),
+      ) as unknown as Record<string, number>;
+      const got = parseRgb(
+        color('#3366cc').blend('#cc6633', mode).rgb().css(),
+      );
+      expect(got.r).toBeCloseTo(ref.r, 2);
+      expect(got.g).toBeCloseTo(ref.g, 2);
+      expect(got.b).toBeCloseTo(ref.b, 2);
+    });
   }
+});
+
+describe('color — ensureContrast (WCAG via OKLCH lightness)', () => {
+  it('raises contrast to >= 4.5 against white (darkens)', () => {
+    const out = color('#777777').ensureContrast('white');
+    expect(out.contrast('white')).toBeGreaterThanOrEqual(4.5 - 1e-6);
+    const got = oklch(parse(out.oklch().css())) as unknown as Record<
+      string,
+      number
+    >;
+    const orig = oklch(parse('#777777')) as unknown as Record<
+      string,
+      number
+    >;
+    // against white, the way to gain contrast is to get darker.
+    expect(got.l).toBeLessThan(orig.l);
+  });
+
+  it('reaches the AAA ratio (7) when achievable', () => {
+    const out = color('#888888').ensureContrast('white', 7);
+    expect(out.contrast('white')).toBeGreaterThanOrEqual(7 - 1e-6);
+  });
+
+  it('already-sufficient contrast is returned unchanged', () => {
+    const out = color('black').ensureContrast('white');
+    expect(out.contrast('white')).toBeCloseTo(21, 4);
+  });
+
+  it('unreachable ratio yields the best-achievable (max-contrast) colour', () => {
+    // white vs white can never reach 21; pushing toward black maxes out near 21.
+    const out = color('white').ensureContrast('white', 21);
+    expect(out.contrast('white')).toBeGreaterThan(15);
+  });
 });

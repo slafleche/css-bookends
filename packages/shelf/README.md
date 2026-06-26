@@ -9,18 +9,17 @@ npm install @css-bookends/shelf
 ```
 
 ```ts
-import { m, mediaQueryFactory } from "@css-bookends/shelf";
+import { publishShelf } from "@css-bookends/shelf";
 
-const padding = m(16);
-const media = mediaQueryFactory({
-  queries: { desktop: { minWidth: m(640) } },
-  config: { label: "layout" },
-});
+const shelf = publishShelf();
+
+const padding = shelf.m(16);          // 16px (css-calipers)
+const accent = shelf.color("#3366cc"); // the color book
 ```
 
 Prefer the individual packages when you only need one concern:
 
 - [`css-calipers`](https://www.npmjs.com/package/@css-bookends/css-calipers) (measurement lexicon)
-- [`@css-bookends/media-queries`](https://www.npmjs.com/package/@css-bookends/media-queries)
+- [`@css-bookends/color`](https://www.npmjs.com/package/@css-bookends/color)
 
 Everything here is a flat re-export of those packages; nothing is added on top.

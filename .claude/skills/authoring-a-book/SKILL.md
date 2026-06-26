@@ -6,9 +6,11 @@ description: How to build or rework a CSS-Bookends book with self-publish, the p
 # authoring-a-book
 
 A **book** is a workable library for one CSS concern (borders, shadows, spacing).
-Every book is bound by **publishBook** from `@css-bookends/self-publish`, from a
-**manuscript** definition made of three **steps**. See `/ARCHITECTURE.md` and
-`/self-publish/README.md` for the canonical model.
+Books are **Layer 2** of the stack: helpers that consume the Layer-1 calipers
+primitives; a helper never lives in calipers (canonical three-layer model in
+`.claude/CLAUDE.md` / `AGENTS.md`). Every book is bound by **publishBook** from
+`@css-bookends/self-publish`, from a **manuscript** definition made of three
+**steps**. See `/ARCHITECTURE.md` and `/self-publish/README.md` for the canonical model.
 
 ## The manuscript: three steps + defaults
 

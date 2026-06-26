@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest';
 
-import { color, colorFormats } from '../../../src/color';
+import { color } from '../../../src/color';
 import type { ColorString } from '../../../src/color/formats';
 
 /**
@@ -23,11 +23,11 @@ describe('selector hardening', () => {
     >();
   });
 
-  it('hardens a one-off .css(format) to that format', () => {
-    expectTypeOf(color('#fff').css(colorFormats.hex)).toEqualTypeOf<
+  it('a named format selector hardens .css() to that format', () => {
+    expectTypeOf(color('#fff').hex().css()).toEqualTypeOf<
       ColorString<'hex'>
     >();
-    expectTypeOf(color('#fff').css(colorFormats.oklch)).toEqualTypeOf<
+    expectTypeOf(color('#fff').oklch().css()).toEqualTypeOf<
       ColorString<'oklch'>
     >();
   });

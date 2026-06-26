@@ -28,6 +28,7 @@ import {
   simplifyRatio,
   toFloat,
 } from './ratio';
+import { type Scalar } from './scalar';
 import {
   type UnitCategory,
   type UnitDefinition,
@@ -87,8 +88,8 @@ export interface IMeasurement<Unit extends string = string> {
   compare(other: IMeasurement<string>, strict: false): number;
   add(delta: number | IMeasurement<Unit>): IMeasurement<Unit>;
   subtract(delta: number | IMeasurement<Unit>): IMeasurement<Unit>;
-  multiply: (factor: number) => IMeasurement<Unit>;
-  divide: (divisor: number) => IMeasurement<Unit>;
+  multiply: (factor: Scalar) => IMeasurement<Unit>;
+  divide: (divisor: Scalar) => IMeasurement<Unit>;
   double: () => IMeasurement<Unit>;
   half: () => IMeasurement<Unit>;
   negation: (shouldNegate?: boolean) => IMeasurement<Unit>;

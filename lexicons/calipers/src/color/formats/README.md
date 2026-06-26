@@ -85,6 +85,19 @@ const color = publishBookColor({
 A single format is just a one-item list. Custom or experimental formats are authored
 with `defineColorSpace` and dropped into the list alongside the built-ins.
 
+## Fully-transparent rendering (`transparent: 'white' | 'black'`)
+
+A colour at alpha 0 has no visible hue, so by default `.css()` emits the `transparent`
+keyword (`transparent: 'keyword'`). The config also offers `transparent: 'white'` and
+`transparent: 'black'`, which emit the substitute colour at alpha 0 (under the `rgba`
+slot, `rgba(255, 255, 255, 0)` or `rgba(0, 0, 0, 0)`).
+
+These options exist partly to sidestep an old-Safari gradient quirk. Inside a gradient,
+older Safari interpreted the bare `transparent` keyword as `rgba(0, 0, 0, 0)`, so a fade
+to `transparent` produced a fade to black rather than a clean fade-out. Choosing
+`white` or `black` explicitly (matching the adjacent stop colour) avoids the unwanted
+dark tint. Pick the substitute that matches the colour the gradient fades toward.
+
 ## Not the browser fallback
 
 This fidelity escalation produces ONE faithful output. It is distinct from the

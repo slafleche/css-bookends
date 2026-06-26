@@ -23,4 +23,32 @@ is clear.
 The only thing you configure is the evergreen part, your browser `targets`. The core
 (default: the Lightning CSS adapter) is swappable behind that surface.
 
+## Composing a custom pre-step (the onion)
+
+Some tokens Lightning CSS cannot fall back, because it does not recognize them (for
+example a custom colour-format keyword). For those, gilding composes a pre-step in
+FRONT of the inner Lightning CSS core, rather than replacing it. The inner core keeps
+doing 100% of its job (fallbacks, prefixes, minification); the pre-step is just a ring
+around it (the onion principle, Lightning stays intact).
+
+- `composeCore(preSteps, inner?)` wraps an inner `PostProcessCore` with one or more
+  pre-steps. The returned core's `finish` runs each pre-step over the CSS string in
+  order, THEN hands the transformed CSS to `inner.finish` with the same evergreen
+  config and pass-through options. A pre-step is a pure `(css, evergreen) => css`
+  string transform tagged with an optional `preStepName`. `inner` defaults to the
+  Lightning CSS core. The composed core's `name` is honest about the composition (for
+  example `compose(keyword-to-rgb, lightningcss)`).
+- `composeCoreFromFormats(formats, inner?)` is the registry-aware path. Instead of a
+  baked-in map, it reads each registered custom format off the `createColor` registry
+  and applies that format's declared `ColorFormatPlugin.fallback` transform as a
+  pre-step before Lightning. Formats with no `fallback` contribute no pre-step; if none
+  declare one, the inner core is handed back untouched (the honest no-op composition).
+  Adding a format WITH a fallback to the registry is what causes the rewrite, proving
+  it is registry-driven.
+
+`keywordToRgb` is the bundled POC pre-step: a hard-coded keyword->rgb rewrite (`pink`,
+`black`, `white`) that demonstrates the seam. It is deliberately narrow, not a general
+CSS colour parser; the registry-aware `composeCoreFromFormats` is the un-hard-coded
+path.
+
 Status: early (0.x). The Lightning CSS core and the swappable seam are in place.

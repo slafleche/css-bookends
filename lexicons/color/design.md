@@ -37,21 +37,23 @@ outputs) with a lexicon-grade value algebra living on the resolved result.
 - **Output (page 3):** the final output is always `.css()` (the only renderer).
   The format is a typed object, `CssFormat` (a discriminated union keyed by
   `format`), supplied from the `colorFormats` presets, never a raw string. Choose
-  it by `config.output`, by argument (`.css(colorFormats.hex)`), or via a format
-  selector that returns the colour (`.hex().css()`). No method renders a string
-  per format.
+  it by `config.output`, or via a format selector that returns the colour
+  (`.hex().css()`, or `.formatAs(colorFormats.hex).css()` for a custom / list
+  format); `.css()` itself takes no argument. No method renders a string per format.
 
 Built surface (pass 1, in `src/colours.ts`):
 
 - `bookPressColours(config)` - the factory (bookPress + press), config = default output
   format (`output`), base colour (`base`), and `cssOptions`.
-- A `ResolvedColour` returned per call: the single render terminal
-  `.css(format?: CssFormat)` (format defaults to `config.output`), format
-  selectors (`.hex()/.rgb()/.hsl()/.oklch()/.modern()`, with typed options like
-  `.hex({ alpha: true })`) that return the colour configured to that format, the
-  transform algebra, and `wrapper()` as an escape hatch to the `ColorWrapper`.
+- A `ResolvedColour` returned per call: the single render terminal `.css()`
+  (argument-free, renders `config.output`), format selectors
+  (`.hex()/.rgb()/.hsl()/.oklch()/.modern()`, with typed options like
+  `.hex({ alpha: true })`) that return the colour configured to that format (plus
+  `.formatAs(...)` for a custom / list format), the transform algebra, and
+  `wrapper()` as an escape hatch to the `ColorWrapper`.
 - `colorFormats` - named `CssFormat` presets (`css`, `rgb`, `rgbLegacy`, `hex`,
-  `hexAlpha`, `hsl`, `oklch`, `modern`). Pass these to `.css()` / `output`.
+  `hexAlpha`, `hsl`, `oklch`, `modern`). Set these via `config.output` or a selector
+  / `.formatAs(...)`, never as a `.css()` argument.
 
 Each colour modification is treated as a NEW colour object. This is already how
 `ColorWrapper` behaves (it clones before every mutation), so the book adds no new
@@ -149,14 +151,15 @@ The table above is the wrapper-level reality. The **book** unifies all of these
 under the single renderer `.css()`. The format is a `CssFormat` object from the
 `colorFormats` presets (e.g. `colorFormats.hex`, `colorFormats.rgbLegacy`,
 `colorFormats.hexAlpha`), never a raw string. Pick it by config
-(`config.output`), by argument (`c.css(colorFormats.hex)`), or by selector
-(`c.hex().css()`). Selectors return the colour (not a string) and the chosen
+(`config.output`) or by selector (`c.hex().css()`, or
+`c.formatAs(colorFormats.hex).css()` for a custom / list format); `.css()` itself
+takes no argument. Selectors return the colour (not a string) and the chosen
 format persists through later modifications; no method renders a string per
 format.
 
 ### Gaps (missing / proposed)
 
-- **Alpha-aware hex** (`#rrggbbaa`) as a `.css('hex')` variant.
+- **Alpha-aware hex** (`#rrggbbaa`) as a `.hexAlpha().css()` selector variant.
 - **lab() / lch() / display-p3 / `color()` function outputs.**
 - **Modern + `@supports` fallback pairing** (may belong to the supports-fallback
   book rather than here).
@@ -174,7 +177,8 @@ Two files form the contract:
   - `colours - gaps (not yet supported)` holds an `it.todo` per gap above; convert
     each to a real assertion as it is implemented.
 - `tests/runtime/colours.book.src.test.ts` - the book contract: `bookPressColours`
-  factory + bare call, `.css()` rendering `config.output` (and `.css(format)`
-  overriding per call), and modifications returning navigable resolved colours.
+  factory + bare call, `.css()` rendering `config.output` (and a selector /
+  `.formatAs(...)` overriding per call before an argument-free `.css()`), and
+  modifications returning navigable resolved colours.
 
 Run: `npm test` (42 passing, 10 todo; also builds CJS/ESM, type-checks, lints).

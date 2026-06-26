@@ -70,53 +70,51 @@ describe('color — factory config #2: transparent (alpha-0 rendering)', () => {
   it("defaults to the 'transparent' keyword", () => {
     expect(publishBookColor()(transparent).css()).toBe('transparent');
     // ...for any requested format, since it has no value to convert.
-    expect(
-      publishBookColor()(transparent).css(colorFormats.oklch),
-    ).toBe('transparent');
+    expect(publishBookColor()(transparent).oklch().css()).toBe(
+      'transparent',
+    );
   });
 
   it("'white' renders white at alpha 0", () => {
     const color = publishBookColor({
       config: { transparent: 'white' },
     });
-    expect(color(transparent).css()).toBe('#ffffff00');
+    // default ladder is [hex, rgba, oklch]: an alpha-0 colour escalates past the
+    // no-alpha hex to the rgba slot, so white at 0 is rgba(255, 255, 255, 0).
+    expect(color(transparent).css()).toBe('rgba(255, 255, 255, 0)');
   });
 
   it("'black' renders black at alpha 0", () => {
     const color = publishBookColor({
       config: { transparent: 'black' },
     });
-    expect(color(transparent).css()).toBe('#00000000');
+    expect(color(transparent).css()).toBe('rgba(0, 0, 0, 0)');
   });
 });
 
 describe('color — factory config #3: omitOpaqueAlpha', () => {
   it('off by default: opaque still shows the alpha slot', () => {
-    expect(publishBookColor()('#3366cc').css(colorFormats.rgba)).toBe(
+    expect(publishBookColor()('#3366cc').rgba().css()).toBe(
       'rgba(51, 102, 204, 1)',
     );
-    expect(
-      publishBookColor()('#3366cc').css(colorFormats.oklch),
-    ).toMatch(/ \/ 1\)$/);
+    expect(publishBookColor()('#3366cc').oklch().css()).toMatch(
+      / \/ 1\)$/,
+    );
   });
 
   it('on: opaque drops the optional slot (rgba -> rgb, oklch loses / 1)', () => {
     const color = publishBookColor({
       config: { omitOpaqueAlpha: true },
     });
-    expect(color('#3366cc').css(colorFormats.rgba)).toBe(
-      'rgb(51, 102, 204)',
-    );
-    expect(color('#3366cc').css(colorFormats.oklch)).not.toContain(
-      '/',
-    );
+    expect(color('#3366cc').rgba().css()).toBe('rgb(51, 102, 204)');
+    expect(color('#3366cc').oklch().css()).not.toContain('/');
   });
 
   it('on: a transparent color still shows its alpha', () => {
     const color = publishBookColor({
       config: { omitOpaqueAlpha: true, transparent: 'black' },
     });
-    expect(color('#3366cc80').css(colorFormats.rgba)).toBe(
+    expect(color('#3366cc80').rgba().css()).toBe(
       'rgba(51, 102, 204, 0.502)',
     );
   });
@@ -127,16 +125,14 @@ describe('color — factory config #4: strictness (violation handling)', () => {
     const color = publishBookColor({
       config: { strictness: 'silent' },
     });
-    expect(color('#3366cc80').css(colorFormats.rgb)).toBe(
-      'rgb(51, 102, 204)',
-    );
+    expect(color('#3366cc80').rgb().css()).toBe('rgb(51, 102, 204)');
   });
 
   it("'throw' raises on a violation regardless of env", () => {
     const color = publishBookColor({
       config: { strictness: 'throw' },
     });
-    expect(() => color('#3366cc80').css(colorFormats.rgb)).toThrow();
+    expect(() => color('#3366cc80').rgb().css()).toThrow();
   });
 
   it("'warn' logs a warning and still renders (does not throw)", () => {
@@ -146,9 +142,7 @@ describe('color — factory config #4: strictness (violation handling)', () => {
     const color = publishBookColor({
       config: { strictness: 'warn' },
     });
-    expect(color('#3366cc80').css(colorFormats.rgb)).toBe(
-      'rgb(51, 102, 204)',
-    );
+    expect(color('#3366cc80').rgb().css()).toBe('rgb(51, 102, 204)');
     expect(spy).toHaveBeenCalledTimes(1);
     spy.mockRestore();
   });

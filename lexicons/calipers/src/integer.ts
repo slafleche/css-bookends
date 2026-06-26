@@ -1,4 +1,5 @@
 import { toPlainDecimal } from './internal/toPlainDecimal';
+import { type Scalar, toNumber } from './scalar';
 
 export type IntegerConstraints = {
   min?: number;
@@ -16,17 +17,17 @@ export interface IInteger {
   value: () => number;
   constraints: () => IntegerConstraints;
   withValue: (value: number) => IInteger;
-  add: (delta: number | IInteger) => IInteger;
-  subtract: (delta: number | IInteger) => IInteger;
-  multiply: (factor: number) => IInteger;
+  add: (delta: Scalar) => IInteger;
+  subtract: (delta: Scalar) => IInteger;
+  multiply: (factor: Scalar) => IInteger;
+  divide: (divisor: Scalar) => IInteger;
   clamp: (min: number, max: number) => IInteger;
 }
 
 const suffix = (context?: string): string =>
   context ? ` [${context}]` : '';
 
-const coerce = (value: number | IInteger): number =>
-  typeof value === 'number' ? value : value.valueOf();
+const coerce = (value: Scalar): number => toNumber(value);
 
 class IntegerImpl implements IInteger {
   #value: number;
@@ -95,16 +96,32 @@ class IntegerImpl implements IInteger {
     return new IntegerImpl(value, this.#options());
   }
 
-  add(delta: number | IInteger): IInteger {
+  add(delta: Scalar): IInteger {
     return this.withValue(this.#value + coerce(delta));
   }
 
-  subtract(delta: number | IInteger): IInteger {
+  subtract(delta: Scalar): IInteger {
     return this.withValue(this.#value - coerce(delta));
   }
 
-  multiply(factor: number): IInteger {
-    return this.withValue(this.#value * factor);
+  multiply(factor: Scalar): IInteger {
+    return this.withValue(this.#value * coerce(factor));
+  }
+
+  divide(divisor: Scalar): IInteger {
+    const numeric = coerce(divisor);
+    if (numeric === 0) {
+      throw new Error(
+        `i: cannot divide ${this.#value} by zero${suffix(this.#context)}`,
+      );
+    }
+    const result = this.#value / numeric;
+    if (!Number.isFinite(result)) {
+      throw new Error(
+        `i: non-finite result dividing ${this.#value} by ${numeric}${suffix(this.#context)}`,
+      );
+    }
+    return this.withValue(result);
   }
 
   clamp(min: number, max: number): IInteger {

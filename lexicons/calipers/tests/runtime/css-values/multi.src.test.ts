@@ -241,6 +241,22 @@ describe('Multi-part CSS-value helpers (src)', () => {
         /not a valid keyword/,
       );
     });
+
+    it('rejects an entry that is neither a <number> nor an IMeasurement', () => {
+      // a non-string, non-number, non-measurement entry falls through to the
+      // renderNumberOrLength type guard, which names the helper and the bad type.
+      expect(() =>
+        borderImageOutset(
+          // deliberately wrong type to reach the runtime guard.
+          {} as unknown as number,
+        ),
+      ).toThrow(
+        /borderImageOutset: expected a <number> or an IMeasurement \(got object\)/,
+      );
+      expect(() =>
+        borderImageOutset(true as unknown as number),
+      ).toThrow(/got boolean/);
+    });
   });
 
   describe('border-image-slice / mask-border-slice', () => {

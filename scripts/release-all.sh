@@ -4,7 +4,7 @@
 #   1. build every package
 #   2. run the full test suite (a failure here aborts the release)
 #   3. publish changed packages to npm via Changesets (@css-bookends/css-calipers,
-#      media-queries, shelf, whatever has a version not yet on the registry)
+#      shelf, whatever has a version not yet on the registry)
 #   4. publish the standalone unscoped `css-calipers` (same code, own name)
 #   5. mirror the calipers lexicon to the standalone css-calipers repo (+ tag)
 #

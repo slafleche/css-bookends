@@ -24,6 +24,17 @@ keywords; CSS-Calipers types the values: measurements (number + unit), ratios, a
 numbers (integers and floats). Do typed arithmetic, let the compiler catch unit and range
 mistakes, and emit a CSS string only at the edge.
 
+CSS-Calipers is **Layer 1** of the CSS-Bookends stack: the typed CSS input primitives,
+and nothing else. It is meant to be used **standalone**, by someone who wants only typed
+CSS inputs and no helpers at all. Helpers (the "books") are not part of calipers; they
+live in the books layer above and consume these primitives. See the root `ARCHITECTURE.md`
+and `.claude/CLAUDE.md` for the full three-layer model.
+
+> **Known debt:** the per-property value helpers in `src/css-values/` (`opacity`,
+> `zIndex`, `fontWeight`, the `createCssValues` factory) are helpers that currently live
+> in calipers, which violates the Layer-1 boundary. They are slated to move to the books
+> layer; treat them as transitional, not a permanent calipers feature.
+
 ## Install
 
 ```bash

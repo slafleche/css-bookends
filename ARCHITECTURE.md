@@ -3,6 +3,30 @@
 How every helper in CSS-Bookends is structured and consumed. This is the design
 all lexicons/books are being reworked toward.
 
+## The three layers (canonical)
+
+Above the factory model sits the layering of the stack itself. Three
+strictly-separated layers, each with one job, consumed one-way
+(calipers -> books -> squire). The canonical statement lives in `.claude/CLAUDE.md`
+and `AGENTS.md`; keep this in sync with them.
+
+1. **css-calipers (Layer 1), typed CSS input PRIMITIVES only.** Fills the gap where
+   `csstype` is lacking: typed, build-time-validated CSS input values (`m`, `r`, `i`,
+   `f`, `color`). Usable STANDALONE, with no helpers at all. No helpers, no books, no
+   `publishBook` engine, ever.
+2. **css-bookends (Layer 2), the helpers (books) that consume the primitives.** EVERY
+   helper is a book; the shelf is the full bundle of every active book; the typesetter
+   ingests DTCG design tokens; gilding is the output-edge finisher. Books consume
+   calipers; calipers never depends on a book.
+3. **css-squire (Layer 3, TBD), the opinionated framework on top.** Built on the steady
+   calipers + bookends foundation, adaptable per project (you could in theory rebuild
+   Tailwind or Bootstrap on top of it). Not built yet; nothing depends on it.
+
+The consumption direction is one-way and never inverts: a lower layer never depends on
+a higher one. Known debt: the per-property helpers in
+`lexicons/calipers/src/css-values/` currently live in calipers, violating Layer 1, and
+must be extracted into the books layer. No further helpers go into calipers.
+
 ## Vocabulary
 
 - **lexicon** : primitives for CSS use (calipers, color, spacing). The raw

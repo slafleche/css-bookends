@@ -1,11 +1,12 @@
 import { type IFloat, isFloat } from './float';
 import { type IInteger, isInteger } from './integer';
+import { type Scalar, toNumber } from './scalar';
 
 /** A value `ratio` can consume: a raw number or a typed scalar primitive. */
-export type RatioValue = number | IInteger | IFloat;
+export type RatioValue = Scalar;
 
 const ratioValueToNumber = (value: RatioValue): number =>
-  typeof value === 'number' ? value : value.valueOf();
+  toNumber(value);
 
 const isRatioValue = (value: unknown): value is RatioValue =>
   typeof value === 'number' || isInteger(value) || isFloat(value);

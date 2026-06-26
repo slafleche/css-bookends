@@ -11,7 +11,6 @@ import {
   publishBookColor,
 } from '@css-bookends/color';
 import * as calipers from '@css-bookends/css-calipers';
-import * as mediaQueries from '@css-bookends/media-queries';
 
 /** Per-book config, forwarded to each book's factory. Only color has one today. */
 export interface ShelfConfig {
@@ -25,16 +24,14 @@ export interface ShelfConfig {
  */
 export type Shelf = {
   color: ReturnType<typeof publishBookColor>;
-} & Omit<typeof calipers, 'color'> &
-  typeof mediaQueries;
+} & Omit<typeof calipers, 'color'>;
 
 /**
  * Bind the whole shelf: each book via its own factory (under its name), with the
- * lexicons (`css-calipers`, `media-queries`) spread straight up by their names. The
- * color book is assigned last so it wins the `color` slot over the calipers value fn.
+ * lexicons (`css-calipers`) spread straight up by their names. The color book is
+ * assigned last so it wins the `color` slot over the calipers value fn.
  */
 export const publishShelf = (config: ShelfConfig = {}): Shelf => ({
   ...calipers,
-  ...mediaQueries,
   color: publishBookColor({ config: config.color }),
 });

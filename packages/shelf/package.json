@@ -45,8 +45,7 @@
   "dependencies": {
     "@css-bookends/self-publish": "workspace:*",
     "@css-bookends/color": "workspace:*",
-    "@css-bookends/css-calipers": "workspace:*",
-    "@css-bookends/media-queries": "workspace:*"
+    "@css-bookends/css-calipers": "workspace:*"
   },
   "devDependencies": {
     "@css-bookends/eslint-config": "workspace:*",

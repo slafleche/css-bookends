@@ -10,26 +10,19 @@ describe('css-bookends shelf — factory-only contract', () => {
     expect(typeof pkg.publishShelf).toBe('function');
     expect('color' in pkg).toBe(false);
     expect('m' in pkg).toBe(false);
-    expect('mediaQueryFactory' in pkg).toBe(false);
   });
 });
 
 describe('css-bookends shelf — bundle contents', () => {
   it('binds the color book via its factory (under `color`)', () => {
     expect(typeof shelf.color).toBe('function');
-    expect(shelf.color('#3366cc').css()).toBe(
-      'rgba(51, 102, 204, 1)',
-    );
+    // default ladder is [hex, rgba, oklch]: an opaque colour renders as hex.
+    expect(shelf.color('#3366cc').css()).toBe('#3366cc');
   });
 
   it('bundles css-calipers straight up by name', () => {
     expect(typeof shelf.m).toBe('function');
     expect(shelf.m(8).css()).toBe('8px');
-  });
-
-  it('bundles media-queries straight up by name', () => {
-    expect(typeof shelf.mediaQueryFactory).toBe('function');
-    expect(typeof shelf.buildMediaQueryString).toBe('function');
   });
 });
 

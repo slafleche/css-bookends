@@ -11,6 +11,7 @@ import type {
   UnitGuard,
   UnitHelper,
 } from '../core';
+import { type Scalar, toNumber } from '../scalar';
 import {
   UNIT_DEFINITIONS,
   type UnitDefinitionRecord,
@@ -176,17 +177,19 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
       return this.#clone(next);
     }
 
-    multiply(factor: number): Measurement<Unit> {
-      if (factor === 1) return this;
-      if (factor === 0) return new Measurement(0, this.#unit);
-      if (factor === -1)
+    multiply(factor: Scalar): Measurement<Unit> {
+      const numericFactor = toNumber(factor);
+      if (numericFactor === 1) return this;
+      if (numericFactor === 0) return new Measurement(0, this.#unit);
+      if (numericFactor === -1)
         return new Measurement(-this.#value, this.#unit);
-      return this.#clone(this.#value * factor);
+      return this.#clone(this.#value * numericFactor);
     }
 
-    divide(divisor: number): Measurement<Unit> {
-      if (divisor === 1) return this;
-      if (divisor === 0) {
+    divide(divisor: Scalar): Measurement<Unit> {
+      const numericDivisor = toNumber(divisor);
+      if (numericDivisor === 1) return this;
+      if (numericDivisor === 0) {
         throwMeasurementMethodError({
           operation: 'css-calipers.Measurement.divide',
           caller: this,
@@ -195,7 +198,7 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
           details: { code: 'CALIPERS_E_DIVIDE_BY_ZERO' },
         });
       }
-      const result = this.#value / divisor;
+      const result = this.#value / numericDivisor;
       if (!Number.isFinite(result)) {
         throwMeasurementMethodError({
           operation: 'css-calipers.Measurement.divide',

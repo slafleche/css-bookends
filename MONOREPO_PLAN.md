@@ -4,6 +4,10 @@ How CSS-Bookends is structured: one monorepo as the source of truth, each "book"
 published independently to npm, and the established books mirrored out to their
 own standalone repos with their own releases.
 
+> Note: `media-queries` has been removed from the active workspace, pending
+> rework. The `media-queries` references below are historical (it was the first
+> book) and describe the intended publishing model, not a current package.
+
 ## Principles
 
 1. **Source of truth is this monorepo.** All development happens here.
