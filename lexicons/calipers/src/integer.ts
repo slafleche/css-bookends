@@ -1,3 +1,9 @@
+import {
+  DEFAULT_HARDENING,
+  type Hardening,
+  type HardeningConfig,
+  reactToBreach,
+} from './hardening';
 import { toPlainDecimal } from './internal/toPlainDecimal';
 import { type Scalar, toNumber } from './scalar';
 
@@ -8,6 +14,12 @@ export type IntegerConstraints = {
 
 export type IntegerOptions = IntegerConstraints & {
   context?: string;
+  /**
+   * Reaction when a bound is breached (at construction or through arithmetic):
+   * the shared `'ignore' | 'warn' | 'fail'` config (default `'fail'` = throw,
+   * the historical behaviour). A bundle `global` can relax it.
+   */
+  hardening?: Hardening;
 };
 
 export interface IInteger {
@@ -15,7 +27,12 @@ export interface IInteger {
   toString: () => string;
   valueOf: () => number;
   value: () => number;
+  /** Always `''` (integers are unitless); present for value-surface uniformity. */
+  unit: () => string;
   constraints: () => IntegerConstraints;
+  isInt: () => boolean;
+  isFloat: () => boolean;
+  toTypedValue: () => IInteger;
   withValue: (value: number) => IInteger;
   add: (delta: Scalar) => IInteger;
   subtract: (delta: Scalar) => IInteger;
@@ -34,9 +51,11 @@ class IntegerImpl implements IInteger {
   #min?: number;
   #max?: number;
   #context?: string;
+  #hardening: Hardening;
 
   constructor(value: number, options: IntegerOptions = {}) {
     const { min, max, context } = options;
+    const hardening = options.hardening ?? DEFAULT_HARDENING;
     if (min !== undefined && max !== undefined && min > max) {
       throw new Error(
         `i: min (${min}) must be <= max (${max})${suffix(context)}`,
@@ -52,13 +71,17 @@ class IntegerImpl implements IInteger {
         `i: expected an integer (got ${value})${suffix(context)}`,
       );
     }
+    // Range breaches go through the shared hardening reaction; the finite /
+    // integer invariants above always throw (type invariants, not a bound).
     if (min !== undefined && value < min) {
-      throw new Error(
+      reactToBreach(
+        hardening,
         `i: ${value} is below the minimum ${min}${suffix(context)}`,
       );
     }
     if (max !== undefined && value > max) {
-      throw new Error(
+      reactToBreach(
+        hardening,
         `i: ${value} is above the maximum ${max}${suffix(context)}`,
       );
     }
@@ -66,14 +89,24 @@ class IntegerImpl implements IInteger {
     this.#min = min;
     this.#max = max;
     this.#context = context;
+    this.#hardening = hardening;
   }
 
   #options(): IntegerOptions {
-    return { min: this.#min, max: this.#max, context: this.#context };
+    return {
+      min: this.#min,
+      max: this.#max,
+      context: this.#context,
+      hardening: this.#hardening,
+    };
   }
 
   value(): number {
     return this.#value;
+  }
+
+  unit(): string {
+    return '';
   }
 
   valueOf(): number {
@@ -82,6 +115,18 @@ class IntegerImpl implements IInteger {
 
   constraints(): IntegerConstraints {
     return { min: this.#min, max: this.#max };
+  }
+
+  isInt(): boolean {
+    return Number.isInteger(this.#value);
+  }
+
+  isFloat(): boolean {
+    return !Number.isInteger(this.#value);
+  }
+
+  toTypedValue(): IInteger {
+    return i(this.#value);
   }
 
   css(): string {
@@ -159,3 +204,35 @@ export const hardenInteger =
 
 export const isInteger = (value: unknown): value is IInteger =>
   value instanceof IntegerImpl;
+
+/** The integer factory config: the shared hardening slice (identical to m / f). */
+export type IntegerFactoryConfig = HardeningConfig;
+
+/** The bound integer surface a `createInteger` instance exposes. */
+export interface IntegerApi {
+  i: (value: number, options?: IntegerOptions) => IInteger;
+  hardenInteger: (
+    constraints?: IntegerConstraints,
+  ) => (value: number, context?: string) => IInteger;
+  isInteger: (value: unknown) => value is IInteger;
+}
+
+/**
+ * The integer FACTORY: bind a config once (today the `hardening` reaction) and
+ * get the integer surface with that config baked in. Mirrors `createCalipers`
+ * (measurements) and `createFloat` (floats) so `m` / `i` / `f` are identical.
+ * A per-call `options.hardening` still overrides the baked default.
+ */
+export const createInteger = (
+  config: IntegerFactoryConfig = {},
+): IntegerApi => {
+  const hardening = config.hardening ?? DEFAULT_HARDENING;
+  return {
+    i: (value, options = {}) => i(value, { hardening, ...options }),
+    hardenInteger:
+      (constraints = {}) =>
+      (value, context) =>
+        i(value, { hardening, ...constraints, context }),
+    isInteger,
+  };
+};

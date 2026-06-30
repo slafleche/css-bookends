@@ -61,6 +61,11 @@ import {
   type CounterSetConfig,
   publishBookCounterSet,
 } from '@css-bookends/counter-set';
+import {
+  type CalipersBundleConfig,
+  createCalipersBundle,
+  type Hardening,
+} from '@css-bookends/css-calipers';
 import * as calipers from '@css-bookends/css-calipers';
 import {
   type FillOpacityConfig,
@@ -205,6 +210,21 @@ import { publishBookZoom, type ZoomConfig } from '@css-bookends/zoom';
  * every book at its defaults; supply any subset of these keys to configure.
  */
 export interface CompendiumConfig {
+  /**
+   * Shared options that cascade to every unit (books AND, through the nested
+   * corpus, the calipers primitives). A unit's own key wins, then this global,
+   * then the factory default.
+   */
+  global?: {
+    /** Hardening reaction, forwarded into the calipers primitives. */
+    hardening?: Hardening;
+  };
+  /**
+   * The whole calipers (corpus) config, forwarded to `createCalipersBundle`.
+   * A primitive resolves own (`calipers.<unit>`) -> `calipers.global`
+   * (corpus global) -> `compendium.global` -> factory default.
+   */
+  calipers?: CalipersBundleConfig;
   color?: Partial<ColorConfig>;
   animationIterationCount?: AnimationIterationCountConfig;
   borderImageOutset?: BorderImageOutsetConfig; // empty config (Record<string, never>)
@@ -321,6 +341,19 @@ export const publishCompendium = (
   config: CompendiumConfig = {},
 ): Compendium => ({
   ...calipers,
+  // Spread the CONFIGURED calipers bundle over the raw namespace so the cascade
+  // reaches the primitives (own calipers.<unit> -> corpus.global ->
+  // compendium.global -> default), overriding the default m / i / f. The raw
+  // `...calipers` above still provides the broader namespace (r, helpers, types).
+  ...createCalipersBundle({
+    ...config.calipers,
+    global: {
+      ...config.calipers?.global,
+      hardening:
+        config.calipers?.global?.hardening ??
+        config.global?.hardening,
+    },
+  }),
   animationIterationCount: publishBookAnimationIterationCount(
     config.animationIterationCount !== undefined
       ? { config: config.animationIterationCount }

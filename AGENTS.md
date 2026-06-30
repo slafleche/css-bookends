@@ -3,6 +3,13 @@
 Guidance for agents working in CSS-Bookends. See `ARCHITECTURE.md` for the full
 factory + book model, and each package's `design.md` / `notes.md` for specifics.
 
+## All packages stay PUBLIC (absolute)
+
+Every package here is public, INCLUDING test / `e2e` packages. NEVER set `"private": true`,
+never flip a package's `private` field, and never "fix" a `"private": false` to `true`
+(e.g. during a publish audit). Leave `private` exactly as it is. This is the user's
+explicit, repeated instruction. (Full statement in `.claude/CLAUDE.md`.)
+
 ## Architecture: the three layers (canonical, ABSOLUTE)
 
 The same statement lives in `.claude/CLAUDE.md`, the package READMEs, and the skills.
@@ -70,6 +77,12 @@ form (every book bound at defaults). That aggregate does not change the per-book
   through it. This aggregate sits ON TOP of the per-book factories; it does not change the
   per-book contract (each package still exports only its `publishBook<Name>`, no pre-made
   instance).
+- **Everything is config-driven (absolute, first principle).** A behaviour that could reasonably
+  vary is a config OPTION (an explicit, enumerated value with a sensible default), never a hardcoded
+  decision. When the design forces a "should it do X or Y?" choice, the answer is "neither — it's a
+  config." Do not bake one branch in. Every such option then follows the cascade +
+  bundle-reachability rules below. (Examples: `format: 'object' | 'string'`,
+  `outOfRange: 'throw' | 'clamp'`, the hardening reaction `'ignore' | 'warn' | 'fail'`.)
 - **Three-tier config cascade (absolute).** A bundle (`publishCompendium`, `createCalipersBundle`)
   resolves every setting per unit as: the unit's OWN keyed config -> the bundle's `global` slot
   (where that option applies) -> the unit's built-in default. Set a value once in `global` and

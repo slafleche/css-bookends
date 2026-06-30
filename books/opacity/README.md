@@ -22,9 +22,9 @@ import { publishBookOpacity } from '@css-bookends/opacity';
 // Bind the book once (the factory is the configurable seam), then call it.
 const opacity = publishBookOpacity();
 
-opacity(0.5).css();   // '0.5'  (typed as Property.Opacity)
-opacity().css();      // '1'    (the configured default alpha)
-opacity(0.5).value(); // 0.5    (the raw number back)
+opacity(0.5).css();   // { opacity: '0.5' }  (a property-keyed style object, typed against Property.Opacity)
+opacity().css();      // { opacity: '1' }    (the configured default alpha)
+opacity(0.5).value(); // 0.5                 (the raw number back)
 ```
 
 Out-of-range alphas throw by default. Bind a clamping book instead:
@@ -32,7 +32,7 @@ Out-of-range alphas throw by default. Bind a clamping book instead:
 ```ts
 const opacity = publishBookOpacity({ config: { outOfRange: 'clamp' } });
 
-opacity(1.5).css(); // '1'  (clamped into [0, 1])
+opacity(1.5).css(); // { opacity: '1' }  (clamped into [0, 1])
 ```
 
 ## API
@@ -50,7 +50,7 @@ Returns an opacity book. `options.config` is a partial `OpacityConfig`:
 
 `input` is `number | 'unset'` (omit it, or pass `'unset'`, for the configured default). Returns a `ResolvedOpacity`:
 
-- `.css()` returns the value as `Property.Opacity` (e.g. `'0.5'`).
+- `.css()` returns a property-keyed style object `{ opacity: <Property.Opacity> }` (e.g. `{ opacity: '0.5' }`).
 - `.value()` returns the raw alpha `number`.
 
 ## Why a factory?
@@ -59,4 +59,4 @@ You bind the book once in your own module and import it from there, so configura
 
 ## License
 
-MIT © Stéphane LaFlèchee
+MIT © Stéphane LaFlèche

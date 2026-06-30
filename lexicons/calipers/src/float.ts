@@ -1,3 +1,10 @@
+import {
+  DEFAULT_HARDENING,
+  type Hardening,
+  type HardeningConfig,
+  reactToBreach,
+} from './hardening';
+import { i, type IInteger } from './integer';
 import { toPlainDecimal } from './internal/toPlainDecimal';
 import { type Scalar, toNumber } from './scalar';
 
@@ -8,6 +15,12 @@ export type FloatConstraints = {
 
 export type FloatOptions = FloatConstraints & {
   context?: string;
+  /**
+   * Reaction when a bound is breached (at construction or through arithmetic):
+   * the shared `'ignore' | 'warn' | 'fail'` config (default `'fail'` = throw,
+   * the historical behaviour). A bundle `global` can relax it.
+   */
+  hardening?: Hardening;
 };
 
 export interface IFloat {
@@ -15,7 +28,12 @@ export interface IFloat {
   toString: () => string;
   valueOf: () => number;
   value: () => number;
+  /** Always `''` (floats are unitless); present for value-surface uniformity. */
+  unit: () => string;
   constraints: () => FloatConstraints;
+  isInt: () => boolean;
+  isFloat: () => boolean;
+  toTypedValue: () => IInteger | IFloat;
   withValue: (value: number) => IFloat;
   add: (delta: Scalar) => IFloat;
   subtract: (delta: Scalar) => IFloat;
@@ -34,9 +52,11 @@ class FloatImpl implements IFloat {
   #min?: number;
   #max?: number;
   #context?: string;
+  #hardening: Hardening;
 
   constructor(value: number, options: FloatOptions = {}) {
     const { min, max, context } = options;
+    const hardening = options.hardening ?? DEFAULT_HARDENING;
     if (min !== undefined && max !== undefined && min > max) {
       throw new Error(
         `f: min (${min}) must be <= max (${max})${suffix(context)}`,
@@ -47,13 +67,17 @@ class FloatImpl implements IFloat {
         `f: expected a finite number (got ${value})${suffix(context)}`,
       );
     }
+    // Range breaches go through the shared hardening reaction; the finite
+    // invariant above always throws (a type invariant, not a bound).
     if (min !== undefined && value < min) {
-      throw new Error(
+      reactToBreach(
+        hardening,
         `f: ${value} is below the minimum ${min}${suffix(context)}`,
       );
     }
     if (max !== undefined && value > max) {
-      throw new Error(
+      reactToBreach(
+        hardening,
         `f: ${value} is above the maximum ${max}${suffix(context)}`,
       );
     }
@@ -61,14 +85,24 @@ class FloatImpl implements IFloat {
     this.#min = min;
     this.#max = max;
     this.#context = context;
+    this.#hardening = hardening;
   }
 
   #options(): FloatOptions {
-    return { min: this.#min, max: this.#max, context: this.#context };
+    return {
+      min: this.#min,
+      max: this.#max,
+      context: this.#context,
+      hardening: this.#hardening,
+    };
   }
 
   value(): number {
     return this.#value;
+  }
+
+  unit(): string {
+    return '';
   }
 
   valueOf(): number {
@@ -77,6 +111,20 @@ class FloatImpl implements IFloat {
 
   constraints(): FloatConstraints {
     return { min: this.#min, max: this.#max };
+  }
+
+  isInt(): boolean {
+    return Number.isInteger(this.#value);
+  }
+
+  isFloat(): boolean {
+    return !Number.isInteger(this.#value);
+  }
+
+  toTypedValue(): IInteger | IFloat {
+    return Number.isInteger(this.#value)
+      ? i(this.#value)
+      : f(this.#value);
   }
 
   css(): string {
@@ -150,3 +198,35 @@ export const hardenFloat =
 
 export const isFloat = (value: unknown): value is IFloat =>
   value instanceof FloatImpl;
+
+/** The float factory config: the shared hardening slice (identical to m / i). */
+export type FloatFactoryConfig = HardeningConfig;
+
+/** The bound float surface a `createFloat` instance exposes. */
+export interface FloatApi {
+  f: (value: number, options?: FloatOptions) => IFloat;
+  hardenFloat: (
+    constraints?: FloatConstraints,
+  ) => (value: number, context?: string) => IFloat;
+  isFloat: (value: unknown) => value is IFloat;
+}
+
+/**
+ * The float FACTORY: bind a config once (today the `hardening` reaction) and
+ * get the float surface with that config baked in. Mirrors `createCalipers`
+ * (measurements) and `createInteger` (integers) so `m` / `i` / `f` are
+ * identical. A per-call `options.hardening` still overrides the baked default.
+ */
+export const createFloat = (
+  config: FloatFactoryConfig = {},
+): FloatApi => {
+  const hardening = config.hardening ?? DEFAULT_HARDENING;
+  return {
+    f: (value, options = {}) => f(value, { hardening, ...options }),
+    hardenFloat:
+      (constraints = {}) =>
+      (value, context) =>
+        f(value, { hardening, ...constraints, context }),
+    isFloat,
+  };
+};

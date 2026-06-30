@@ -16,8 +16,9 @@ describe('compendium /defaults: bound, zero-config helpers', () => {
   });
 
   it('exposes factory books bound at defaults', () => {
-    expect(opacity(0.5).css()).toBe('0.5');
-    expect(zIndex(10).css()).toBe('10');
+    // per-property books default to the `format: 'object'` shape (property-keyed).
+    expect(opacity(0.5).css()).toEqual({ opacity: '0.5' });
+    expect(zIndex(10).css()).toEqual({ zIndex: '10' });
     expect(typeof borders).toBe('function');
   });
 

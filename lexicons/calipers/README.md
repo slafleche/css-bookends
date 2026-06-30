@@ -2,6 +2,8 @@
 
 The missing pieces of typed CSS input, build-time-validated: colour, measurements, integers, floats, and ratios.
 
+> **Beta.** The expanded surface documented here (colour, ratios, the unified value surface, and the config cascade) ships under the `beta` tag as `1.1.0-beta.0` — install with `@beta` and expect changes before it reaches a stable `1.x`. Only the original `m()` release is on `latest` (`1.0.0`).
+
 ## The problem
 
 CSS input values are untyped. A measurement is a string (`'8px'`), an opacity is a bare number, a colour is whatever string you typed. Nothing catches `opacity: 1.5`, a `px` value added to an `em`, or a `z-index` that is silently a float. The mistake surfaces in the browser, not the compiler.
@@ -96,9 +98,23 @@ color('#3366cc80', { strictness: 'silent' }).rgb().css(); // 'rgb(51, 102, 204)'
 
 `m(value, unit?)` builds a measurement (unit defaults to `px`, lower-cased). Arithmetic, `round`, and `clamp` return new measurements in the same unit. Per-unit helpers bind the unit (`mPx`, `mEm`, `mRem`, `mPercent`, `mCqw`, ...) across every unit family: absolute, font-relative, viewport, container, angle, time, frequency, resolution, and grid.
 
+`m()` accepts a plain number OR a typed scalar (`m(i(8))`, `m(f(2.5), 'rem')`). The raw accessor is uniform across measurements, integers, and floats: `.value()` (the raw number) and `.unit()` (the unit string, empty for the unitless scalars); `.getValue()` / `.getUnit()` remain as deprecated aliases on measurements. Recover a typed scalar with `.toTypedValue()` (returns `i()` when the value is integral, else `f()`), and query a value with `.isInt()` / `.isFloat()`. A measurement also reports its CSS category, `.category()` (e.g. `'length-absolute'`, `'percent'`, `'angle'`, or `undefined` for an unknown unit), plus `.isLength()` / `.isAbsolute()` / `.isRelative()` / `.isPercent()` / `.isAngle()`.
+
+```ts
+import { m, i } from '@css-bookends/css-calipers';
+
+m(i(8)).css();          // '8px'              (m accepts i / f)
+m(2.5, 'rem').value();  // 2.5
+m(2.5, 'rem').unit();   // 'rem'
+m(8).category();        // 'length-absolute'
+m(8).isAbsolute();      // true
+m(50, '%').isPercent(); // true
+m(2.5).toTypedValue();  // f(2.5)             (integral -> i, fractional -> f)
+```
+
 ## Integers and floats
 
-`i()` (a whole number) and `f()` (a real number) are constrained scalars for the unitless number space CSS leaves untyped. Both validate at construction and re-validate on every operation, so a constrained value stays valid (or throws) through arithmetic. `clamp(min, max)` snaps into range instead of throwing; `hardenInteger({ min, max })` / `hardenFloat({ min, max })` bind a constraint once into a reusable factory. See `examples/integers-floats.example.ts`.
+`i()` (a whole number) and `f()` (a real number) are constrained scalars for the unitless number space CSS leaves untyped. Both validate at construction and re-validate on every operation, so a constrained value stays valid (or throws) through arithmetic. `clamp(min, max)` snaps into range instead of throwing; `hardenInteger({ min, max })` / `hardenFloat({ min, max })` bind a constraint once into a reusable factory. The `createInteger` / `createFloat` factories return that same `i` / `hardenInteger` (resp. `f` / `hardenFloat`) surface with a `hardening` reaction baked in (see Hardening). See `examples/integers-floats.example.ts`.
 
 ## Ratios
 
@@ -108,13 +124,27 @@ color('#3366cc80', { strictness: 'silent' }).rgb().css(); // 'rgb(51, 102, 204)'
 
 Refinements run a runtime check and return the same value branded with the constraint, so a function can demand "a non-negative measurement" and the compiler rejects anything unchecked (brands are keyed by a private symbol). The built-ins are `nonNegative`, `nonPositive`, and `inRange(min, max)`, each exposing `.is` / `.ensure` / `.check` / `.hardenWith`. `inRange` carries its literal bounds in the type. Build your own with `makeMeasurementRefinement`. The full model is in `docs/hardening.md`, with runnable examples in `examples/refinements.example.ts`.
 
+**Hardening through `m()` (config-driven).** When `m()` ingests a hardened `i` / `f`, it CARRIES the bound, readable via `.constraints()`. What happens when later arithmetic BREAKS that bound is one config knob, `hardening: 'ignore' | 'warn' | 'fail'` (default `'fail'`): `fail` throws, `warn` warns and drops the bound, `ignore` drops it silently. The same knob governs `i` / `f`'s own re-validation. Set it per instance via `createCalipers({ hardening })` / `createInteger({ hardening })` / `createFloat({ hardening })`, or across the whole bundle via the cascade (see Factories).
+
+```ts
+import { m, hardenInteger, createCalipersBundle } from '@css-bookends/css-calipers';
+
+const bounded = hardenInteger({ min: 0, max: 10 });
+m(bounded(8)).constraints();      // { min: 0, max: 10 }   (m carries the ingested bound)
+m(bounded(8)).multiply(2);        // throws                (16 breaks [0, 10]; default 'fail')
+
+// configure the reaction via the bundle (createCalipers is on the /factory + /corpus entries)
+const lenient = createCalipersBundle({ measurements: { hardening: 'ignore' } });
+lenient.m(bounded(8)).multiply(2).css(); // '16px'         (bound dropped, proceeds)
+```
+
 ## Per-property value helpers live in the books layer
 
 calipers is the value-type primitives only (colour, measurements, integers, floats, ratios). The per-property value helpers (`opacity`, `zIndex`, `fontWeight`, ...) are NOT a calipers feature: they live one layer up, in the books layer. Each is a book that binds a calipers primitive to one CSS property, applies that property's bound and keyword companions, and types its `.css()` output against the matching csstype `Property.X`. The shared engine behind them is `@css-bookends/css-value-core`. For the full picture, the value-type side is mapped in `lexicons/calipers/surface.md` and the per-property side in `packages/css-value-core/surface.md`.
 
 ## Factories
 
-The bare exports (`m`, `color`, the refinements, ...) are each a factory already called at its defaults, so the default instance and a custom instance share one construction path. The factory itself is the real configurable path and the override seam: `createCalipers({ errorConfig? })` returns a measurement instance and `createColor({ formats })` a colour instance with custom format plugins registered, and routing every consumer through a factory means you can rewrite or wrap any step (input, storage, output) with zero call-site changes. `corpus` is the lazy-defaults convenience entry: it default-exports a master factory, `createCalipersBundle({ measurements?, color? })`, that combines `createCalipers` + `createColor` under one keyed config and binds the whole calipers surface in one object (mirroring the compendium's `publishCompendium`), and it named-exports that same primitive set already bound at defaults, so you get everything wired without touching a factory yourself. (`corpus` and the bookends `@css-bookends/compendium/defaults` subpath are the only two lazy-defaults entries in the project.) Binding a factory once in one of your own modules and re-exporting the bound helper from there also keeps the blast radius of a library change small: your code imports that helper from a single seam, so a major restructuring of the library's internal paths lands in that one file, not across the hundreds or thousands of call sites that use it. And because each factory call returns its own independent instance, several configurations coexist side by side with no shared global state to collide: a `createColor` that emits hex and another that emits oklch, or a strict instance next to a clamping one, all live at once, with no cascade or global state to fight (each instance is just a value in scope, not a stylesheet competing in the cascade). See `examples/factory-wrapper.example.ts`.
+The bare exports (`m`, `color`, the refinements, ...) are each a factory already called at its defaults, so the default instance and a custom instance share one construction path. The factory itself is the real configurable path and the override seam: `createCalipers({ errorConfig?, hardening? })` returns a measurement instance, `createInteger({ hardening? })` / `createFloat({ hardening? })` return the integer / float surface, and `createColor({ formats })` a colour instance with custom format plugins registered; routing every consumer through a factory means you can rewrite or wrap any step (input, storage, output) with zero call-site changes. The master factory `createCalipersBundle({ global?, measurements?, integer?, float?, color? })` (surfaced on the package root, and the default export of the `corpus` entry) combines all of the above under one keyed config: a `global` slot of shared options plus one key per unit, where each setting resolves own key -> `global` -> factory default. So `createCalipersBundle({ global: { hardening: 'warn' }, integer: { hardening: 'fail' } })` warns everywhere except integers, which throw. `corpus` is the lazy-defaults convenience entry: it default-exports that master factory and named-exports the same primitive set already bound at defaults, so you get everything wired without touching a factory yourself. (`corpus` and the bookends `@css-bookends/compendium/defaults` subpath are the only two lazy-defaults entries in the project.) Binding a factory once in one of your own modules and re-exporting the bound helper from there also keeps the blast radius of a library change small: your code imports that helper from a single seam, so a major restructuring of the library's internal paths lands in that one file, not across the hundreds or thousands of call sites that use it. And because each factory call returns its own independent instance, several configurations coexist side by side with no shared global state to collide: a `createColor` that emits hex and another that emits oklch, or a strict instance next to a clamping one, all live at once, with no cascade or global state to fight (each instance is just a value in scope, not a stylesheet competing in the cascade). See `examples/factory-wrapper.example.ts`.
 
 All of that power is opt-in. If you just want sensible defaults and none of the above, you never touch a factory: the bare `m` / `color` / refinement exports are ready as-is, and `corpus` hands you the whole primitive set bound at defaults in one import.
 

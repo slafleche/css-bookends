@@ -11,9 +11,21 @@ import type {
   UnitGuard,
   UnitHelper,
 } from '../core';
+import { f } from '../float';
+import {
+  type Constraints,
+  DEFAULT_HARDENING,
+  describeBound,
+  type Hardening,
+  normalizeConstraints,
+  violatesConstraints,
+} from '../hardening';
+import { i } from '../integer';
 import { type Scalar, toNumber } from '../scalar';
 import {
+  UNIT_CATEGORY_BY_UNIT,
   UNIT_DEFINITIONS,
+  type UnitCategory,
   type UnitDefinitionRecord,
   type UnitHelperName,
 } from '../unitDefinitions';
@@ -27,7 +39,10 @@ type MeasurementCreateOptions<Unit extends string> = {
   context?: string;
 };
 
-export const createCoreApi = (errorStore: ErrorConfigStore) => {
+export const createCoreApi = (
+  errorStore: ErrorConfigStore,
+  hardening: Hardening = DEFAULT_HARDENING,
+) => {
   const { throwHelperError, throwMeasurementMethodError } =
     createErrorHelpers(errorStore);
 
@@ -66,8 +81,13 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
   > implements IMeasurement<Unit> {
     #value: number;
     #unit: Unit;
+    #constraints: Constraints;
 
-    constructor(value: number, unit: Unit) {
+    constructor(
+      value: number,
+      unit: Unit,
+      constraints: Constraints = {},
+    ) {
       if (!Number.isFinite(value)) {
         throwHelperError({
           operation: 'css-calipers.Measurement.constructor',
@@ -78,6 +98,7 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
       }
       this.#value = value;
       this.#unit = unit.toLowerCase() as Unit;
+      this.#constraints = constraints;
     }
 
     css(): string {
@@ -88,12 +109,63 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
       return this.css();
     }
 
+    unit(): Unit {
+      return this.#unit;
+    }
+
+    value(): number {
+      return this.#value;
+    }
+
     getUnit(): Unit {
       return this.#unit;
     }
 
     getValue(): number {
       return this.#value;
+    }
+
+    constraints(): Constraints {
+      return { ...this.#constraints };
+    }
+
+    isInt(): boolean {
+      return Number.isInteger(this.#value);
+    }
+
+    isFloat(): boolean {
+      return !Number.isInteger(this.#value);
+    }
+
+    toTypedValue() {
+      return Number.isInteger(this.#value)
+        ? i(this.#value)
+        : f(this.#value);
+    }
+
+    category(): UnitCategory | undefined {
+      return UNIT_CATEGORY_BY_UNIT[this.#unit];
+    }
+
+    isLength(): boolean {
+      const category = this.category();
+      return category !== undefined && category.startsWith('length-');
+    }
+
+    isAbsolute(): boolean {
+      return this.category() === 'length-absolute';
+    }
+
+    isRelative(): boolean {
+      return this.isLength() && !this.isAbsolute();
+    }
+
+    isPercent(): boolean {
+      return this.category() === 'percent';
+    }
+
+    isAngle(): boolean {
+      return this.category() === 'angle';
     }
 
     valueOf(): number {
@@ -180,9 +252,8 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
     multiply(factor: Scalar): Measurement<Unit> {
       const numericFactor = toNumber(factor);
       if (numericFactor === 1) return this;
-      if (numericFactor === 0) return new Measurement(0, this.#unit);
-      if (numericFactor === -1)
-        return new Measurement(-this.#value, this.#unit);
+      if (numericFactor === 0) return this.#clone(0);
+      if (numericFactor === -1) return this.#clone(-this.#value);
       return this.#clone(this.#value * numericFactor);
     }
 
@@ -290,7 +361,28 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
     }
 
     #clone(value: number): Measurement<Unit> {
-      return new Measurement(value, this.#unit);
+      if (violatesConstraints(value, this.#constraints)) {
+        const result = `${toPlainDecimal(value)}${this.#unit}`;
+        const bound = describeBound(this.#constraints);
+        if (hardening === 'fail') {
+          throwMeasurementMethodError({
+            operation: 'css-calipers.Measurement.hardening',
+            caller: this,
+            params: [],
+            message: `operation result ${result} breaks the hardened bound ${bound}`,
+            details: { code: 'CALIPERS_E_HARDENING_BREACH' },
+          });
+        }
+        if (hardening === 'warn') {
+          console.warn(
+            `css-calipers: operation result ${result} breaks the hardened bound ${bound}; dropping the constraint`,
+          );
+        }
+        // 'ignore' + 'warn': drop the broken bound and proceed.
+        return new Measurement(value, this.#unit);
+      }
+      // In bounds (or unhardened): carry the bound onto the derived value.
+      return new Measurement(value, this.#unit, this.#constraints);
     }
   }
 
@@ -299,36 +391,60 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
   const createMeasurement = <Unit extends string>(
     value: number,
     unit: Unit,
+    constraints: Constraints = {},
   ): InscribedMeasurement<Unit> =>
     new Measurement(
       value,
       unit,
+      constraints,
     ) as unknown as InscribedMeasurement<Unit>;
 
   const isMeasurement = (x: unknown): x is IMeasurement<string> =>
     x instanceof Measurement;
 
-  function m(value: number): InscribedMeasurement<'px'>;
+  function m(value: Scalar): InscribedMeasurement<'px'>;
   function m(
-    value: number,
+    value: Scalar,
     options: { context?: string },
   ): InscribedMeasurement<'px'>;
   function m<Unit extends string>(
-    value: number,
+    value: Scalar,
     unit: Unit,
     context?: string,
   ): InscribedMeasurement<Lowercase<Unit>>;
   function m<Unit extends string>(
-    value: number,
+    value: Scalar,
     options: MeasurementCreateOptions<Unit>,
   ): InscribedMeasurement<Lowercase<Unit>>;
   function m<Unit extends string>(
-    value: number,
+    value: Scalar,
     unitOrOptions:
       | Unit
       | MeasurementCreateOptions<Unit> = 'px' as Unit,
     context?: string,
   ): InscribedMeasurement<Lowercase<Unit>> {
+    // Accept a plain number OR a typed scalar (i / f); coerce to a number here.
+    // Only a typed scalar (object) is unwrapped via valueOf; a plain number, or
+    // anything invalid (e.g. a missing value), passes through so the finite check
+    // below still produces the graceful "non-finite" error rather than crashing.
+    // (A hardened i/f's range bound is ingested below as `ingestedConstraints`.)
+    const numericValue =
+      typeof value === 'object' && value !== null
+        ? value.valueOf()
+        : value;
+    // A hardened i / f carries a range bound; ingest it so m can re-check it
+    // through arithmetic. An unhardened scalar (or plain number) carries none.
+    const ingestedConstraints: Constraints =
+      typeof value === 'object' &&
+      value !== null &&
+      typeof (value as { constraints?: unknown }).constraints ===
+        'function'
+        ? normalizeConstraints(
+            (
+              value as { constraints: () => Constraints }
+            ).constraints(),
+          )
+        : {};
     const options =
       unitOrOptions && typeof unitOrOptions === 'object'
         ? unitOrOptions
@@ -336,9 +452,9 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
     const unit = (options.unit ?? 'px') as Unit;
     const contextLabel = options.context;
     const normalizedUnit = unit.toLowerCase() as Lowercase<Unit>;
-    if (!Number.isFinite(value)) {
+    if (!Number.isFinite(numericValue)) {
       const errorPayload = buildMeasurementCreationError(
-        value,
+        numericValue,
         normalizedUnit,
         'm',
         contextLabel,
@@ -352,7 +468,11 @@ export const createCoreApi = (errorStore: ErrorConfigStore) => {
         includeStackHint: true,
       });
     }
-    return createMeasurement(value, normalizedUnit);
+    return createMeasurement(
+      numericValue,
+      normalizedUnit,
+      ingestedConstraints,
+    );
   }
 
   type UnitHelperFactory<Unit extends string> = ((

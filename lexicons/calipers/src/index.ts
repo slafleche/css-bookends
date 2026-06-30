@@ -1,4 +1,13 @@
 export * from './core';
+// The master factory + its config, surfaced on the ROOT (cycle-free via
+// `./bundle`) so classic-resolution consumers (e.g. the compendium) reach it
+// without a subpath, exactly like `createColor`. The `/corpus` entry also
+// re-exports it (via `export * from './index'`).
+export {
+  type CalipersBundle,
+  type CalipersBundleConfig,
+  createCalipersBundle,
+} from './bundle';
 // The bare default-instance helpers (`m`, refinements, unit-helper builders,
 // error-config accessors) come from the single construction path in `./default`,
 // which assembles them via `createCalipers()` at its defaults.

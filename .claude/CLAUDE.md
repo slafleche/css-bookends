@@ -3,6 +3,15 @@
 This is the canonical architecture. It is ABSOLUTE. The same statement lives in
 `AGENTS.md`, the package READMEs, and the skills, keep them in sync.
 
+## All packages stay PUBLIC (absolute, do not touch `private`)
+
+Every package in this repo is published / public, INCLUDING test and `e2e` packages.
+NEVER set `"private": true` on any package, never flip a package's `private` field, and
+never "fix" a `"private": false` to `true` (e.g. during a publish audit). If a package is
+`"private": false`, LEAVE IT. A package describing itself as test-only is NOT a reason to
+make it private; the user has decided everything stays public. This is the user's explicit,
+repeated instruction. Report packaging observations if asked, but do not change `private`.
+
 ## The three layers
 
 A typed-CSS stack in three layers. Each has one job. Keep them strictly separated.
@@ -119,7 +128,13 @@ both. Three cross-cutting patterns follow.
   to avoid). Multi-property books ALSO keep their decomposition axis (longhand/shorthand;
   long/line/short); per-property books keep `.value()` for the raw scalar.
 
-### Pattern 3: three-tier config cascade (own -> global -> default)
+### Pattern 3: everything is config-driven, resolved by a three-tier cascade
+
+**First principle: everything is config-driven.** A behaviour that could reasonably vary is a config
+OPTION (an explicit, enumerated value with a sensible default), never a hardcoded decision. When the
+design forces a "should it do X or Y?" choice, it is a config, not a baked-in branch. Examples:
+`format: 'object' | 'string'`, `outOfRange: 'throw' | 'clamp'`, the hardening reaction
+`'ignore' | 'warn' | 'fail'`. Every such option resolves by the three-tier cascade:
 
 - A bundle factory takes ONE config object shaped `{ global?: <shared options>, <unitKey>?:
   <that unit's own config>, … }`: a `global` slot of shared options, plus one optional key per

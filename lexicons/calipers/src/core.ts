@@ -1,16 +1,23 @@
 import {
+  createFloat,
   f,
+  type FloatApi,
   type FloatConstraints,
+  type FloatFactoryConfig,
   type FloatOptions,
   hardenFloat,
   type IFloat,
   isFloat,
 } from './float';
+import { type Constraints } from './hardening';
 import {
+  createInteger,
   hardenInteger,
   i,
   type IInteger,
+  type IntegerApi,
   type IntegerConstraints,
+  type IntegerFactoryConfig,
   type IntegerOptions,
   isInteger,
 } from './integer';
@@ -72,9 +79,38 @@ export type InRangeBrand<
 export interface IMeasurement<Unit extends string = string> {
   css: () => string;
   toString: () => string;
+  /** The raw unit string (e.g. `'px'`). The unified accessor across value types. */
+  unit: () => Unit;
+  /** The raw numeric value. The unified accessor across value types. */
+  value: () => number;
+  /** @deprecated Use {@link unit}; kept as a back-compat alias. */
   getUnit: () => Unit;
+  /** @deprecated Use {@link value}; kept as a back-compat alias. */
   getValue: () => number;
   valueOf: () => number;
+  /**
+   * The range bound this measurement carries (from an ingested hardened
+   * `i` / `f`), or `{}` if unhardened. Arithmetic that breaks the bound reacts
+   * per the instance's `hardening` config; an in-bounds derived value keeps it.
+   */
+  constraints: () => Constraints;
+  /** Whether the raw value is integral / fractional. */
+  isInt: () => boolean;
+  isFloat: () => boolean;
+  /** Recover the matching unitless typed scalar (`i()` if integral, else `f()`). */
+  toTypedValue: () => IInteger | IFloat;
+  /** The unit's CSS category (e.g. `'length-absolute'`), or `undefined` for an unknown unit. */
+  category: () => UnitCategory | undefined;
+  /** True for any length unit (absolute or relative). */
+  isLength: () => boolean;
+  /** True for an absolute length (px, cm, pt, ...). */
+  isAbsolute: () => boolean;
+  /** True for a relative length (font-relative, viewport, container). */
+  isRelative: () => boolean;
+  /** True for the percentage unit. */
+  isPercent: () => boolean;
+  /** True for an angle unit (deg, rad, grad, turn). */
+  isAngle: () => boolean;
   [Symbol.toPrimitive]: (hint: string) => string | number;
   isUnit: (unit: string) => boolean;
   assertUnit: (unit: string, context?: string) => void;
@@ -209,6 +245,7 @@ export type UnitAssertion<T extends UnitHelper> = (
 export type MeasurementUnitDefinition = UnitDefinition;
 export type MeasurementUnitCategory = UnitCategory;
 export { type ErrorCode, type ErrorConfig };
+export type { Constraints, Hardening } from './hardening';
 export {
   isRatio,
   normalizeRatio,
@@ -220,12 +257,25 @@ export {
   toFloat,
 };
 export type { IRatio, RatioParts, RatioValue };
-export { f, hardenFloat, hardenInteger, i, isFloat, isInteger };
+export {
+  createFloat,
+  createInteger,
+  f,
+  hardenFloat,
+  hardenInteger,
+  i,
+  isFloat,
+  isInteger,
+};
 export type {
+  FloatApi,
   FloatConstraints,
+  FloatFactoryConfig,
   FloatOptions,
   IFloat,
   IInteger,
+  IntegerApi,
   IntegerConstraints,
+  IntegerFactoryConfig,
   IntegerOptions,
 };

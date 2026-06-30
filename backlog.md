@@ -88,3 +88,18 @@ them recorded, re-check once Layers 1-2 are conformed rather than acting on them
       (was todo #38) — re-evaluate when colour is conformed as a Layer-1 primitive.
 - [ ] css-value-core coverage gaps + convert remaining `todo` stubs + add tsd interop type tests
       (was todo #44) — re-evaluate when the per-property books are conformed.
+
+## 8. typesetter: spec it as an onion wrapper around style-dictionary (no code yet)
+The bespoke typesetter (`packages/typesetter`) + its `design-tokens.md` / `token-research.md` were
+deleted (junk, 2026-06-29) and stay deleted. Per the onion-framework rule the future typesetter
+WRAPS **style-dictionary** (the swappable core) with its OWN factory + props, like `gilding` wraps
+Lightning CSS. NEXT STEP IS A SPEC, not code — the user wants familiarity with style-dictionary
+before forming a strong opinion.
+- [ ] Write `docs/typesetter-spec.md`: how style-dictionary works (tokens → transforms → formats),
+      its DTCG support, how the typesetter onion-wraps it (`createTypesetter(config)`: evergreen
+      config + swappable `core` defaulting to a style-dictionary adapter + `coreOptions`), the seam
+      that feeds calipers Layer-1 primitives, and the open trade-offs for the user to weigh.
+- [ ] (LATER, after the user has an opinion) implement per the spec.
+- [ ] Deprecate the published `@css-bookends/typesetter@0.1.0` on npm (`npm deprecate`, user-run).
+- [ ] Scrub remaining `typesetter` mentions in `ARCHITECTURE.md` / READMEs / `AGENTS.md` /
+      `.claude/CLAUDE.md` once the spec direction is settled.

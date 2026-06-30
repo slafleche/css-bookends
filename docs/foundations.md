@@ -11,6 +11,22 @@ precedent to copy. When in doubt, open `m()` or `borders` and match it.
 
 ---
 
+## First principle: everything is config-driven
+
+A behaviour that could reasonably vary is a CONFIG OPTION, not a hardcoded decision. When the
+design forces a "should it do X or Y?" question, the answer is almost always "neither — it's a
+config" with a sensible default. Examples in play: output shape (`format: 'object' | 'string'`),
+out-of-range handling (`outOfRange: 'throw' | 'clamp'`), and how `m` reacts to a lost/broken
+hardening (`'ignore' | 'warn' | 'fail'`).
+
+- Expose the behaviour as an explicit, enumerated, named config value; never bake one branch in.
+- Ship a sensible DEFAULT (the most useful real behaviour), fully overridable.
+- The option MUST be reachable from the bundle factory (`createCalipersBundle` / `publishCompendium`)
+  under the matching key, with the cascade (own -> bundle global -> default). No unit config the
+  bundle factory cannot reach. (See the `doc-test-code` skill's config rule.)
+
+---
+
 ## Canonical LEXICON (the `m()` template)
 
 A lexicon is a typed CSS input value type (measurement, ratio, integer, float, colour). Reference:
@@ -84,8 +100,31 @@ The conformance rules that follow:
 - **`m()` / the primitives stay PERMISSIVE.** Only truly-invalid input (non-finite) fails; range
   rules are not their job. Ordinary in-range variation (an opacity moving 1 -> 0.4) is never an
   error.
-- **Hardening is OPT-IN.** The refinement quartet on `m()` (and `i`/`f`) lets a consumer add
-  strict bounds when they want them; it is never forced.
+- **Hardening is OPT-IN.** `m()`'s refinement quartet, and `hardenInteger`/`hardenFloat` on
+  `i`/`f`, let a consumer add strict bounds when they want them; it is never forced.
+
+### Hardening: config-driven reaction to loss / breach (locked 2026-06-29)
+
+Each value type keeps its existing hardening tools: `hardenInteger` / `hardenFloat` on the scalars
+(runtime bounds, re-validated through arithmetic, exposed via `.constraints()`), and `m`'s
+refinement quartet (`nonNegative` / `nonPositive` / `inRange`) for hardening a measurement directly.
+`m` does NOT get its own construction bounds (`m(v, {min,max})`) or a `hardenMeasurement` — to bound
+a measurement you either harden the scalar first and pass it in, or use `m`'s quartet.
+
+`m()` accepts `number | i | f`. When it ingests a HARDENED `i`/`f`, `m` CARRIES the bound (exposed
+as a runtime `.constraints()`); ingestion itself is silent (nothing is lost, it is kept). What
+happens when later ARITHMETIC on that hardened `m` crosses (breaks) the carried bound is
+**config-driven** (per the first principle), one knob with three values:
+
+- `'ignore'` → proceed, drop the (now-violated) constraint silently;
+- `'warn'` → proceed, but warn that the guarantee was broken;
+- `'fail'` → throw (disallow the breaking operation).
+
+So `fail` gives the `i`/`f`-style enforce-through-math, `ignore` a loose drop, `warn` the middle. An
+in-bounds operation keeps the constraint; ingesting an UNHARDENED scalar carries nothing. The config
+lives on `CalipersFactoryConfig` (today `{ errorConfig? }`) and is reachable from
+`createCalipersBundle` under the `measurement` key + the `global` cascade. (Key name + default still
+being finalised; lean default `warn`.)
 
 ### Colour is a Layer-1 calipers primitive (locked 2026-06-27)
 

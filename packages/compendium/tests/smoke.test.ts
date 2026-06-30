@@ -31,10 +31,12 @@ describe('css-bookends compendium: bundle contents', () => {
 
   it('binds representative per-property books, callable under their names', () => {
     expect(typeof c.opacity).toBe('function');
-    expect(c.opacity(0.5).css()).toBe('0.5');
+    // per-property books default to the `format: 'object'` shape (a property-keyed
+    // style object); the bare string is available via `.value.css()`.
+    expect(c.opacity(0.5).css()).toEqual({ opacity: '0.5' });
 
     expect(typeof c.zIndex).toBe('function');
-    expect(c.zIndex(10).css()).toBe('10');
+    expect(c.zIndex(10).css()).toEqual({ zIndex: '10' });
 
     // composed book present under its name.
     expect(c.borders).toBeDefined();

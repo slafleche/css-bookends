@@ -104,3 +104,20 @@ describe('Measurement arithmetic with typed scalar operands (i / f)', () => {
     );
   });
 });
+
+describe('m() accepts typed scalar (i / f) inputs', () => {
+  it('builds a measurement from an integer or float value', () => {
+    expect(m(i(4)).css()).toBe('4px');
+    expect(m(f(1.5)).css()).toBe('1.5px');
+  });
+
+  it('honours the unit + options forms with a typed scalar value', () => {
+    expect(m(i(4), 'rem').css()).toBe('4rem');
+    expect(m(f(2.5), { unit: 'em' }).css()).toBe('2.5em');
+  });
+
+  it('plain numbers still work unchanged', () => {
+    expect(m(8).css()).toBe('8px');
+    expect(m(8, 'rem').css()).toBe('8rem');
+  });
+});

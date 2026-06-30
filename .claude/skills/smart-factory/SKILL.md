@@ -39,6 +39,9 @@ the home of smart defaults. Modeled by `publishBookColor`. This is the how-to fo
   still producing a best-effort value in the warn case. Other invalid input fails fast
   with a named / coded error (calipers' `CALIPERS_E_*`). color's `strictness` /
   `violate()` is the pattern.
+- **Everything is config-driven (first principle).** A behaviour that could reasonably vary is a
+  config OPTION (explicit enumerated value + sensible default), never a hardcoded decision. When a
+  design forces "should it do X or Y?", make it a config. See `docs/foundations.md` + `doc-test-code`.
 - **Output shape via `format: 'object' | 'string'`.** Every book's config carries this
   (object = property-keyed style object, string = bare value; default `'object'`). The output
   step switches on it. See `output-shape`.
